@@ -2,7 +2,7 @@
    acting), with its resources, its target, an action card per weapon, power and physical action, and the button that
    ends its pass or its round. Every Action is the RWF Ruleset's, run through Rule Them'All. */
 import {SOCKET} from "./test-request-model.mjs";
-import {hudRuleset, followedCombatant, yourTurn, targetingUser, opposingSide, hits, edgeDistance, combatantView, endTurnLabel, readWhole} from "./hud-model.mjs";
+import {hudRuleset, followedCombatant, waitForTurn, yourTurn, targetingUser, opposingSide, hits, edgeDistance, combatantView, endTurnLabel, readWhole} from "./hud-model.mjs";
 import {renderCombatHTML} from "./hud-markup.mjs";
 import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction} from "./hud-common.mjs";
 
@@ -57,10 +57,12 @@ export function createCombatHud() {
         : [...(aimer.targets ?? [])].find(token => token.actor?.uuid && token.actor.uuid !== followed.actorUuid) ?? null;
       const target = targetToken ? {uuid: targetToken.actor.uuid, name: targetToken.name ?? targetToken.document?.name ?? "", tokenId: targetToken.id, distance: onScene(me) ? distanceBetween(me.token, targetToken.document) : null} : null;
       const cover = target ? this.#cover.get(target.uuid) ?? 0 : 0;
-      const combatant = await combatantView(runtime, {versionId, ruleset, actorUuid: followed.actorUuid, target, cover, isGM, userId: game.user.id, contentName: contentNamer(ruleset, followed.actorUuid)});
+      const read = await combatantView(runtime, {versionId, ruleset, actorUuid: followed.actorUuid, target, cover, isGM, userId: game.user.id, contentName: contentNamer(ruleset, followed.actorUuid)});
+      // Only the combatant acting can act: the others see their cards, every button off.
+      const active = combat.combatant ?? null, acting = active?.id === followed.id;
+      const combatant = acting ? read : waitForTurn(read);
       const pass = Number(combat.getFlag?.(...PASS_FLAG) ?? 1) || 1, passes = Math.max(pass, combatant.attacks.best);
       // "À vous de jouer" only for whoever plays the combatant acting: its owner, or the GM for a combatant no player owns.
-      const active = combat.combatant ?? null, acting = active?.id === followed.id;
       const myTurn = Boolean(active) && yourTurn({isGM, owned: Boolean(active.isOwner), playerOwned: Boolean(active.actor?.hasPlayerOwner ?? active.hasPlayer)});
       const view = {versionId, ruleset, round: combat.round, pass, passes, turnName: combat.combatant?.name ?? null, myTurn, name: me.name, actorUuid: followed.actorUuid, combatantId: followed.id,
         combatant, target, cover, isGM, canEndTurn: acting && (isGM || followed.owned), endLabel: endTurnLabel({pass, passes: combatant.attacks.best})};

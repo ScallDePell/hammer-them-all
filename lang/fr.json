@@ -63,6 +63,7 @@
   "RWFTOOLS.Combat.Required": "{n}+ au d20",
   "RWFTOOLS.Combat.Contact": "Cible à {distance} m : il faut être au contact.",
   "RWFTOOLS.Combat.OutOfRange": "Cible à {distance} m, hors de portée ({range} m).",
+  "RWFTOOLS.Combat.WaitTurn": "Ce n'est pas le tour de ce combattant : ses actions attendent son tour.",
   "RWFTOOLS.Combat.Attack": "Attaquer",
   "RWFTOOLS.Combat.Shoot": "Tirer",
   "RWFTOOLS.Combat.Action.tirer-rafale": "Rafale",

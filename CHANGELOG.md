@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4
+
+- HUD Combat : hors de son tour, un combattant voit ses cartes mais aucun bouton d'action n'est actif ; une seule ligne dit pourquoi.
+- Un combat supprimé, commencé ou non, remet à zéro les marques de combat (« En combat », passe, dernière passe d'attaque, attaques du round) de ses acteurs, sauf ceux pris dans un autre combat en cours.
+- Demande Rule Them'All 1.0.14 (le combat commence sur la meilleure initiative, à la première passe).
+
 ## 0.2.3
 
 - Le combattant qui agit peut toujours jouer sa passe : le client du MJ actif vérifie, à chaque changement du combat, que sa passe est celle du combat et que l'attaque de la passe n'est pas marquée comme déjà faite par des compteurs restés d'un combat précédent ; sinon il annonce à nouveau le tour ou remet ces compteurs, et l'écrit dans la console (« rwf-tools | … repaired »).

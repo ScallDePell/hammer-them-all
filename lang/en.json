@@ -63,6 +63,7 @@
   "RWFTOOLS.Combat.Required": "{n}+ on the d20",
   "RWFTOOLS.Combat.Contact": "Target {distance} m away: you must be in contact.",
   "RWFTOOLS.Combat.OutOfRange": "Target {distance} m away, out of range ({range} m).",
+  "RWFTOOLS.Combat.WaitTurn": "Not this combatant's turn: its actions wait for its turn.",
   "RWFTOOLS.Combat.Attack": "Attack",
   "RWFTOOLS.Combat.Shoot": "Shoot",
   "RWFTOOLS.Combat.Action.tirer-rafale": "Burst",

@@ -30,6 +30,10 @@ export function turnRepairs({combatId, round, turn, pass, actorUuid, state, fres
   return {events, values};
 }
 
+const COUNTERS = ["passe-en-cours", "derniere-passe-attaque", "attaques-utilisees", "effort-physique"];
+/** Whether an Actor still carries the marks of a combat: "En combat" or a combat counter above 0. */
+export function combatMarks(state) { return Boolean(state) && (inCombat(state) || COUNTERS.some(id => counter(state, id) > 0)); }
+
 export function installTurnGuard({hooks = globalThis.Hooks, delay = 400} = {}) {
   // One repair per turn and pass: a Ruleset that refuses the pass is not asked again and again. The turn running when
   // the GM logs in is not fresh: its combatant may already have attacked.
@@ -65,6 +69,21 @@ export function installTurnGuard({hooks = globalThis.Hooks, delay = 400} = {}) {
   };
   // Rule Them'All writes its events a moment after the change: the check waits for the burst to settle.
   const later = () => { clearTimeout(timer); timer = setTimeout(check, delay); };
+  // A combat removed: every Actor of it still marked leaves the combat, whether or not the combat had started.
+  hooks.on("deleteCombat", async combat => {
+    const game = globalThis.game, rta = game.ruleThemAll;
+    if (!game.user.isGM || (game.users.activeGM && game.users.activeGM !== game.user) || !rta?.runtime) return;
+    try {
+      const found = hudRuleset(rta.configurator);
+      if (found.reason) return;
+      const elsewhere = new Set([...(game.combats ?? [])].filter(c => c.id !== combat.id && c.started).flatMap(c => [...c.combatants].map(x => x.actor?.uuid)));
+      const uuids = [...new Set([...(combat.combatants ?? [])].map(c => c.actor?.uuid).filter(uuid => uuid && !elsewhere.has(uuid)))];
+      const marked = [];
+      for (const uuid of uuids) { const state = await rta.runtime.getContainerState(uuid); if (state?.rulesetVersionId === found.versionId && combatMarks(state)) marked.push(uuid); }
+      // Rule Them'All sends its own end a moment later for a started combat: both leave the same marks at 0.
+      if (marked.length) await rta.runtime.emitSystemEvent("rta.combat.end", {combatId: combat.id, round: Number(combat.round ?? 0)}, marked);
+    } catch (error) { console.error(`${MODULE_ID} | Combat end failed`, error); }
+  });
   for (const hook of ["combatStart", "combatTurnChange", "updateCombat", "createCombatant", "updateCombatant", "deleteCombatant", "updateActor"]) hooks.on(hook, later);
   later();
   return check;

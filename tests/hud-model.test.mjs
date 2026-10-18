@@ -113,3 +113,15 @@ test("the HUD markup escapes names and disables what cannot be done", () => {
   assert.match(renderPursuitHTML({active: false, isGM: true}, t), /data-rwf-start/);
   assert.doesNotMatch(renderPursuitHTML({active: false, isGM: false}, t), /data-rwf-start/);
 });
+
+test("outside its turn a combatant's buttons are all off, for one reason shown once", async () => {
+  const {waitForTurn} = await import("../src/hud-model.mjs");
+  const {renderCombatHTML} = await import("../src/hud-markup.mjs");
+  const combatant = {pools: {}, defense: 10, attacks: {used: 0, best: 1}, efforts: 0, cards: [{kind: "weapon", key: "p", name: "Pistolet", details: [], buttons: [{actionId: "attaquer", label: "RWFTOOLS.Combat.Shoot", allowed: true}]}]};
+  const waiting = waitForTurn(combatant);
+  assert.equal(waiting.cards[0].buttons[0].allowed, false);
+  assert.equal(combatant.cards[0].buttons[0].allowed, true, "the view read stays as it was");
+  const html = renderCombatHTML({combatant: waiting, round: 1, pass: 1, passes: 1, name: "Marc", turnName: "Garde", cover: 0, mode: "foundry"}, key => key);
+  assert.equal(html.match(/RWFTOOLS\.Combat\.WaitTurn/g).length, 2, "the hint once, the button's title once");
+  assert.match(html, /data-rwf-action="attaquer"[^>]* disabled/);
+});

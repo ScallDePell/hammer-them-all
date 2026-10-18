@@ -2,7 +2,7 @@
 
 Outils de jeu de Real World Fantasy pour Foundry VTT v14, par-dessus [Rule Them'All](https://github.com/ScallDePell/Rule-Them-All) et son Ruleset RWF. Module privé : les outils propres à RWF vivent ici, jamais dans Rule Them'All.
 
-Il demande Rule Them'All 1.0.13 ou plus récent et le Ruleset RWF 2.2.0 ou plus récent (2.3.0 conseillé), actif dans le monde.
+Il demande Rule Them'All 1.0.14 ou plus récent et le Ruleset RWF 2.2.0 ou plus récent (2.3.0 conseillé), actif dans le monde.
 
 ## Les macros
 

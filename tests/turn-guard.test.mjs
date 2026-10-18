@@ -26,3 +26,10 @@ test("a turn that just began with its attack marked spent gets the counters of a
   assert.deepEqual(turnRepairs({...turn, pass: 2, state: state({pass: 2, last: 2, used: 1}), fresh: true}).values, {"derniere-passe-attaque": 1}, "the first pass's attack still counts");
   assert.deepEqual(turnRepairs({...turn, state: state({pass: 1, last: 1, used: 1})}).values, {}, "not fresh: it may have just attacked");
 });
+
+test("an Actor keeps combat marks while in combat or with a counter above 0", async () => {
+  const {combatMarks} = await import("../src/turn-guard.mjs");
+  assert.equal(combatMarks(state({combat: false})), false);
+  assert.equal(combatMarks(state({combat: false, last: 1})), true);
+  assert.equal(combatMarks(state()), true);
+});

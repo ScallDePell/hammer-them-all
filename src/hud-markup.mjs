@@ -43,7 +43,7 @@ function card(c, t) {
   if (c.perRound) details.push(`<span>${e(fmt(t, "RWFTOOLS.Combat.PerRound", {n: c.perRound}))}</span>`);
   const blocked = c.buttons.find(b => b.range);
   // Nothing on the card can be used: why, in words (the Condition of the Ruleset that stops its first button).
-  const stopped = !blocked && c.kind !== "physical" && c.buttons.length && c.buttons.every(b => !b.allowed) ? c.buttons.find(b => b.reason) : null;
+  const stopped = !blocked && !c.buttons.some(b => b.waiting) && c.kind !== "physical" && c.buttons.length && c.buttons.every(b => !b.allowed) ? c.buttons.find(b => b.reason) : null;
   return `<li class="rwf-hud__card rwf-hud__card--${e(c.kind)}">
     <div class="rwf-hud__card-head"><strong>${e(t(c.name))}</strong>${c.latent ? ` <em>${words(t, "RWFTOOLS.Combat.Latent")}</em>` : ""}${c.required ? `<span class="rwf-hud__required">${e(fmt(t, "RWFTOOLS.Combat.Required", {n: c.required}))}</span>` : ""}</div>
     ${details.length ? `<div class="rwf-hud__details">${details.join("")}</div>` : ""}
@@ -75,7 +75,7 @@ export function renderCombatHTML(view, t) {
     : `<div class="rwf-hud__row"><span><i class="fa-solid fa-crosshairs"></i> ${words(t, "RWFTOOLS.Combat.NoTarget")}</span><button type="button" data-rwf-pick>${words(t, "RWFTOOLS.Combat.Target")}</button></div>`}</section>`;
   const end = view.canEndTurn ? `<button type="button" class="rwf-hud__end" data-rwf-end-turn><i class="fa-solid fa-check"></i> ${e(fmt(t, view.endLabel, {pass: view.pass}))}</button>` : "";
   return `<div class="rwf-hud rwf-hud--combat">${head}${who}${modeSwitch(view.mode, t)}${target}${tableForm(view.pending, t, view.error)}${message(view.message, t)}
-    <h3 class="rwf-hud__section">${words(t, "RWFTOOLS.Combat.Actions")}</h3><ul class="rwf-hud__cards">${c.cards.map(x => card(x, t)).join("")}</ul>${end}</div>`;
+    <h3 class="rwf-hud__section">${words(t, "RWFTOOLS.Combat.Actions")}</h3>${c.waiting ? `<p class="rwf-hud__hint">${words(t, "RWFTOOLS.Combat.WaitTurn")}</p>` : ""}<ul class="rwf-hud__cards">${c.cards.map(x => card(x, t)).join("")}</ul>${end}</div>`;
 }
 
 function gauge(row, bound, t) {

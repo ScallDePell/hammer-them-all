@@ -32,6 +32,11 @@ export function hudRuleset(configurator) {
   return {versionId, ruleset};
 }
 
+/** Outside its turn a combatant waits: no button of its cards can be used, for the one reason said once. */
+export function waitForTurn(combatant) {
+  return {...combatant, waiting: true, cards: combatant.cards.map(card => ({...card, buttons: card.buttons.map(b => ({...b, allowed: false, reason: "RWFTOOLS.Combat.WaitTurn", range: null, waiting: true}))}))};
+}
+
 /** An announced roll: a whole number from min to max, else null. */
 export function readWhole(value, min = D20_MIN, max = D20_MAX) {
   const text = String(value ?? "").trim();
