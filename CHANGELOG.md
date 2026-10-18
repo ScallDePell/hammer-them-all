@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- **HUD Combat** : ressources, passes, cible et couverture, une carte par arme, pouvoir et action physique, d20 à atteindre, portée, dés de Foundry ou de la table, fin de passe ou de round (relayée au MJ pour un joueur).
+- **HUD Poursuite** : poursuite partagée dans le monde, réglée par le MJ (rôles, déplacement, référence de vitesse, vitesse maximale du terrain), jauge par participant, coups du Ruleset RWF avec l'avantage de vitesse.
+- Macros **HUD Combat** et **HUD Poursuite** pour tous, placées une fois dans la barre de chaque utilisateur.
+- Demande Rule Them'All 1.0.10 et le Ruleset RWF 2.2.0 ou plus récent.
+
 ## 0.1.1
 
 - **Vider** la liste des tests demandés : les tests terminés disparaissent, ceux encore en attente sont annulés chez le joueur.

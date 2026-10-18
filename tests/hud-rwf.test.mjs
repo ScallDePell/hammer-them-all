@@ -1,0 +1,126 @@
+// The two HUDs against the real RWF Ruleset, through the Rule Them'All engine (memory adapter).
+// RTA_REPO: a Rule Them'All checkout (default ../rule-them-all), whose Rulesets/rwf holds RWF 2.2.0 or later.
+import test from "node:test";
+import assert from "node:assert/strict";
+import {existsSync, readFileSync, readdirSync} from "node:fs";
+import {resolve} from "node:path";
+import {pathToFileURL} from "node:url";
+import {hudRuleset, combatantView, actionContext, pursuitView, addParticipants, emptyPursuit} from "../src/hud-model.mjs";
+import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
+
+const repo = resolve(process.env.RTA_REPO ?? new URL("../../rule-them-all", import.meta.url).pathname);
+const rwfDir = `${repo}/Rulesets/rwf`;
+const file = existsSync(rwfDir) ? readdirSync(rwfDir).filter(name => /^rwf-ruleset-.*\.json$/.test(name)).sort().at(-1) : null;
+const lang = JSON.parse(readFileSync(new URL("../lang/fr.json", import.meta.url), "utf8"));
+const t = key => key.startsWith("RWFTOOLS.") ? (assert.ok(key in lang, `missing ${key}`), lang[key]) : key;
+
+async function setup() {
+  const imp = path => import(pathToFileURL(`${repo}/src/${path}`).href);
+  const {createConfiguratorAPI} = await imp("configurator/configurator-api.mjs");
+  const {emptyStorageSnapshot} = await imp("configurator/configurator-storage.mjs");
+  const {MemoryRuntimeAdapter} = await imp("runtime/memory-runtime-adapter.mjs");
+  const {createRuntimeAPI} = await imp("runtime/runtime-api.mjs");
+  class Storage { data = emptyStorageSnapshot(); async load() { return structuredClone(this.data); } async save(d) { this.data = structuredClone(d); } }
+  class Adapter extends MemoryRuntimeAdapter {
+    rolls = []; natural = 10;
+    async roll(formula) { this.rolls.push(formula); const total = /^\d+$/.test(formula) ? Number(formula) : formula === "1d20" ? this.natural : 1; return {formula, result: String(total), total, natural: total}; }
+  }
+  const configurator = await createConfiguratorAPI(new Storage());
+  const {versionId} = await configurator.importRuleset(readFileSync(`${rwfDir}/${file}`, "utf8"), "NEW");
+  await configurator.setActiveVersionId(versionId);
+  const adapter = new Adapter(), runtime = createRuntimeAPI(configurator, {adapter, hooks: null});
+  const found = hudRuleset(configurator);
+  const give = async (uuid, contents) => {
+    const state = await adapter.load({uuid});
+    for (const [key, templateId] of Object.entries(contents)) {
+      const template = found.ruleset.contentTemplates.find(tpl => tpl.id === templateId);
+      state.contents[key] = {templateId, contentTypeId: template.contentTypeId, fields: {}};
+    }
+    await adapter.write({uuid}, {state, ledger: await adapter.loadLedger({uuid})});
+  };
+  return {configurator, versionId, adapter, runtime, found, give};
+}
+
+test("the combat HUD shows the RWF combatant's cards and runs its Actions", {skip: !file && "no Rule Them'All checkout"}, async () => {
+  const {versionId, adapter, runtime, found, give} = await setup();
+  assert.equal(found.versionId, versionId);
+  const pc = "Actor.marc", foe = "Actor.garde";
+  for (const uuid of [pc, foe]) await runtime.initializeContainer(versionId, uuid);
+  await give(pc, {pistolet: "arme-pistolet-9-mm", couteau: "arme-couteau-poignard", tk: "pouvoir-telekinesie"});
+  const view = async (distance, cover = 0) => combatantView(runtime, {versionId, ruleset: found.ruleset, actorUuid: pc, target: {uuid: foe, name: "Garde", distance}, cover, isGM: true, userId: "gm"});
+
+  let v = await view(5);
+  assert.deepEqual(v.cards.map(c => `${c.kind}:${c.key}`), ["unarmed:unarmed", "weapon:pistolet", "weapon:couteau", "power:tk", "physical:physical"]);
+  assert.deepEqual([v.pools.vitalite.max > 0, v.attacks, v.efforts], [true, {used: 0, best: 1}, 0]);
+  const card = key => v.cards.find(c => c.key === key), button = (key, id) => card(key).buttons.find(b => b.actionId === id);
+  assert.equal(button("pistolet", "attaquer").allowed, true, "a target 5 m away, in the pistol's 20 m");
+  assert.equal(button("pistolet", "attaquer").label, "RWFTOOLS.Combat.Shoot");
+  assert.deepEqual(card("pistolet").ammo, {loaded: 15, magazine: 15, reserve: 30});
+  assert.deepEqual(card("pistolet").buttons.map(b => b.actionId), ["attaquer", "recharger"], "a pistol has no burst");
+  assert.equal(button("pistolet", "recharger").allowed, false, "a full magazine");
+  assert.equal(button("couteau", "attaquer").allowed, false, "a knife needs contact");
+  assert.equal(button("couteau", "attaquer").range.key, "RWFTOOLS.Combat.Contact");
+  assert.equal(card("tk").latent, true, "a latent power, shown to the GM");
+  const required = button("pistolet", "attaquer").required;
+  v = await view(5, 2);
+  assert.equal(button("pistolet", "attaquer").required, required + 2, "cover raises the d20 needed");
+  v = await view(30);
+  assert.equal(button("pistolet", "attaquer").allowed, false, "30 m: out of the pistol's range");
+  v = await view(0);
+  assert.equal(button("couteau", "attaquer").allowed, true, "in contact");
+
+  // The markup, every word translated.
+  const html = renderCombatHTML({combatant: v, round: 1, pass: 1, passes: 1, myTurn: true, turnName: "Marc", name: "Marc", target: {uuid: foe, name: "Garde", distance: 0}, cover: 0, mode: "table", canEndTurn: true, endLabel: "RWFTOOLS.Combat.EndRound",
+    pending: {label: "RWFTOOLS.Combat.Shoot", subject: "pistolet", required: 10, damage: true}}, t);
+  assert.match(html, /data-rwf-action="attaquer" data-rwf-content="pistolet"/);
+  assert.match(html, /name="de"/);
+  assert.match(html, /Fin du round/);
+
+  // A shot with the d20 and the damage read on the table: the foe loses the announced damage, the magazine one round.
+  // The combat starts and it is Marc's first pass, as Rule Them'All signals it in Foundry.
+  await runtime.emitSystemEvent("rta.combat.start", {combatId: "c", round: 1}, [pc, foe]);
+  await runtime.emitSystemEvent("rta.combat.round", {combatId: "c", round: 1}, [pc, foe]);
+  await runtime.emitSystemEvent("rta.combat.turn", {combatId: "c", round: 1, turn: 0, pass: 1}, [pc]);
+  const vitality = async () => (await runtime.tokenBarValue(versionId, foe, "rta.vitalite.points")).value;
+  const before = await vitality();
+  const shot = await runtime.executeAction(versionId, "attaquer", actionContext({actorUuid: pc, targetUuid: foe, contentKey: "pistolet", input: {couverture: 0, de: 19, degats: 3}, userId: "gm", isGM: true}));
+  assert.notEqual(shot.allowed, false, JSON.stringify(shot).slice(0, 300));
+  assert.equal(shot.testResult.roll.total, 19, "the announced d20");
+  assert.equal(await vitality(), before - 3);
+  assert.ok(!adapter.rolls.includes("1d20"), "no d20 thrown by Foundry");
+  v = await view(5);
+  assert.equal(card("pistolet").ammo.loaded, 14);
+  assert.equal(v.attacks.used, 1);
+  assert.equal(button("pistolet", "attaquer").allowed, false, "one attack per round at mastery 0");
+  assert.equal(button("pistolet", "recharger").allowed, false, "the pass's attack is spent");
+});
+
+test("the pursuit HUD gives each participant its gauge, its speed advantage and its moves", {skip: !file && "no Rule Them'All checkout"}, async () => {
+  const {versionId, runtime, found, give} = await setup();
+  const runner = "Actor.marc", driver = "Actor.lea", thug = "Actor.garde";
+  for (const uuid of [runner, driver, thug]) await runtime.initializeContainer(versionId, uuid);
+  await give(driver, {auto: "vehicule-citadine"});
+  let pursuit = addParticipants(emptyPursuit(), [{uuid: runner, name: "Marc", playerOwned: true}, {uuid: driver, name: "Léa", playerOwned: true}, {uuid: thug, name: "Garde", playerOwned: false}]);
+  assert.equal(pursuit.referenceUuid, thug, "the first who flees is the reference");
+  pursuit = {...pursuit, active: true, participants: pursuit.participants.map(p => p.uuid === driver ? {...p, means: "auto"} : p)};
+  const read = p => pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: p, isGM: true, userId: "gm"});
+  let v = await read(pursuit);
+  const row = uuid => v.rows.find(r => r.uuid === uuid);
+  assert.deepEqual([row(runner).speed, row(driver).speed, row(thug).speed], [-1, 1, -1]);
+  assert.deepEqual([row(runner).advantage, row(driver).advantage, row(thug).advantage], [0, 1, 0]);
+  assert.equal(row(thug).moves.length, 0, "the reference does not move");
+  assert.deepEqual(row(driver).moves.map(m => m.actionId), ["poursuite-vehicule-continuer", "poursuite-vehicule-risque", "poursuite-vehicule-raccourci", "poursuite-arret"]);
+  assert.deepEqual(row(runner).moves.map(m => m.actionId).slice(0, 1), ["poursuite-a-pied-continuer"]);
+  assert.ok(row(runner).moves.every(m => m.allowed));
+  v = await read({...pursuit, cap: 0.5});
+  assert.equal(row(driver).speed, 0.5, "the terrain caps the car");
+
+  // Léa keeps going with a good d20: her gauge moves toward catching the quarry.
+  const move = await runtime.executeAction(versionId, "poursuite-vehicule-continuer", actionContext({actorUuid: driver, contentKey: "auto", input: {vitesse: 1, de: 18}, userId: "gm", isGM: true}));
+  assert.notEqual(move.allowed, false);
+  v = await read(pursuit);
+  assert.ok(row(driver).gauge > 0, "the gauge moved");
+  const html = renderPursuitHTML({...v, active: true, isGM: true, mode: "foundry"}, t);
+  assert.match(html, /data-rwf-move="continuer" data-rwf-who="Actor.lea"/);
+  assert.match(html, /Poursuivant/);
+});

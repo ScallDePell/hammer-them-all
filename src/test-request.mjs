@@ -200,13 +200,27 @@ export function installTestRequests({hooks = globalThis.Hooks} = {}) {
   hooks.on("updateSetting", setting => { if (String(setting?.key ?? "").startsWith("rule-them-all.")) refreshRequest(); });
 }
 
-/** The GM's macro, made once by the first GM client and put on that GM's hotbar. */
-export async function ensureRequestMacro() {
-  const game = globalThis.game;
-  if (!game.user.isGM || (game.users.activeGM && game.users.activeGM !== game.user)) return;
-  let macro = game.macros.find(m => m.getFlag?.(MODULE_ID, "testRequest"));
-  macro ??= await globalThis.Macro.create({name: t("RWFTOOLS.Macro.Name"), type: "script", img: "icons/svg/d20-highlight.svg",
-    command: `game.modules.get("${MODULE_ID}")?.api?.openTestRequest();`, flags: {[MODULE_ID]: {testRequest: true}}});
-  const onHotbar = Object.values(game.user.hotbar ?? {}).includes(macro.id);
-  if (!onHotbar) await game.user.assignHotbarMacro(macro, null);
+/** The module's macros, made once by the active GM: "Demander un test" for the GM only, the two HUDs for everyone
+ * (Observer, so players can run them). Each client puts the macros it can run on its own hotbar, once. */
+const MACROS = [
+  {flag: "testRequest", name: "RWFTOOLS.Macro.Name", img: "icons/svg/d20-highlight.svg", api: "openTestRequest", ownership: {default: 0}},
+  {flag: "combatHud", name: "RWFTOOLS.Macro.Combat", img: "icons/svg/sword.svg", api: "openCombatHud", ownership: {default: 2}},
+  {flag: "pursuitHud", name: "RWFTOOLS.Macro.Pursuit", img: "icons/svg/wing.svg", api: "openPursuitHud", ownership: {default: 2}}
+];
+export async function ensureMacros() {
+  const game = globalThis.game, find = flag => game.macros.find(m => m.getFlag?.(MODULE_ID, flag));
+  if (game.user.isGM && (!game.users.activeGM || game.users.activeGM === game.user)) {
+    for (const spec of MACROS) if (!find(spec.flag)) await globalThis.Macro.create({name: t(spec.name), type: "script", img: spec.img, ownership: spec.ownership,
+      command: `game.modules.get("${MODULE_ID}")?.api?.${spec.api}();`, flags: {[MODULE_ID]: {[spec.flag]: true}}});
+  }
+  // A macro the user removed from the hotbar stays removed: each one is placed once per user.
+  const placed = game.user.getFlag?.(MODULE_ID, "hotbarPlaced") ?? {};
+  let changed = false;
+  for (const spec of MACROS) {
+    const macro = find(spec.flag);
+    if (!macro || placed[spec.flag] || !(macro.canExecute ?? macro.testUserPermission?.(game.user, "LIMITED"))) continue;
+    if (!Object.values(game.user.hotbar ?? {}).includes(macro.id)) await game.user.assignHotbarMacro(macro, null);
+    placed[spec.flag] = true; changed = true;
+  }
+  if (changed) await game.user.setFlag(MODULE_ID, "hotbarPlaced", placed);
 }
