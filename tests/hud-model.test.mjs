@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, addParticipants, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
+import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, readRunningPursuit, addParticipants, setFleeing, canLaunch, pursuitOver, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 test("each user's HUD follows the combatant acting when it is theirs, else their own character", () => {
@@ -71,20 +71,31 @@ test("the HUD asks for RWF 2.2.0 or later", () => {
   assert.equal(hudRuleset(configurator(["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer"])).versionId, "v");
 });
 
-test("a pursuit kept in the world: participants, roles, reference and outcomes", () => {
+test("a pursuit is prepared in the world: who flees, each side, each means", () => {
   assert.deepEqual(readPursuit(null), emptyPursuit());
-  assert.deepEqual(readPursuit({active: true, participants: [{uuid: "a", role: "x"}, {uuid: "a"}, {name: "no uuid"}], referenceUuid: "z", cap: -2}),
-    {active: true, referenceUuid: null, cap: 0, participants: [{uuid: "a", name: "", role: "poursuivant", means: "pied"}]});
-  const p = addParticipants(emptyPursuit(), [{uuid: "pc", name: "Marc", playerOwned: true}, {uuid: "npc", name: "Garde", playerOwned: false}]);
-  assert.deepEqual(p.participants.map(x => x.role), ["poursuivant", "fuyard"]);
-  assert.equal(p.referenceUuid, "npc");
+  assert.deepEqual(readPursuit({phase: "setup", fleeing: "x", participants: [{uuid: "a", role: "x", tokenId: "t"}, {uuid: "a"}, {name: "no uuid"}], cap: -2}),
+    {phase: "setup", fleeing: "pnj", cap: 0, participants: [{uuid: "a", name: "", role: "poursuivant", means: "pied", playerOwned: false, tokenId: "t"}]});
+  assert.equal(readPursuit({active: true, participants: [{uuid: "a"}]}).phase, "none", "a pursuit of the earlier version is not resumed");
+  let p = addParticipants(emptyPursuit(), [{uuid: "pc", name: "Marc", playerOwned: true}, {uuid: "npc", name: "Garde", playerOwned: false}]);
+  assert.deepEqual(p.participants.map(x => x.role), ["poursuivant", "fuyard"], "by default the NPCs flee");
   assert.equal(addParticipants(p, [{uuid: "pc", name: "Marc", playerOwned: true}]).participants.length, 2, "no one twice");
+  p = setFleeing(p, "pj");
+  assert.deepEqual(p.participants.map(x => x.role), ["fuyard", "poursuivant"]);
+  assert.equal(addParticipants(p, [{uuid: "pc2", name: "Léa", playerOwned: true}]).participants[2].role, "fuyard", "newcomers follow who flees");
+  assert.equal(canLaunch(p), true);
+  assert.equal(canLaunch({...p, participants: p.participants.slice(0, 1)}), false, "someone on each side");
+  assert.deepEqual(readRunningPursuit({cap: 2, participants: [{uuid: "a", combatantId: "c", role: "fuyard"}], outcomes: {a: "RWFTOOLS.Pursuit.Status.Escaped", b: 3}}),
+    {cap: 2, participants: [{uuid: "a", name: "", role: "fuyard", means: "pied", playerOwned: false, combatantId: "c"}], outcomes: {a: "RWFTOOLS.Pursuit.Status.Escaped"}});
   assert.deepEqual([speedAdvantage(2, 1), speedAdvantage(-1, -1), speedAdvantage(-1, 1), speedAdvantage(1, null)], [1, 0, -1, 0]);
   assert.equal(pursuitStatus("fuyard", 3).key, "RWFTOOLS.Pursuit.Status.Escaped");
   assert.equal(pursuitStatus("poursuivant", 3).key, "RWFTOOLS.Pursuit.Status.Caught");
   assert.equal(pursuitStatus("fuyard", -3).key, "RWFTOOLS.Pursuit.Status.CaughtUp");
   assert.equal(pursuitStatus("poursuivant", -3).done, true);
   assert.equal(pursuitStatus("poursuivant", 2).done, false);
+  const row = (role, done) => ({role, status: {done}});
+  assert.equal(pursuitOver([row("fuyard", false), row("poursuivant", false), row("poursuivant", true)]), false);
+  assert.equal(pursuitOver([row("fuyard", true), row("poursuivant", false)]), true, "no one left fleeing");
+  assert.equal(pursuitOver([row("fuyard", false), row("poursuivant", true)]), true, "no one left pursuing");
   assert.equal(moveAction("risque", "pied"), "poursuite-a-pied-risque");
   assert.equal(moveAction("risque", "auto"), "poursuite-vehicule-risque");
 });
@@ -93,7 +104,7 @@ test("every word of the HUDs is translated, in French and in English", () => {
   const sources = ["hud-model", "hud-markup", "combat-hud", "pursuit-hud", "hud-common", "test-request"].map(f => readFileSync(new URL(`../src/${f}.mjs`, import.meta.url), "utf8")).join("\n");
   const fixed = [...sources.matchAll(/RWFTOOLS\.[A-Za-z0-9.]*[A-Za-z0-9]/g)].map(m => m[0]);
   const prefixed = {"RWFTOOLS.Combat.Action": ["tirer-rafale", "tirer-full-auto", "recharger", "utiliser-pouvoir", "pouvoir-degats", "pouvoir-soins", "sprinter", "reprendre-son-souffle"],
-    "RWFTOOLS.Hud.Mode": ["foundry", "table"], "RWFTOOLS.Pursuit.Move": ["continuer", "risque", "raccourci", "stop"], "RWFTOOLS.Pursuit.Roles": ["poursuivant", "fuyard"]};
+    "RWFTOOLS.Hud.Mode": ["foundry", "table"], "RWFTOOLS.Pursuit.Move": ["continuer", "risque", "raccourci", "stop"], "RWFTOOLS.Pursuit.Roles": ["poursuivant", "fuyard"], "RWFTOOLS.Pursuit.Side": ["poursuivant", "fuyard"], "RWFTOOLS.Pursuit.Fleeing": ["pnj", "pj"]};
   const keys = new Set([...fixed.filter(k => !(k in prefixed)), ...Object.entries(prefixed).flatMap(([p, ids]) => ids.map(id => `${p}.${id}`))]);
   for (const file of ["fr", "en"]) {
     const lang = JSON.parse(readFileSync(new URL(`../lang/${file}.json`, import.meta.url), "utf8")), names = Object.keys(lang);
@@ -118,8 +129,13 @@ test("the HUD markup escapes names and disables what cannot be done", () => {
   assert.match(damage, /\(2d6\)/);
   assert.match(damage, /RWFTOOLS\.Hud\.Critical/);
   assert.match(renderCombatHTML({round: 1, pass: 1, passes: 1, name: "M", mode: "table", cover: 0, target: null, combatant: {pools: {}, attacks: {used: 0, best: 1}, efforts: 0, cards: []}}, t), /aria-checked="true" class="rwf-hud__mode-option rwf-hud__mode-option--on"/);
-  assert.match(renderPursuitHTML({active: false, isGM: true}, t), /data-rwf-start/);
-  assert.doesNotMatch(renderPursuitHTML({active: false, isGM: false}, t), /data-rwf-start/);
+  assert.match(renderPursuitHTML({phase: "none", isGM: true}, t), /data-rwf-start/);
+  assert.doesNotMatch(renderPursuitHTML({phase: "none", isGM: false}, t), /data-rwf-start/);
+  const setup = {phase: "setup", isGM: true, fleeing: "pnj", cap: 0, fleeBonus: 2, canLaunch: false, rows: [{uuid: "a", name: "<i>Garde</i>", role: "fuyard", means: "pied", vehicles: []}]};
+  assert.match(renderPursuitHTML(setup, t), /data-rwf-launch disabled/, "no pursuer yet");
+  assert.match(renderPursuitHTML(setup, t), /&lt;i&gt;Garde/);
+  assert.match(renderPursuitHTML(setup, t), /data-rwf-role="a" data-rwf-to="poursuivant"/);
+  assert.doesNotMatch(renderPursuitHTML({...setup, isGM: false}, t), /data-rwf-launch/, "players wait for the GM");
 });
 
 test("outside its turn a combatant's buttons are all off, for one reason shown once", async () => {

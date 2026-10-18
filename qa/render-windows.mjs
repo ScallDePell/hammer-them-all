@@ -47,16 +47,24 @@ const combat = {round: 2, pass: 1, passes: 2, myTurn: true, turnName: "Marc Dura
     {kind: "physical", key: "physical", name: "RWFTOOLS.Combat.Physical", details: [], buttons: [{actionId: "sprinter", label: "RWFTOOLS.Combat.Action.sprinter", allowed: true}, {actionId: "reprendre-son-souffle", label: "RWFTOOLS.Combat.Action.reprendre-son-souffle", allowed: false, reason: "Aucune attaque ce round"}]}]},
   pending: {stage: "damage", de: 14, dice: "2d8", label: "RWFTOOLS.Combat.Shoot", subject: "Fusil d'assaut", required: 10, damage: true}};
 const move = (m, allowed = true) => ({move: m, label: `RWFTOOLS.Pursuit.Move.${m}`, allowed});
-const row = (uuid, name, role, gauge, extra) => ({uuid, name, role, gauge, means: "pied", vehicles: [], vehicle: null, speed: -1, advantage: 0, endurance: {value: 6, max: 7}, reference: false,
-  status: {key: gauge >= 3 ? "RWFTOOLS.Pursuit.Status.Caught" : "RWFTOOLS.Pursuit.Status.Running", done: gauge >= 3}, ends: role === "fuyard" ? ["RWFTOOLS.Pursuit.Ends.CaughtUp", "RWFTOOLS.Pursuit.Ends.Escaped"] : ["RWFTOOLS.Pursuit.Ends.Lost", "RWFTOOLS.Pursuit.Ends.Caught"],
-  moves: ["continuer", "risque", "raccourci", "stop"].map(m => move(m)), ...extra});
 const car = {key: "auto", name: "Citadine", speed: 1};
-const chase = [row("g", "Garde du corps", "fuyard", 0, {reference: true, moves: []}), row("m", "Marc Durand", "poursuivant", 1), row("l", "Léa Martin", "poursuivant", -2, {means: "auto", vehicles: [car], vehicle: car, speed: 1, advantage: 1, endurance: null})];
+const status = (role, gauge) => gauge >= 3 ? {key: role === "fuyard" ? "RWFTOOLS.Pursuit.Status.Escaped" : "RWFTOOLS.Pursuit.Status.Caught", done: true} : {key: "RWFTOOLS.Pursuit.Status.Running", done: false};
+const row = (uuid, name, role, gauge, extra) => ({uuid, name, role, gauge, means: "pied", vehicles: [car], vehicle: null, speed: -1, advantage: 0, endurance: {value: 6, max: 7}, status: status(role, gauge),
+  ends: role === "fuyard" ? ["RWFTOOLS.Pursuit.Ends.CaughtUp", "RWFTOOLS.Pursuit.Ends.Escaped"] : ["RWFTOOLS.Pursuit.Ends.Lost", "RWFTOOLS.Pursuit.Ends.Caught"], active: false, ...extra});
+const lea = row("l", "Léa Martin", "poursuivant", -2, {means: "auto", vehicle: car, speed: 1, advantage: 1, endurance: null, active: true, moves: ["continuer", "risque", "raccourci", "stop"].map(m => move(m))});
+const rowsRun = [row("g", "Garde du corps", "fuyard", 1), row("c", "Chauffeur", "fuyard", 3), lea, row("m", "Marc Durand", "poursuivant", 1)];
+const chase = {phase: "running", round: 2, bound: 3, cap: 0, rows: rowsRun, sides: {fuyard: rowsRun.slice(0, 2), poursuivant: rowsRun.slice(2)}, current: lea, over: false, myTurn: true};
+const prepared = {phase: "setup", isGM: true, fleeing: "pnj", cap: 0, fleeBonus: 2, canLaunch: true,
+  rows: [row("g", "Garde du corps", "fuyard", 0), row("c", "Chauffeur", "fuyard", 0, {means: "auto", vehicle: car}), row("l", "Léa Martin", "poursuivant", 0), row("m", "Marc Durand", "poursuivant", 0)]};
 await tab.setViewportSize({width: 1000, height: 1100});
 await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML(combat, t), "rwf-hud-app", 400) +
-  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({active: true, isGM: true, cap: 0, bound: 3, rows: chase, mode: "foundry", finished: []}, t), "rwf-hud-app", 420)));
+  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: true, mode: "foundry", settingsOpen: true}, t), "rwf-hud-app", 440)));
 await tab.screenshot({path: `${out}/huds.png`, fullPage: true});
 await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML({...combat, pending: null, mode: "foundry", targets: [{id: "1", name: "Garde du corps", current: true, distance: 7.5}, {id: "2", name: "Chien", distance: 3}]}, t), "rwf-hud-app", 400) +
-  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({active: true, isGM: false, cap: 0, bound: 3, rows: chase.map(r => r.uuid === "l" ? r : {...r, moves: []}), mode: "table", finished: [], pending: {label: "RWFTOOLS.Pursuit.Move.risque", subject: "Léa Martin"}}, t), "rwf-hud-app", 420)));
+  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: false, mode: "table", pending: {label: "RWFTOOLS.Pursuit.Move.risque", subject: "Léa Martin"}}, t), "rwf-hud-app", 440)));
 await tab.screenshot({path: `${out}/huds-2.png`, fullPage: true});
+// The GM prepares the chase; a player's view of someone else's turn, in a wide window (the two sides side by side).
+await tab.setContent(page(frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML(prepared, t), "rwf-hud-app", 440) +
+  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: false, myTurn: false, mode: "foundry", current: {...lea, moves: []}}, t), "rwf-hud-app", 620)));
+await tab.screenshot({path: `${out}/poursuite.png`, fullPage: true});
 await browser.close();

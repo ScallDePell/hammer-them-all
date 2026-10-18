@@ -227,31 +227,54 @@ export const endTurnLabel = ({pass, passes}) => pass < passes ? "RWFTOOLS.Combat
 
 /* ---------- Pursuit ---------- */
 
-export const ROLES = ["poursuivant", "fuyard"];
-export const FOOT = "pied";
-export const emptyPursuit = () => ({active: false, referenceUuid: null, cap: 0, participants: []});
+/* A pursuit is prepared by the GM (a draft kept in the world: who flees, who pursues, on foot or in which vehicle),
+   then run as a Foundry combat flagged as a pursuit: initiative sets the order of play, the fleeing side gets a bonus
+   in the first round, and each participant moves its own gauge on its turn. */
 
-/** A pursuit kept in the world (GM writes): its participants [{uuid, name, role, means}], the reference of speed, the
- * environment's speed cap (0: none). Anything malformed is dropped. */
+export const ROLES = ["fuyard", "poursuivant"];
+export const FOOT = "pied";
+export const FLEE_BONUS = 2;
+export const FLEEING = ["pnj", "pj"];
+export const emptyPursuit = () => ({phase: "none", fleeing: "pnj", cap: 0, participants: []});
+
+const roleOf = (playerOwned, fleeing) => (fleeing === "pj") === Boolean(playerOwned) ? "fuyard" : "poursuivant";
+const readParticipant = p => ({uuid: p.uuid, name: String(p.name ?? ""), role: ROLES.includes(p.role) ? p.role : "poursuivant",
+  means: typeof p.means === "string" && p.means ? p.means : FOOT, playerOwned: Boolean(p.playerOwned),
+  ...(typeof p.tokenId === "string" ? {tokenId: p.tokenId} : {}), ...(typeof p.combatantId === "string" ? {combatantId: p.combatantId} : {})});
+const readParticipants = list => {
+  const out = (Array.isArray(list) ? list : []).filter(p => p && typeof p.uuid === "string").map(readParticipant);
+  return out.filter((p, i) => out.findIndex(q => q.uuid === p.uuid) === i);
+};
+
+/** The pursuit the GM prepares, kept in the world: {phase: "none" | "setup", fleeing: which side flees by default
+ * ("pnj" | "pj"), cap: the terrain's speed cap (0: none), participants: [{uuid, tokenId, name, role, means, playerOwned}]}. */
 export function readPursuit(stored) {
   const value = stored && typeof stored === "object" ? stored : {};
-  const participants = (Array.isArray(value.participants) ? value.participants : []).filter(p => p && typeof p.uuid === "string")
-    .map(p => ({uuid: p.uuid, name: String(p.name ?? ""), role: ROLES.includes(p.role) ? p.role : "poursuivant", means: typeof p.means === "string" && p.means ? p.means : FOOT}));
-  const unique = participants.filter((p, i) => participants.findIndex(q => q.uuid === p.uuid) === i);
-  const referenceUuid = unique.some(p => p.uuid === value.referenceUuid) ? value.referenceUuid : null;
-  return {active: Boolean(value.active) && unique.length > 0, referenceUuid, cap: Math.max(0, number(value.cap) ?? 0), participants: unique};
+  const participants = readParticipants(value.participants);
+  return {phase: value.phase === "setup" ? "setup" : "none", fleeing: FLEEING.includes(value.fleeing) ? value.fleeing : "pnj", cap: Math.max(0, number(value.cap) ?? 0), participants};
 }
 
-/** New participants, by default: a player's character pursues, anyone else flees; the reference is the first who flees. */
+/** The pursuit a combat runs (its rwf-tools flag "pursuit"): {cap, participants: [{uuid, combatantId, name, role, means}],
+ * outcomes: {uuid: the status key it ended with}}. */
+export function readRunningPursuit(flag) {
+  const value = flag && typeof flag === "object" ? flag : {};
+  const outcomes = Object.fromEntries(Object.entries(value.outcomes && typeof value.outcomes === "object" ? value.outcomes : {}).filter(([, key]) => typeof key === "string"));
+  return {cap: Math.max(0, number(value.cap) ?? 0), participants: readParticipants(value.participants), outcomes};
+}
+
+/** New participants join the side the draft says: the fleeing side ("pnj" or "pj"), the others pursue. */
 export function addParticipants(pursuit, candidates) {
-  const next = readPursuit(pursuit);
-  for (const c of candidates) if (!next.participants.some(p => p.uuid === c.uuid)) next.participants.push({uuid: c.uuid, name: c.name, role: c.playerOwned ? "poursuivant" : "fuyard", means: FOOT});
-  next.referenceUuid ??= next.participants.find(p => p.role === "fuyard")?.uuid ?? next.participants[0]?.uuid ?? null;
+  const next = {...pursuit, participants: [...pursuit.participants]};
+  for (const c of candidates) if (!next.participants.some(p => p.uuid === c.uuid)) next.participants.push(readParticipant({...c, role: roleOf(c.playerOwned, next.fleeing), means: FOOT}));
   return next;
 }
+/** Who flees: the non-player characters or the player characters; every participant takes its side again. */
+export const setFleeing = (pursuit, fleeing) => FLEEING.includes(fleeing) ? {...pursuit, fleeing, participants: pursuit.participants.map(p => ({...p, role: roleOf(p.playerOwned, fleeing)}))} : pursuit;
+/** Whether a prepared pursuit can start: someone on each side. */
+export const canLaunch = pursuit => ROLES.every(role => pursuit.participants.some(p => p.role === role));
 
-/** Sign of a speed difference: +1 faster than the reference, −1 slower, 0 as fast (and for the reference itself). */
-export const speedAdvantage = (speed, reference) => speed === null || reference === null ? 0 : Math.sign(speed - reference);
+/** Sign of a speed difference: +1 faster than the other side, −1 slower, 0 as fast (or no one to compare with). */
+export const speedAdvantage = (speed, reference) => speed === null || reference === null || reference === undefined ? 0 : Math.sign(speed - reference);
 
 /** How far a participant got, read from its gauge: the outcome once a bound is reached ({key, done}). */
 export function pursuitStatus(role, gauge, bound = 3) {
@@ -265,31 +288,57 @@ export const gaugeEnds = role => role === "fuyard" ? ["RWFTOOLS.Pursuit.Ends.Cau
 /** The Action a pursuit move runs: on foot it is the character's own, in a vehicle the vehicle's. */
 export const moveAction = (move, means) => means === FOOT ? `poursuite-a-pied-${move}` : `poursuite-vehicule-${move}`;
 
-/** The pursuit HUD: one card per participant, with its gauge, its means and speed, and its moves.
- * canAct(uuid): whether this user plays that participant; contentName(row, uuid): an owned Content's name. */
-export async function pursuitView(runtime, {versionId, ruleset, pursuit, canAct = () => true, isGM = false, userId = null, contentName = row => row.name ?? row.templateId}) {
-  const param = id => number(ruleset.parameters?.find(p => p.id === id)?.value);
-  const bound = param(RWF.gaugeBound) ?? 3, footSpeed = param(RWF.footSpeed) ?? -1, cap = pursuit.cap > 0 ? pursuit.cap : null;
+/** Whether the pursuit is over: no one left running on one of the sides. rows: [{role, status: {done}}]. */
+export const pursuitOver = rows => ROLES.some(role => !rows.some(r => r.role === role && !r.status.done));
+
+/** A participant's means and speed: on foot, or one of its vehicles, capped by the terrain. */
+async function meansOf(runtime, versionId, ruleset, p, {cap, contentName}) {
+  let state = null, contents = [];
+  try { state = await runtime.getContainerState(p.uuid); contents = await runtime.listOwnedContents(versionId, p.uuid, actionContext({actorUuid: p.uuid})); } catch { state = null; }
+  const footSpeed = number(ruleset.parameters?.find(x => x.id === RWF.footSpeed)?.value) ?? -1;
+  const vehicles = contents.filter(r => r.contentTypeId === RWF.vehicleType).map(r => ({key: r.key, name: contentName(r, p.uuid), speed: number(r.fields?.vitesse) ?? 0, handling: number(r.fields?.maniabilite) ?? 0}));
+  const vehicle = vehicles.find(v => v.key === p.means) ?? null, raw = vehicle ? vehicle.speed : footSpeed;
+  return {state, vehicles, vehicle, means: vehicle ? vehicle.key : FOOT, speed: cap > 0 ? Math.min(raw, cap) : raw};
+}
+
+/** The pursuit being prepared: each participant with the vehicles it could use. */
+export async function setupView(runtime, {versionId, ruleset, pursuit, contentName = row => row.name ?? row.templateId}) {
   const rows = [];
   for (const p of pursuit.participants) {
-    let state = null, contents = [];
-    try { state = await runtime.getContainerState(p.uuid); contents = await runtime.listOwnedContents(versionId, p.uuid, actionContext({actorUuid: p.uuid})); } catch { state = null; }
-    const vehicles = contents.filter(r => r.contentTypeId === RWF.vehicleType).map(r => ({key: r.key, name: contentName(r, p.uuid), speed: number(r.fields?.vitesse) ?? 0, handling: number(r.fields?.maniabilite) ?? 0}));
-    const vehicle = vehicles.find(v => v.key === p.means) ?? null, means = vehicle ? vehicle.key : FOOT;
-    const raw = vehicle ? vehicle.speed : footSpeed, speed = cap !== null ? Math.min(raw, cap) : raw;
-    rows.push({...p, means, vehicles, vehicle, speed, gauge: counter(state, RWF.gauge), endurance: await runtime.tokenBarValue(versionId, p.uuid, "rta.endurance.points").catch(() => null), playable: Boolean(state) && canAct(p.uuid)});
+    const {vehicles, vehicle, means, speed} = await meansOf(runtime, versionId, ruleset, p, {cap: pursuit.cap, contentName});
+    rows.push({...p, vehicles, vehicle, means, speed});
   }
-  const reference = rows.find(r => r.uuid === pursuit.referenceUuid) ?? null;
+  return {phase: "setup", fleeing: pursuit.fleeing, cap: pursuit.cap, rows, canLaunch: canLaunch(pursuit)};
+}
+
+/** The pursuit running: every participant in turn order with its gauge, its speed and its advantage over the fastest
+ * of the other side still running; the moves of the one whose turn it is, when this user plays it.
+ * order: the participants' uuids in turn order; activeUuid: whose turn it is; canAct(uuid): whether this user plays it. */
+export async function pursuitView(runtime, {versionId, ruleset, pursuit, order = [], activeUuid = null, canAct = () => true, isGM = false, userId = null, contentName = row => row.name ?? row.templateId}) {
+  const bound = number(ruleset.parameters?.find(x => x.id === RWF.gaugeBound)?.value) ?? 3;
+  const rank = uuid => { const i = order.indexOf(uuid); return i < 0 ? Infinity : i; };
+  const participants = [...pursuit.participants].sort((a, b) => rank(a.uuid) - rank(b.uuid));
+  const rows = [];
+  for (const p of participants) {
+    const {state, vehicles, vehicle, means, speed} = await meansOf(runtime, versionId, ruleset, p, {cap: pursuit.cap, contentName});
+    const gauge = counter(state, RWF.gauge), outcome = pursuit.outcomes?.[p.uuid];
+    const status = outcome ? {key: outcome, done: true} : pursuitStatus(p.role, gauge, bound);
+    rows.push({...p, means, vehicles, vehicle, speed, gauge, status, ends: gaugeEnds(p.role), active: p.uuid === activeUuid, playable: Boolean(state) && canAct(p.uuid),
+      endurance: means === FOOT ? await runtime.tokenBarValue(versionId, p.uuid, "rta.endurance.points").catch(() => null) : null});
+  }
   for (const row of rows) {
-    row.reference = row === reference;
-    row.advantage = row.reference ? 0 : speedAdvantage(row.speed, reference?.speed ?? null);
-    row.status = pursuitStatus(row.role, row.gauge, bound);
-    row.ends = gaugeEnds(row.role);
-    row.moves = [];
-    if (!row.playable || row.reference) continue;
-    const context = actionContext({actorUuid: row.uuid, contentKey: row.vehicle?.key ?? null, input: {vitesse: row.advantage}, userId, isGM});
-    for (const move of RWF.moves) row.moves.push({move, actionId: moveAction(move, row.means), contentKey: row.vehicle?.key ?? null, label: `RWFTOOLS.Pursuit.Move.${move}`, ...(await usable(runtime, versionId, ruleset, moveAction(move, row.means), context))});
-    row.moves.push({move: "stop", actionId: RWF.stop, contentKey: null, label: "RWFTOOLS.Pursuit.Move.stop", ...(await usable(runtime, versionId, ruleset, RWF.stop, context))});
+    const others = rows.filter(r => r.role !== row.role && !r.status.done);
+    row.advantage = speedAdvantage(row.speed, others.length ? Math.max(...others.map(r => r.speed)) : null);
   }
-  return {bound, cap: pursuit.cap, rows, reference: reference?.uuid ?? null, finished: rows.filter(r => r.status.done)};
+  const current = rows.find(r => r.active) ?? null;
+  if (current) {
+    current.moves = [];
+    if (current.playable && !current.status.done) {
+      const context = actionContext({actorUuid: current.uuid, contentKey: current.vehicle?.key ?? null, input: {vitesse: current.advantage}, userId, isGM});
+      for (const move of RWF.moves) current.moves.push({move, actionId: moveAction(move, current.means), contentKey: current.vehicle?.key ?? null, label: `RWFTOOLS.Pursuit.Move.${move}`, ...(await usable(runtime, versionId, ruleset, moveAction(move, current.means), context))});
+      current.moves.push({move: "stop", actionId: RWF.stop, contentKey: null, label: "RWFTOOLS.Pursuit.Move.stop", ...(await usable(runtime, versionId, ruleset, RWF.stop, context))});
+    }
+  }
+  const sides = Object.fromEntries(ROLES.map(role => [role, rows.filter(r => r.role === role)]));
+  return {phase: "running", bound, cap: pursuit.cap, rows, sides, current, over: pursuitOver(rows)};
 }

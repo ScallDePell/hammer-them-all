@@ -2,7 +2,7 @@ import {MODULE_ID, SOCKET} from "./src/test-request-model.mjs";
 import {installTestRequests, ensureMacros, openTestRequest} from "./src/test-request.mjs";
 import {registerHudSettings, refreshOnChanges} from "./src/hud-common.mjs";
 import {COMBAT_HUD_ID, openCombatHud, serveEndTurn, serveTarget, installCombatTargets} from "./src/combat-hud.mjs";
-import {PURSUIT_HUD_ID, openPursuitHud} from "./src/pursuit-hud.mjs";
+import {PURSUIT_HUD_ID, openPursuitHud, installPursuitKeeper} from "./src/pursuit-hud.mjs";
 import {installTurnGuard} from "./src/turn-guard.mjs";
 
 Hooks.once("init", () => {
@@ -21,6 +21,7 @@ Hooks.once("ready", async () => {
   refreshOnChanges([COMBAT_HUD_ID, PURSUIT_HUD_ID]);
   installTurnGuard();
   installCombatTargets();
+  installPursuitKeeper();
   // One at a time: the GM's own macro creations fire createMacro while it is still making the others.
   let queue = Promise.resolve();
   const macros = () => (queue = queue.then(ensureMacros).catch(error => console.error("RWF tools | Macro", error)));

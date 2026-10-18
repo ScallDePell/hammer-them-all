@@ -38,6 +38,7 @@ export function createCombatHud() {
       if (found.reason) return {reason: found.reason};
       const game = globalThis.game, combat = game.combat;
       if (!combat?.started) return {reason: "RWFTOOLS.Combat.NoCombat"};
+      if (combat.getFlag?.(MODULE_ID, "pursuit")) return {reason: "RWFTOOLS.Combat.InPursuit"};
       const {versionId, ruleset} = found, runtime = rta().runtime, isGM = Boolean(game.user.isGM);
       const turns = [...(combat.turns ?? [])];
       const rows = turns.map(c => ({id: c.id, actorUuid: c.actor?.uuid ?? null, owned: Boolean(c.isOwner), defeated: Boolean(c.isDefeated), combatant: c}));

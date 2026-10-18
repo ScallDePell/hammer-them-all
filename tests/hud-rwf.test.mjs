@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import {existsSync, readFileSync, readdirSync} from "node:fs";
 import {resolve} from "node:path";
 import {pathToFileURL} from "node:url";
-import {hudRuleset, combatantView, actionContext, pursuitView, addParticipants, emptyPursuit} from "../src/hud-model.mjs";
+import {hudRuleset, combatantView, actionContext, pursuitView, setupView, addParticipants, emptyPursuit} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 const repo = resolve(process.env.RTA_REPO ?? new URL("../../rule-them-all", import.meta.url).pathname);
@@ -96,34 +96,45 @@ test("the combat HUD shows the RWF combatant's cards and runs its Actions", {ski
   assert.equal(button("pistolet", "recharger").allowed, false, "the pass's attack is spent");
 });
 
-test("the pursuit HUD gives each participant its gauge, its speed advantage and its moves", {skip: !file && "no Rule Them'All checkout"}, async () => {
+test("the pursuit HUD: two sides in turn order, the advantage over the other side, moves for the one whose turn it is", {skip: !file && "no Rule Them'All checkout"}, async () => {
   const {versionId, runtime, found, give} = await setup();
   const runner = "Actor.marc", driver = "Actor.lea", thug = "Actor.garde";
   for (const uuid of [runner, driver, thug]) await runtime.initializeContainer(versionId, uuid);
   await give(driver, {auto: "vehicule-citadine"});
-  let pursuit = addParticipants(emptyPursuit(), [{uuid: runner, name: "Marc", playerOwned: true}, {uuid: driver, name: "Léa", playerOwned: true}, {uuid: thug, name: "Garde", playerOwned: false}]);
-  assert.equal(pursuit.referenceUuid, thug, "the first who flees is the reference");
-  pursuit = {...pursuit, active: true, participants: pursuit.participants.map(p => p.uuid === driver ? {...p, means: "auto"} : p)};
-  const read = p => pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: p, isGM: true, userId: "gm"});
-  let v = await read(pursuit);
+  const draft = addParticipants(emptyPursuit(), [{uuid: runner, name: "Marc", playerOwned: true}, {uuid: driver, name: "Léa", playerOwned: true}, {uuid: thug, name: "Garde", playerOwned: false}]);
+  const prepared = await setupView(runtime, {versionId, ruleset: found.ruleset, pursuit: draft});
+  assert.deepEqual(prepared.rows.find(r => r.uuid === driver).vehicles.map(v => v.key), ["auto"], "the GM picks among the vehicles it owns");
+  assert.equal(prepared.canLaunch, true);
+  const pursuit = {cap: 0, outcomes: {}, participants: draft.participants.map((p, i) => ({...p, combatantId: `c${i}`, means: p.uuid === driver ? "auto" : p.means}))};
+  const read = (p, activeUuid) => pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: p, order: [thug, driver, runner], activeUuid, isGM: true, userId: "gm"});
+  let v = await read(pursuit, driver);
   const row = uuid => v.rows.find(r => r.uuid === uuid);
+  assert.deepEqual(v.rows.map(r => r.uuid), [thug, driver, runner], "turn order");
+  assert.deepEqual(v.sides.fuyard.map(r => r.uuid), [thug]);
+  assert.deepEqual(v.sides.poursuivant.map(r => r.uuid), [driver, runner]);
   assert.deepEqual([row(runner).speed, row(driver).speed, row(thug).speed], [-1, 1, -1]);
-  assert.deepEqual([row(runner).advantage, row(driver).advantage, row(thug).advantage], [0, 1, 0]);
-  assert.equal(row(thug).moves.length, 0, "the reference does not move");
-  assert.deepEqual(row(driver).moves.map(m => m.actionId), ["poursuite-vehicule-continuer", "poursuite-vehicule-risque", "poursuite-vehicule-raccourci", "poursuite-arret"]);
-  assert.deepEqual(row(runner).moves.map(m => m.actionId).slice(0, 1), ["poursuite-a-pied-continuer"]);
-  assert.ok(row(runner).moves.every(m => m.allowed));
-  v = await read({...pursuit, cap: 0.5});
-  assert.equal(row(driver).speed, 0.5, "the terrain caps the car");
+  assert.deepEqual([row(runner).advantage, row(driver).advantage, row(thug).advantage], [0, 1, -1], "against the fastest of the other side");
+  assert.equal(v.current.uuid, driver);
+  assert.deepEqual(v.current.moves.map(m => m.actionId), ["poursuite-vehicule-continuer", "poursuite-vehicule-risque", "poursuite-vehicule-raccourci", "poursuite-arret"]);
+  assert.equal(row(runner).moves, undefined, "only the one whose turn it is has moves");
+  assert.equal((await read({...pursuit, cap: 0.5}, driver)).rows.find(r => r.uuid === driver).speed, 0.5, "the terrain caps the car");
+  assert.equal((await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit, order: [], activeUuid: driver, canAct: () => false})).current.moves.length, 0, "not this user's to play");
 
   // Léa keeps going with a good d20: her gauge moves toward catching the quarry.
   const move = await runtime.executeAction(versionId, "poursuite-vehicule-continuer", actionContext({actorUuid: driver, contentKey: "auto", input: {vitesse: 1, de: 18}, userId: "gm", isGM: true}));
   assert.notEqual(move.allowed, false);
-  v = await read(pursuit);
+  v = await read(pursuit, driver);
   assert.ok(row(driver).gauge > 0, "the gauge moved");
-  const html = renderPursuitHTML({...v, active: true, isGM: true, mode: "foundry"}, t);
-  assert.match(html, /data-rwf-move="continuer" data-rwf-who="Actor.lea"/);
-  assert.match(html, /Poursuivant/);
+  assert.equal(v.over, false);
+  v = await read({...pursuit, outcomes: {[thug]: "RWFTOOLS.Pursuit.Status.CaughtUp"}}, driver);
+  assert.equal(row(thug).status.done, true);
+  assert.equal(v.over, true, "no one left fleeing");
+  assert.equal(row(driver).advantage, 0, "no one left to compare with");
+  const html = renderPursuitHTML({...(await read(pursuit, driver)), isGM: true, round: 1, myTurn: true, mode: "foundry"}, t);
+  assert.match(html, /data-rwf-move="continuer"/);
+  assert.match(html, /data-rwf-end-turn/);
+  assert.match(html, /rwf-pursuit__runner--active/);
+  assert.match(html, /Poursuivants/);
 });
 
 test("the turn guard frees a first combatant left with the counters of an earlier combat", {skip: !file && "no Rule Them'All checkout"}, async () => {

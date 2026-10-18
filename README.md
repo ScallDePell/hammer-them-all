@@ -33,13 +33,15 @@ La macro **HUD Combat** ouvre, sur chaque client, une fenêtre qui suit le comba
 
 ## HUD Poursuite
 
-La macro **HUD Poursuite** ouvre la poursuite en cours, la même pour tout le monde (elle est gardée dans le monde).
+La macro **HUD Poursuite** ouvre la poursuite en cours, la même pour tout le monde. Une poursuite se joue comme un combat Foundry, dans l'ordre de l'initiative.
 
-- Le MJ sélectionne et cible les jetons des participants, puis **Commencer la poursuite** (ou **Ajouter la sélection** en cours de route). Par défaut, un personnage de joueur poursuit et les autres fuient ; la référence de vitesse est le premier fuyard. La jauge de chacun repart de 0.
-- Le MJ règle pour chaque participant son rôle, son déplacement (à pied ou l'un de ses véhicules), la référence de vitesse (cible), et la **Vitesse maximale du terrain** (0 : pas de limite). Il peut retirer un participant ou **Terminer la poursuite**.
-- Chaque participant a sa jauge de −3 à +3 (la Progression de poursuite du Ruleset) avec ce que veulent dire ses deux bouts. L'avantage de vitesse (+1, 0 ou −1) est calculé contre la référence et passé aux Actions.
-- Le joueur qui joue un participant, et le MJ, ont ses coups : **Continuer**, **Prendre un risque**, **Raccourci** (à pied ou ceux du véhicule) et **S'arrêter**. La référence ne joue pas de coup : c'est contre elle que les autres se mesurent.
-- Quand une jauge atteint un bout, le chat l'annonce et les coups se figent ; le MJ conclut la poursuite.
+- **Préparer :** le MJ sélectionne (ou cible) les jetons des participants, puis **Préparer la poursuite**. Il répond à **Qui fuit ?** (les PNJ ou les PJ), puis ajuste chaque participant : son camp (bouton ⇄), son déplacement (à pied ou l'un de ses véhicules), ou le retire. **Ajouter la sélection** en ajoute d'autres ; **Vitesse maximale du terrain** plafonne les vitesses (0 : pas de limite).
+- **Lancer la poursuite :** crée un combat Foundry marqué comme poursuite, avec une seule passe par round. L'initiative RWF est lancée et les fuyards ont +2 au premier round ; elle est relancée à chaque round, sans bonus. La jauge de chacun repart de 0. Le HUD Combat ne s'occupe pas de ce combat.
+- **En haut du HUD :** le round et à qui c'est le tour, le choix des dés (Foundry ou sur la table), puis le participant dont c'est le tour : son déplacement, son avantage de vitesse, son Endurance à pied. Celui qui le joue (son joueur, ou le MJ) a ses coups : **Continuer**, **Prendre un risque**, **Raccourci** et **S'arrêter**. Un coup joué passe le tour ; **Passer le tour** le passe sans jouer.
+- **Deux zones, Fuyards et Poursuivants :** chaque participant dans l'ordre de l'initiative, avec sa jauge de −3 à +3 et ce que veulent dire ses deux bouts ; celui dont c'est le tour est encadré.
+- **Avantage de vitesse :** +1, 0 ou −1 contre le plus rapide du camp d'en face encore en course, calculé seul et passé aux Actions.
+- **Fin :** à +3 un fuyard s'est échappé et un poursuivant a rattrapé sa cible ; à −3 un fuyard s'est fait rattraper et un poursuivant a perdu sa cible. Le chat l'annonce, le participant est marqué vaincu dans le suivi de combat et ses tours sont passés. Quand un camp n'a plus personne en course, la poursuite se termine : le chat donne l'issue de chacun et le combat est supprimé.
+- **Réglages** (MJ, repliés en bas) : vitesse maximale du terrain, camp et déplacement de chacun, ajouter la sélection, retirer un participant, **Terminer la poursuite**.
 
 ## Installation
 

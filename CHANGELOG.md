@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- HUD Poursuite refait. Le MJ prépare la poursuite : **Qui fuit ?** (les PNJ ou les PJ), puis le camp et le déplacement de chacun. **Lancer la poursuite** crée un combat Foundry à une passe par round, dans l'ordre de l'initiative RWF ; les fuyards ont +2 au premier round.
+- Le HUD montre en haut le participant dont c'est le tour et ses coups (pour son joueur ou le MJ), puis deux zones, Fuyards et Poursuivants, avec la jauge de chacun et celui qui joue encadré. Un coup joué passe le tour. Les réglages du MJ sont repliés en bas.
+- Plus de référence de vitesse : l'avantage se calcule contre le plus rapide du camp d'en face encore en course.
+- Un participant qui atteint ±3 est annoncé dans le chat, marqué vaincu et ses tours sont passés ; la poursuite se termine quand un camp n'a plus personne en course.
+- Le HUD Combat ignore le combat d'une poursuite. Une poursuite préparée avec une version précédente n'est pas reprise.
+- Demande Rule Them'All 1.0.20 (combat à une seule passe).
+
 ## 0.2.6
 
 - Avec le Ruleset RWF 2.4.0 : un round que le combattant qui agit n'a pas compté (annonce perdue) lui est annoncé avant son tour ; son effort physique du round précédent est compté et l'Endurance baisse au troisième, sans jamais compter deux fois le même round.

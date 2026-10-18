@@ -78,47 +78,93 @@ export function renderCombatHTML(view, t) {
     <h3 class="rwf-hud__section">${words(t, "RWFTOOLS.Combat.Actions")}</h3>${c.waiting ? `<p class="rwf-hud__hint">${words(t, "RWFTOOLS.Combat.WaitTurn")}</p>` : ""}<ul class="rwf-hud__cards">${c.cards.map(x => card(x, t)).join("")}</ul>${end}</div>`;
 }
 
+/* ---------- Pursuit ---------- */
+
 function gauge(row, bound, t) {
   const steps = [];
   for (let n = -bound; n <= bound; n++) steps.push(`<span class="rwf-hud__step${n === row.gauge ? " rwf-hud__step--here" : ""}${n === 0 ? " rwf-hud__step--zero" : ""}" title="${e(sign(n))}"></span>`);
-  return `<div class="rwf-hud__gauge" role="meter" aria-valuemin="${-bound}" aria-valuemax="${bound}" aria-valuenow="${e(row.gauge)}">
-    <div class="rwf-hud__gauge-ends"><span>${words(t, row.ends[0])}</span><span class="rwf-hud__gauge-status${row.status.done ? " rwf-hud__gauge-status--done" : ""}">${words(t, row.status.key)} (${e(sign(row.gauge))})</span><span>${words(t, row.ends[1])}</span></div>
-    <div class="rwf-hud__track">${steps.join("")}</div></div>`;
+  return `<div class="rwf-hud__gauge" role="meter" aria-valuemin="${-bound}" aria-valuemax="${bound}" aria-valuenow="${e(row.gauge)}" aria-label="${e(`${t(row.ends[0])} / ${t(row.ends[1])}`)}">
+    <span class="rwf-hud__gauge-end">${words(t, row.ends[0])}</span><div class="rwf-hud__track">${steps.join("")}</div><span class="rwf-hud__gauge-end">${words(t, row.ends[1])}</span></div>`;
+}
+const meansName = (row, t) => row.vehicle ? t(row.vehicle.name) : t("RWFTOOLS.Pursuit.OnFoot");
+
+/** A participant in its side's list: name, means, its gauge below; the one whose turn it is stands out. */
+function runner(row, view, t) {
+  const tag = row.status.done ? `<span class="rwf-pursuit__outcome">${words(t, row.status.key)}</span>`
+    : row.active ? `<span class="rwf-pursuit__now">${words(t, "RWFTOOLS.Pursuit.ItsTurn")}</span>` : "";
+  return `<li class="rwf-pursuit__runner${row.active ? " rwf-pursuit__runner--active" : ""}${row.status.done ? " rwf-pursuit__runner--done" : ""}"${row.active ? ' aria-current="true"' : ""}>
+    <div class="rwf-pursuit__line"><strong>${e(row.name)}</strong><span class="rwf-pursuit__means">${e(meansName(row, t))}</span>${tag}</div>
+    ${gauge(row, view.bound, t)}</li>`;
 }
 
-function participant(row, view, t) {
-  const gm = view.isGM;
-  const meansName = row.vehicle ? row.vehicle.name : t("RWFTOOLS.Pursuit.OnFoot");
-  const role = gm ? `<select data-rwf-role="${e(row.uuid)}" aria-label="${words(t, "RWFTOOLS.Pursuit.Role")}">${["poursuivant", "fuyard"].map(r => `<option value="${r}"${r === row.role ? " selected" : ""}>${words(t, `RWFTOOLS.Pursuit.Roles.${r}`)}</option>`).join("")}</select>`
-    : `<span>${words(t, `RWFTOOLS.Pursuit.Roles.${row.role}`)}</span>`;
-  const means = gm ? `<select data-rwf-means="${e(row.uuid)}" aria-label="${words(t, "RWFTOOLS.Pursuit.Means")}"><option value="pied"${row.means === "pied" ? " selected" : ""}>${words(t, "RWFTOOLS.Pursuit.OnFoot")}</option>${row.vehicles.map(v => `<option value="${e(v.key)}"${v.key === row.means ? " selected" : ""}>${e(t(v.name))}</option>`).join("")}</select>`
-    : `<span>${e(t(meansName))}</span>`;
-  const speed = `${words(t, "RWFTOOLS.Pursuit.Speed")} ${e(row.speed)}${row.reference ? ` · ${words(t, "RWFTOOLS.Pursuit.IsReference")}` : ` · ${e(fmt(t, "RWFTOOLS.Pursuit.Advantage", {n: sign(row.advantage)}))}`}`;
-  const endurance = row.means === "pied" && row.endurance ? ` · ${words(t, "RWFTOOLS.Combat.Endurance")} ${e(row.endurance.value)}/${e(row.endurance.max)}` : "";
-  const moves = row.moves.length ? `<div class="rwf-hud__actions">${row.moves.map(m => {
+function zone(role, rows, view, t) {
+  const count = view.phase === "setup" ? "" : `<small>${e(fmt(t, "RWFTOOLS.Pursuit.StillRunning", {n: rows.filter(r => !r.status.done).length}))}</small>`;
+  return `<section class="rwf-pursuit__zone rwf-pursuit__zone--${role}"><h3 class="rwf-pursuit__zone-title">${words(t, `RWFTOOLS.Pursuit.Side.${role}`)}${count}</h3>
+    ${rows.length ? `<ul class="rwf-pursuit__list">${rows.map(row => view.phase === "setup" ? setupLine(row, t) : runner(row, view, t)).join("")}</ul>` : `<p class="rwf-hud__empty">${words(t, "RWFTOOLS.Pursuit.NoOne")}</p>`}</section>`;
+}
+
+function meansSelect(row, t) {
+  return `<select data-rwf-means="${e(row.uuid)}" aria-label="${words(t, "RWFTOOLS.Pursuit.Means")}"><option value="pied"${row.means === "pied" ? " selected" : ""}>${words(t, "RWFTOOLS.Pursuit.OnFoot")}</option>${row.vehicles.map(v => `<option value="${e(v.key)}"${v.key === row.means ? " selected" : ""}>${e(t(v.name))}</option>`).join("")}</select>`;
+}
+/** The GM's line for a participant: its means, the other side, out of the pursuit. */
+function setupLine(row, t) {
+  const other = row.role === "fuyard" ? "poursuivant" : "fuyard";
+  return `<li class="rwf-pursuit__setup"><strong>${e(row.name)}</strong>${meansSelect(row, t)}
+    <button type="button" class="rwf-hud__icon" data-rwf-role="${e(row.uuid)}" data-rwf-to="${other}" title="${e(fmt(t, "RWFTOOLS.Pursuit.MoveTo", {side: t(`RWFTOOLS.Pursuit.Side.${other}`)}))}"><i class="fa-solid fa-right-left"></i></button>
+    <button type="button" class="rwf-hud__icon" data-rwf-remove="${e(row.uuid)}" title="${words(t, "RWFTOOLS.Pursuit.Remove")}"><i class="fa-solid fa-xmark"></i></button></li>`;
+}
+const capField = (cap, t) => `<label class="rwf-pursuit__cap"><span>${words(t, "RWFTOOLS.Pursuit.Cap")}</span><input type="number" step="1" min="0" value="${e(cap)}" data-rwf-cap></label>
+  <p class="rwf-hud__hint">${words(t, "RWFTOOLS.Pursuit.CapHint")}</p>`;
+
+/** The GM prepares the pursuit: who flees, then each participant's side and means. */
+function renderSetup(view, t) {
+  if (!view.isGM) return `<div class="rwf-hud rwf-hud--pursuit"><p class="rwf-hud__empty">${words(t, "RWFTOOLS.Pursuit.Preparing")}</p></div>`;
+  const fleeing = `<div class="rwf-hud__mode" role="radiogroup" aria-label="${words(t, "RWFTOOLS.Pursuit.WhoFlees")}"><span class="rwf-hud__mode-label">${words(t, "RWFTOOLS.Pursuit.WhoFlees")}</span>${["pnj", "pj"].map(f =>
+    `<button type="button" role="radio" data-rwf-fleeing="${f}" aria-checked="${f === view.fleeing}" class="rwf-hud__mode-option${f === view.fleeing ? " rwf-hud__mode-option--on" : ""}">${words(t, `RWFTOOLS.Pursuit.Fleeing.${f}`)}${f === view.fleeing ? ' <i class="fa-solid fa-check"></i>' : ""}</button>`).join("")}</div>`;
+  const side = role => view.rows.filter(r => r.role === role);
+  return `<div class="rwf-hud rwf-hud--pursuit"><header class="rwf-hud__head"><span>${words(t, "RWFTOOLS.Pursuit.Prepare")}</span></header>
+    ${fleeing}${message(view.message, t)}
+    <div class="rwf-pursuit__zones">${zone("fuyard", side("fuyard"), view, t)}${zone("poursuivant", side("poursuivant"), view, t)}</div>
+    <button type="button" data-rwf-add><i class="fa-solid fa-plus"></i> ${words(t, "RWFTOOLS.Pursuit.Add")}</button>
+    ${capField(view.cap, t)}
+    <p class="rwf-hud__hint">${e(fmt(t, "RWFTOOLS.Pursuit.FleeBonus", {n: view.fleeBonus}))}</p>
+    <div class="rwf-hud__row"><button type="button" data-rwf-launch${view.canLaunch ? "" : ` disabled title="${words(t, "RWFTOOLS.Pursuit.BothSides")}"`}><i class="fa-solid fa-flag-checkered"></i> ${words(t, "RWFTOOLS.Pursuit.Launch")}</button><button type="button" data-rwf-cancel>${words(t, "RWFTOOLS.Hud.Cancel")}</button></div></div>`;
+}
+
+/** The turn being played: the participant, its means and speed, and its moves when this user plays it. */
+function turnPanel(view, t) {
+  const c = view.current;
+  if (!c) return "";
+  const facts = [`${e(meansName(c, t))}`, `${e(fmt(t, "RWFTOOLS.Pursuit.Advantage", {n: sign(c.advantage)}))}`, ...(c.endurance ? [`${words(t, "RWFTOOLS.Combat.Endurance")} ${e(c.endurance.value)}/${e(c.endurance.max)}`] : [])];
+  const moves = c.moves?.length ? `<div class="rwf-hud__actions">${c.moves.map(m => {
     const reason = m.reason ? t(m.reason) : "";
-    return `<button type="button" class="rwf-hud__action" data-rwf-move="${e(m.move)}" data-rwf-who="${e(row.uuid)}"${m.allowed && !view.finished?.length ? "" : " disabled"}${reason ? ` title="${e(reason)}"` : ""}>${words(t, m.label)}</button>`;
-  }).join("")}</div>` : "";
-  return `<li class="rwf-hud__card rwf-hud__participant${row.reference ? " rwf-hud__participant--reference" : ""}">
-    <div class="rwf-hud__card-head"><strong>${e(row.name)}</strong>
-      ${gm ? `<button type="button" class="rwf-hud__icon${row.reference ? " rwf-hud__on" : ""}" data-rwf-reference="${e(row.uuid)}" title="${words(t, "RWFTOOLS.Pursuit.MakeReference")}" aria-pressed="${row.reference}"><i class="fa-solid fa-bullseye"></i></button>
-      <button type="button" class="rwf-hud__icon" data-rwf-remove="${e(row.uuid)}" title="${words(t, "RWFTOOLS.Pursuit.Remove")}"><i class="fa-solid fa-xmark"></i></button>` : ""}</div>
-    <div class="rwf-hud__row rwf-hud__setup">${role}${means}</div>
-    <div class="rwf-hud__details"><span>${speed}${endurance}</span></div>
-    ${gauge(row, view.bound, t)}${moves}</li>`;
+    return `<button type="button" class="rwf-hud__action" data-rwf-move="${e(m.move)}"${m.allowed ? "" : " disabled"}${reason ? ` title="${e(reason)}"` : ""}>${words(t, m.label)}</button>`;
+  }).join("")}</div>
+    <button type="button" class="rwf-hud__end" data-rwf-end-turn><i class="fa-solid fa-forward"></i> ${words(t, "RWFTOOLS.Pursuit.SkipTurn")}</button>` : "";
+  return `<section class="rwf-pursuit__turn"><div class="rwf-pursuit__line"><strong>${e(c.name)}</strong><span class="rwf-pursuit__role">${words(t, `RWFTOOLS.Pursuit.Roles.${c.role}`)}</span></div>
+    <div class="rwf-hud__details">${facts.map(f => `<span>${f}</span>`).join("")}</div>
+    ${tableForm(view.pending, t, view.error)}${moves}</section>`;
 }
 
-/** The pursuit HUD. view: {reason} | {active, isGM, cap, rows, bound, mode, pending, error, message, finished} */
+/** The GM's settings of a running pursuit, folded away: terrain, sides and means, add, remove, finish. */
+function settings(view, t) {
+  if (!view.isGM) return "";
+  return `<details class="rwf-pursuit__settings"${view.settingsOpen ? " open" : ""} data-rwf-settings><summary>${words(t, "RWFTOOLS.Pursuit.Settings")}</summary><div class="rwf-pursuit__settings-body">
+    ${capField(view.cap, t)}
+    <ul class="rwf-pursuit__list">${view.rows.map(row => setupLine(row, t)).join("")}</ul>
+    <div class="rwf-hud__row"><button type="button" data-rwf-add><i class="fa-solid fa-plus"></i> ${words(t, "RWFTOOLS.Pursuit.Add")}</button><button type="button" data-rwf-end>${words(t, "RWFTOOLS.Pursuit.Finish")}</button></div></div></details>`;
+}
+
+/** The pursuit HUD. view: {reason} | {phase: "none", isGM} | setupView + {isGM, fleeBonus} | pursuitView + {round, isGM, myTurn,
+ * mode, pending, error, message, settingsOpen} */
 export function renderPursuitHTML(view, t) {
   if (view.reason) return `<div class="rwf-hud"><p class="rwf-hud__empty">${words(t, view.reason)}</p></div>`;
-  if (!view.active) return `<div class="rwf-hud rwf-hud--pursuit"><p class="rwf-hud__empty">${words(t, view.isGM ? "RWFTOOLS.Pursuit.StartHint" : "RWFTOOLS.Pursuit.None")}</p>
+  if (view.phase === "setup") return renderSetup(view, t);
+  if (view.phase !== "running") return `<div class="rwf-hud rwf-hud--pursuit"><p class="rwf-hud__empty">${words(t, view.isGM ? "RWFTOOLS.Pursuit.StartHint" : "RWFTOOLS.Pursuit.None")}</p>
     ${view.isGM ? `<button type="button" data-rwf-start><i class="fa-solid fa-gauge-high"></i> ${words(t, "RWFTOOLS.Pursuit.Start")}</button>` : ""}${message(view.message, t)}</div>`;
-  const gm = view.isGM ? `<section class="rwf-hud__gm">
-      <label class="rwf-hud__row">${words(t, "RWFTOOLS.Pursuit.Cap")}<input type="number" step="1" min="0" value="${e(view.cap)}" data-rwf-cap></label>
-      <p class="rwf-hud__hint">${words(t, "RWFTOOLS.Pursuit.CapHint")}</p>
-      <div class="rwf-hud__row"><button type="button" data-rwf-add>${words(t, "RWFTOOLS.Pursuit.Add")}</button><button type="button" data-rwf-end>${words(t, "RWFTOOLS.Pursuit.Finish")}</button></div></section>` : "";
-  const finished = view.finished?.length ? `<p class="rwf-hud__outcome">${view.finished.map(r => `${e(r.name)} : ${words(t, r.status.key)}`).join(" · ")}</p>` : "";
-  return `<div class="rwf-hud rwf-hud--pursuit"><header class="rwf-hud__head"><span>${e(fmt(t, "RWFTOOLS.Pursuit.Running", {n: view.rows.length}))}</span></header>
-    ${gm}${modeSwitch(view.mode, t)}${tableForm(view.pending, t, view.error)}${message(view.message, t)}${finished}
-    <ul class="rwf-hud__cards">${view.rows.map(row => participant(row, view, t)).join("")}</ul></div>`;
+  const turn = view.current ? (view.myTurn ? `<span class="rwf-hud__turn rwf-hud__turn--mine">${words(t, "RWFTOOLS.Combat.YourTurn")}</span>` : `<span class="rwf-hud__turn">${e(fmt(t, "RWFTOOLS.Combat.TurnOf", {name: view.current.name}))}</span>`) : "";
+  return `<div class="rwf-hud rwf-hud--pursuit"><header class="rwf-hud__head"><span>${e(fmt(t, "RWFTOOLS.Pursuit.Round", {round: view.round}))}</span>${turn}</header>
+    ${modeSwitch(view.mode, t)}${message(view.message, t)}${turnPanel(view, t)}
+    <div class="rwf-pursuit__zones">${zone("fuyard", view.sides.fuyard, view, t)}${zone("poursuivant", view.sides.poursuivant, view, t)}</div>
+    ${settings(view, t)}</div>`;
 }

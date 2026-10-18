@@ -2,11 +2,11 @@
   "id": "rwf-tools",
   "title": "RWF tools",
   "description": "Outils de jeu pour Real World Fantasy, par-dessus Rule Them'All et son Ruleset RWF : la demande de test du MJ, le HUD Combat et le HUD Poursuite.",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "authors": [{"name": "ScallDePell"}],
   "compatibility": {"minimum": "14", "verified": "14"},
   "relationships": {
-    "requires": [{"id": "rule-them-all", "type": "module", "compatibility": {"minimum": "1.0.17"}}]
+    "requires": [{"id": "rule-them-all", "type": "module", "compatibility": {"minimum": "1.0.20"}}]
   },
   "esmodules": ["rwf-tools.mjs"],
   "styles": ["styles/rwf-tools.css"],
@@ -17,5 +17,5 @@
   "socket": true,
   "url": "https://github.com/ScallDePell/rwf-tools",
   "manifest": "https://github.com/ScallDePell/rwf-tools/releases/latest/download/module.json",
-  "download": "https://github.com/ScallDePell/rwf-tools/releases/download/v0.2.6/rwf-tools.zip"
+  "download": "https://github.com/ScallDePell/rwf-tools/releases/download/v0.3.0/rwf-tools.zip"
 }
