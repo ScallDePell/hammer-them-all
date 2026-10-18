@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {yourTurn, targetingUser, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, addParticipants, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
+import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, addParticipants, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 test("each user's HUD follows the combatant acting when it is theirs, else their own character", () => {
@@ -21,13 +21,21 @@ test("only who plays the combatant acting is told it is their turn", () => {
   assert.equal(yourTurn({isGM: true, owned: true, playerOwned: true}), false, "the GM, on a PC's turn");
 });
 
-test("the GM reads a player character's targets from its player, and picks among the other side", () => {
-  const users = [{id: "gm", isGM: true, active: true, owner: true}, {id: "p1", isGM: false, active: true, owner: true, characterUuid: "Actor.other"},
-    {id: "p2", isGM: false, active: true, owner: true, characterUuid: "Actor.pc"}, {id: "p3", isGM: false, active: false, owner: true, characterUuid: "Actor.pc"}];
-  assert.equal(targetingUser({viewerId: "gm", isGM: true, playerOwned: true, actorUuid: "Actor.pc", users}), "p2", "the connected player whose character it is");
-  assert.equal(targetingUser({viewerId: "gm", isGM: true, playerOwned: false, actorUuid: "Actor.npc", users}), "gm", "an NPC: the GM's own");
-  assert.equal(targetingUser({viewerId: "gm", isGM: true, playerOwned: true, actorUuid: "Actor.pc", users: users.slice(0, 1)}), "gm", "no player connected");
-  assert.equal(targetingUser({viewerId: "p2", isGM: false, playerOwned: true, actorUuid: "Actor.pc", users}), "p2");
+test("each combatant keeps its target until it picks another one or that one is out of combat", () => {
+  const combatants = [{id: "pc"}, {id: "npc"}, {id: "dog", defeated: true}];
+  assert.equal(keptTarget({targets: undefined, combatantId: "pc", combatants}), null, "a new combat: no target");
+  assert.equal(keptTarget({targets: {pc: "npc"}, combatantId: "pc", combatants}), "npc");
+  assert.equal(keptTarget({targets: {pc: "npc"}, combatantId: "npc", combatants}), null, "another combatant's target is not its own");
+  assert.equal(keptTarget({targets: {pc: "dog"}, combatantId: "pc", combatants}), null, "defeated");
+  assert.equal(keptTarget({targets: {pc: "gone"}, combatantId: "pc", combatants}), null, "left the combat");
+  assert.deepEqual(staleTargets({targets: {pc: "npc", npc: "dog", gone: "pc", x: "gone"}, combatants}), ["npc", "gone", "x"]);
+  const rows = [{id: "pc", owned: true, playerOwned: true, actorUuid: "Actor.pc"}, {id: "npc", playerOwned: false}];
+  assert.equal(aimingCombatant({combatants: rows, activeId: "npc", isGM: true})?.id, "npc", "the GM aims for the NPC acting");
+  assert.equal(aimingCombatant({combatants: rows, activeId: "pc", isGM: true}), null, "not for a player character");
+  assert.equal(aimingCombatant({combatants: rows, activeId: "npc", characterUuid: "Actor.pc"})?.id, "pc", "a player aims for their own character");
+});
+
+test("the target picker lists the other side", () => {
   const rows = [{id: "a", playerOwned: true}, {id: "b", playerOwned: false}, {id: "c", playerOwned: false}];
   assert.deepEqual(opposingSide(rows, true).map(r => r.id), ["b", "c"]);
   assert.deepEqual(opposingSide(rows, false).map(r => r.id), ["a"]);

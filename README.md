@@ -2,7 +2,7 @@
 
 Outils de jeu de Real World Fantasy pour Foundry VTT v14, par-dessus [Rule Them'All](https://github.com/ScallDePell/Rule-Them-All) et son Ruleset RWF. Module privé : les outils propres à RWF vivent ici, jamais dans Rule Them'All.
 
-Il demande Rule Them'All 1.0.14 ou plus récent et le Ruleset RWF 2.2.0 ou plus récent (2.3.0 conseillé), actif dans le monde.
+Il demande Rule Them'All 1.0.15 ou plus récent et le Ruleset RWF 2.2.0 ou plus récent (2.3.0 conseillé), actif dans le monde.
 
 ## Les macros
 
@@ -26,7 +26,7 @@ La macro **HUD Combat** ouvre, sur chaque client, une fenêtre qui suit le comba
 - En tête : le round, la passe en cours sur le nombre de passes du combattant, et à qui c'est le tour.
 - Les ressources : Vitalité, Endurance, Énergie, Défense, attaques utilisées dans le round sur ce que permet la meilleure maîtrise, efforts physiques sur 3.
 - **Dés Foundry / Dés sur table**, retenu par client : sur table, le HUD demande le d20 lu sur la table, puis, si l'attaque touche, le total des dés de dégâts (ou de soins) ; avec les dés Foundry, tout est lancé automatiquement. La carte de chat montre le jet, la difficulté, le résultat et les dégâts.
-- La cible est celle de Foundry (premier jeton ciblé) ; dans le HUD du MJ, celle d'un personnage joueur est la cible de son joueur, sauf si le MJ en choisit une ici. **Changer** liste les combattants du camp opposé sur la scène (les PNJ pour un personnage joueur, les personnages joueurs pour un PNJ), du plus proche au plus loin, avec la distance bord à bord. La **Couverture** de la cible s'ajoute à sa Défense ; elle est gardée par cible sur ce client.
+- Chaque combattant garde sa cible pendant le combat, la même pour tous (le MJ voit celle du joueur) : un combat commence sans cible ; elle change quand ce combattant en choisit une autre (ici, ou en ciblant un combattant sur la scène quand on le joue) et disparaît quand la cible quitte le combat ou est mise hors de combat. **Changer** liste les combattants du camp opposé sur la scène (les PNJ pour un personnage joueur, les personnages joueurs pour un PNJ), du plus proche au plus loin, avec la distance bord à bord. La **Couverture** de la cible s'ajoute à sa Défense ; elle est gardée par cible sur ce client.
 - Une carte par manière d'agir : mains nues, chaque arme (dégâts, portée, perforation, chargeur et réserve, attaques par round ; Tirer ou Attaquer, Rafale, Full auto, Recharger selon l'arme), chaque pouvoir disponible (latent pour le MJ seulement), et les actions physiques Sprinter et Reprendre son souffle. Chaque bouton montre le d20 à atteindre ; un bouton grisé dit pourquoi au survol (la Condition du Ruleset qui l'interdit, une cible hors de portée, une arme de mêlée qui n'est pas au contact).
 - Chaque Action est celle du Ruleset RWF, lancée par Rule Them'All, avec sa carte de chat.
 - **Fin de la passe N** ou **Fin du round** passe au combattant suivant ; pour un joueur, c'est le client du MJ qui le fait (il faut un MJ connecté).

@@ -59,13 +59,31 @@ export function followedCombatant({combatants = [], activeId = null, isGM = fals
 /** Whether the turn is this user's to play: a player's when they own the combatant acting, the GM's when no player does. */
 export const yourTurn = ({isGM, owned, playerOwned}) => isGM ? !playerOwned : Boolean(owned);
 
-/** Whose targets the HUD reads for a combatant: a player's own; on the GM's HUD, a player character's targets are its
- * player's (the one connected whose character it is, else one connected who owns it), the GM's own otherwise.
- * users: [{id, isGM, active, characterUuid, owner}] (owner: owns this combatant's Actor). Returns a user id. */
-export function targetingUser({viewerId, isGM, playerOwned, actorUuid, users = []}) {
-  if (!isGM || !playerOwned) return viewerId;
-  const players = users.filter(u => !u.isGM && u.active && u.owner);
-  return (players.find(u => u.characterUuid === actorUuid) ?? players[0])?.id ?? viewerId;
+/* Targets are kept per combatant in the combat (rwf-tools flag "targets": {combatantId: target combatantId}): a new
+   combat starts with none, a target stays until its combatant picks another one or it is out of the combat. */
+
+/** The combatant a combatant aims at, or null when it has none or that one is gone or out of combat (defeated).
+ * combatants: [{id, defeated}]. */
+export function keptTarget({targets = {}, combatantId, combatants = []}) {
+  const id = targets?.[combatantId];
+  const target = id && id !== combatantId ? combatants.find(c => c.id === id) : null;
+  return target && !target.defeated ? target.id : null;
+}
+
+/** The entries of the targets to remove: those of a combatant gone, and those aiming at a combatant gone or defeated. */
+export function staleTargets({targets = {}, combatants = []}) {
+  const alive = new Map(combatants.map(c => [c.id, c]));
+  return Object.entries(targets ?? {}).filter(([from, to]) => !alive.has(from) || !alive.get(to) || alive.get(to).defeated).map(([from]) => from);
+}
+
+/** The combatant whose target a user's own Foundry targeting sets: the one acting when this user plays it (the GM: a
+ * combatant no player owns), else, for a player, their own character, else a combatant they own. */
+export function aimingCombatant({combatants = [], activeId = null, isGM = false, characterUuid = null}) {
+  const active = combatants.find(c => c.id === activeId);
+  if (isGM) return active && !active.playerOwned ? active : null;
+  if (active?.owned) return active;
+  const own = combatants.filter(c => c.owned && !c.defeated);
+  return own.find(c => c.actorUuid === characterUuid) ?? own[0] ?? null;
 }
 
 /** The combatants one may pick as a target: those of the other side (a player character aims at the others, anyone

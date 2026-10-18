@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.5
+
+- HUD Combat : chaque combattant garde sa cible dans le combat, la même pour tous les clients (le MJ voit celle du joueur). Elle ne change que si ce combattant en choisit une autre (dans le HUD, ou en ciblant un combattant sur la scène quand c'est lui qu'on joue) ou si la cible quitte le combat ou est mise hors de combat. Un combat commence sans cible.
+- Demande Rule Them'All 1.0.15 (l'attaque d'un joueur inflige ses dégâts à un PNJ du MJ).
+
 ## 0.2.4
 
 - HUD Combat : hors de son tour, un combattant voit ses cartes mais aucun bouton d'action n'est actif ; une seule ligne dit pourquoi.

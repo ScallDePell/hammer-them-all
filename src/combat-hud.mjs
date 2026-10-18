@@ -1,13 +1,14 @@
 /* The combat HUD in Foundry: one window per client that follows the combatant this user plays (the GM: the one
    acting), with its resources, its target, an action card per weapon, power and physical action, and the button that
    ends its pass or its round. Every Action is the RWF Ruleset's, run through Rule Them'All. */
-import {SOCKET} from "./test-request-model.mjs";
-import {hudRuleset, followedCombatant, waitForTurn, yourTurn, targetingUser, opposingSide, hits, edgeDistance, combatantView, endTurnLabel, readWhole} from "./hud-model.mjs";
+import {MODULE_ID, SOCKET} from "./test-request-model.mjs";
+import {hudRuleset, followedCombatant, waitForTurn, yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, edgeDistance, combatantView, endTurnLabel, readWhole} from "./hud-model.mjs";
 import {renderCombatHTML} from "./hud-markup.mjs";
 import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction} from "./hud-common.mjs";
 
 export const COMBAT_HUD_ID = "rwf-combat-hud";
 const PASS_FLAG = ["rule-them-all", "initiativePass"];
+const TARGETS = "targets";
 const MAX_COVER = 10;
 
 const tokenBox = doc => doc ? {x: Number(doc.x ?? 0), y: Number(doc.y ?? 0), width: Number(doc.width ?? 1), height: Number(doc.height ?? 1)} : null;
@@ -24,7 +25,6 @@ export function createCombatHud() {
     #error = null;
     #message = null;
     #cover = new Map();
-    #picked = new Map();
     #busy = false;
 
     async _prepareContext(options) {
@@ -46,16 +46,11 @@ export function createCombatHud() {
       const state = await runtime.getContainerState(followed.actorUuid);
       if (state?.rulesetVersionId !== versionId) return {reason: "RWFTOOLS.Combat.NotRwfActor"};
       const me = followed.combatant, playerOwned = Boolean(me.actor?.hasPlayerOwner);
-      // The GM following a player character reads its player's targets (Foundry shares them), unless the GM picked one here.
-      const aimerId = targetingUser({viewerId: game.user.id, isGM, playerOwned, actorUuid: followed.actorUuid,
-        users: [...(game.users ?? [])].map(u => ({id: u.id, isGM: u.isGM, active: u.active, characterUuid: u.character?.uuid ?? null, owner: Boolean(me.actor?.testUserPermission?.(u, "OWNER"))}))});
-      const aimer = game.users.get(aimerId) ?? game.user, aimed = [...(aimer.targets ?? [])].map(token => token.id).sort().join(",");
-      const picked = this.#picked.get(followed.id);
-      if (picked && picked.aimed !== aimed) this.#picked.delete(followed.id);
-      const pick = this.#picked.get(followed.id);
-      const targetToken = pick ? (pick.tokenId ? globalThis.canvas?.tokens?.get(pick.tokenId) ?? null : null)
-        : [...(aimer.targets ?? [])].find(token => token.actor?.uuid && token.actor.uuid !== followed.actorUuid) ?? null;
-      const target = targetToken ? {uuid: targetToken.actor.uuid, name: targetToken.name ?? targetToken.document?.name ?? "", tokenId: targetToken.id, distance: onScene(me) ? distanceBetween(me.token, targetToken.document) : null} : null;
+      // The target this combatant keeps in the combat, seen the same by every client (the GM sees the player's).
+      const targetId = keptTarget({targets: combat.getFlag?.(MODULE_ID, TARGETS), combatantId: followed.id, combatants: rows});
+      const aimed = targetId ? rows.find(r => r.id === targetId).combatant : null;
+      const target = aimed?.actor?.uuid ? {uuid: aimed.actor.uuid, name: aimed.name ?? "", combatantId: aimed.id, tokenId: aimed.token?.id ?? null,
+        distance: onScene(me) && onScene(aimed) ? distanceBetween(me.token, aimed.token) : null} : null;
       const cover = target ? this.#cover.get(target.uuid) ?? 0 : 0;
       const read = await combatantView(runtime, {versionId, ruleset, actorUuid: followed.actorUuid, target, cover, isGM, userId: game.user.id, contentName: contentNamer(ruleset, followed.actorUuid)});
       // Only the combatant acting can act: the others see their cards, every button off.
@@ -66,10 +61,9 @@ export function createCombatHud() {
       const myTurn = Boolean(active) && yourTurn({isGM, owned: Boolean(active.isOwner), playerOwned: Boolean(active.actor?.hasPlayerOwner ?? active.hasPlayer)});
       const view = {versionId, ruleset, round: combat.round, pass, passes, turnName: combat.combatant?.name ?? null, myTurn, name: me.name, actorUuid: followed.actorUuid, combatantId: followed.id,
         combatant, target, cover, isGM, canEndTurn: acting && (isGM || followed.owned), endLabel: endTurnLabel({pass, passes: combatant.attacks.best})};
-      view.aimed = aimed; view.aimerId = aimer.id;
       // The other side only: a player character aims at the others, anyone else at the player characters.
       if (this.#picking) view.targets = opposingSide(rows.filter(r => r.id !== followed.id && r.actorUuid && !r.defeated && onScene(r.combatant)).map(r => ({...r, playerOwned: Boolean(r.combatant.actor?.hasPlayerOwner)})), playerOwned)
-        .map(r => ({tokenId: r.combatant.token.id, name: r.combatant.name, img: r.combatant.img ?? null, current: r.combatant.token.id === target?.tokenId, distance: onScene(me) ? distanceBetween(me.token, r.combatant.token) : null}))
+        .map(r => ({id: r.id, name: r.combatant.name, img: r.combatant.img ?? null, current: r.id === target?.combatantId, distance: onScene(me) ? distanceBetween(me.token, r.combatant.token) : null}))
         .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity) || a.name.localeCompare(b.name));
       return view;
     }
@@ -100,14 +94,11 @@ export function createCombatHud() {
       root.querySelector("[data-rwf-autofocus]")?.focus();
     }
 
-    #target(tokenId) {
-      const game = globalThis.game, tokens = globalThis.canvas?.tokens, view = this.#view;
-      // Picked for another user's character (the GM for a player character): kept here until that player aims again.
-      if (view?.aimerId && view.aimerId !== game.user.id) {
-        this.#picked.set(view.combatantId, {tokenId: tokenId ?? null, aimed: view.aimed});
-      } else if (tokenId) tokens?.get(tokenId)?.setTarget(true, {releaseOthers: true, groupSelection: false});
-      else for (const token of [...(game.user.targets ?? [])]) token.setTarget(false, {releaseOthers: false, groupSelection: false});
+    /** The target picked in the HUD (a combatant id, or null for none) is kept in the combat for the combatant followed. */
+    async #target(targetId) {
+      const view = this.#view;
       this.#picking = false;
+      if (view?.combatantId) await setCombatTarget(view.combatantId, targetId || null);
       this.render();
     }
 
@@ -173,6 +164,50 @@ export async function serveEndTurn(message, senderId) {
   if (!combat || !user || combat.combatant?.id !== message.combatantId) return;
   if (!combat.combatant.testUserPermission?.(user, "OWNER")) return;
   try { await combat.nextTurn(); } catch (error) { notifyError(error); }
+}
+
+/** Keep a combatant's target in the current combat: the GM writes it, a player asks the active GM's client. */
+export async function setCombatTarget(combatantId, targetId) {
+  const game = globalThis.game, combat = game.combat;
+  if (!combat || !combatantId) return;
+  if (!game.user.isGM) return game.socket.emit(SOCKET, {type: "hud.target", combatId: combat.id, combatantId, targetId, userId: game.user.id});
+  try { await writeTarget(combat, combatantId, targetId); } catch (error) { notifyError(error); }
+}
+const writeTarget = (combat, combatantId, targetId) => targetId
+  ? combat.update({[`flags.${MODULE_ID}.${TARGETS}.${combatantId}`]: targetId})
+  : combat.update({[`flags.${MODULE_ID}.${TARGETS}.-=${combatantId}`]: null});
+
+/** Active GM client: a player sets the target of a combatant they own, among the combatants of that combat. */
+export async function serveTarget(message, senderId) {
+  const game = globalThis.game;
+  if (message?.type !== "hud.target" || !game.user.isGM || (game.users.activeGM && game.users.activeGM !== game.user)) return;
+  const combat = game.combats?.get?.(message.combatId), user = game.users.get(senderId ?? message.userId);
+  const combatant = combat?.combatants?.get?.(message.combatantId);
+  if (!combatant || !user || !combatant.testUserPermission?.(user, "OWNER")) return;
+  if (message.targetId && !combat.combatants.get(message.targetId)) return;
+  try { await writeTarget(combat, combatant.id, message.targetId ?? null); } catch (error) { notifyError(error); }
+}
+
+/** Targets follow the combat: none when it starts; a combatant targeted on the canvas becomes the target of the
+ * combatant this user aims for; the GM drops targets of or at combatants gone or out of combat. */
+export function installCombatTargets(hooks = globalThis.Hooks) {
+  const activeGM = () => { const game = globalThis.game; return game.user.isGM && (!game.users.activeGM || game.users.activeGM === game.user); };
+  hooks.on("combatStart", combat => { if (activeGM() && combat.getFlag?.(MODULE_ID, TARGETS)) combat.unsetFlag(MODULE_ID, TARGETS).catch(notifyError); });
+  hooks.on("targetToken", (user, token, targeted) => {
+    const game = globalThis.game, combat = game.combat;
+    if (!targeted || user?.id !== game.user.id || !combat?.started) return;
+    const aimed = [...combat.combatants].find(c => c.tokenId === (token.id ?? token.document?.id));
+    if (!aimed) return;
+    const rows = [...(combat.turns ?? [])].map(c => ({id: c.id, actorUuid: c.actor?.uuid ?? null, owned: Boolean(c.isOwner) && !game.user.isGM, playerOwned: Boolean(c.actor?.hasPlayerOwner), defeated: Boolean(c.isDefeated)}));
+    const from = aimingCombatant({combatants: rows, activeId: combat.combatant?.id ?? null, isGM: game.user.isGM, characterUuid: game.user.character?.uuid ?? null});
+    if (from && from.id !== aimed.id && combat.getFlag?.(MODULE_ID, TARGETS)?.[from.id] !== aimed.id) setCombatTarget(from.id, aimed.id);
+  });
+  const tidy = combat => {
+    if (!combat?.started || !activeGM()) return;
+    const stale = staleTargets({targets: combat.getFlag?.(MODULE_ID, TARGETS), combatants: [...combat.combatants].map(c => ({id: c.id, defeated: Boolean(c.isDefeated)}))});
+    if (stale.length) combat.update(Object.fromEntries(stale.map(id => [`flags.${MODULE_ID}.${TARGETS}.-=${id}`, null]))).catch(notifyError);
+  };
+  for (const hook of ["updateCombatant", "deleteCombatant"]) hooks.on(hook, combatant => tidy(combatant.parent ?? combatant.combat));
 }
 
 let CombatHud = null;

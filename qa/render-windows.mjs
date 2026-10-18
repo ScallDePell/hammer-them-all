@@ -56,7 +56,7 @@ await tab.setViewportSize({width: 1000, height: 1100});
 await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML(combat, t), "rwf-hud-app", 400) +
   frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({active: true, isGM: true, cap: 0, bound: 3, rows: chase, mode: "foundry", finished: []}, t), "rwf-hud-app", 420)));
 await tab.screenshot({path: `${out}/huds.png`, fullPage: true});
-await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML({...combat, pending: null, mode: "foundry", targets: [{tokenId: "1", name: "Garde du corps", current: true, distance: 7.5}, {tokenId: "2", name: "Chien", distance: 3}]}, t), "rwf-hud-app", 400) +
+await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML({...combat, pending: null, mode: "foundry", targets: [{id: "1", name: "Garde du corps", current: true, distance: 7.5}, {id: "2", name: "Chien", distance: 3}]}, t), "rwf-hud-app", 400) +
   frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({active: true, isGM: false, cap: 0, bound: 3, rows: chase.map(r => r.uuid === "l" ? r : {...r, moves: []}), mode: "table", finished: [], pending: {label: "RWFTOOLS.Pursuit.Move.risque", subject: "Léa Martin"}}, t), "rwf-hud-app", 420)));
 await tab.screenshot({path: `${out}/huds-2.png`, fullPage: true});
 await browser.close();

@@ -63,7 +63,7 @@ export function renderCombatHTML(view, t) {
     <span class="rwf-hud__stat"><span>${words(t, "RWFTOOLS.Combat.Attacks")}</span><strong>${e(c.attacks.used)}/${e(c.attacks.best)}</strong></span>
     <span class="rwf-hud__stat"><span>${words(t, "RWFTOOLS.Combat.Efforts")}</span><strong>${e(c.efforts)}/3</strong></span></div></section>`;
   if (view.targets) {
-    const list = view.targets.length ? `<ul class="rwf-hud__targets">${view.targets.map(o => `<li><button type="button" data-rwf-target="${e(o.tokenId)}"${o.current ? ' class="rwf-hud__on"' : ""}>
+    const list = view.targets.length ? `<ul class="rwf-hud__targets">${view.targets.map(o => `<li><button type="button" data-rwf-target="${e(o.id)}"${o.current ? ' class="rwf-hud__on"' : ""}>
       ${o.img ? `<img src="${e(o.img)}" alt="">` : ""}<span class="rwf-hud__target-name">${e(o.name)}</span><span class="rwf-hud__distance">${o.distance === null ? words(t, "RWFTOOLS.Combat.UnknownDistance") : `${e(o.distance)} m`}</span></button></li>`).join("")}</ul>`
       : `<p class="rwf-hud__empty">${words(t, "RWFTOOLS.Combat.NoTargets")}</p>`;
     return `<div class="rwf-hud rwf-hud--combat">${head}<section class="rwf-hud__picker"><div class="rwf-hud__row"><button type="button" data-rwf-pick-done><i class="fa-solid fa-arrow-left"></i> ${words(t, "RWFTOOLS.Combat.BackToActions")}</button>
