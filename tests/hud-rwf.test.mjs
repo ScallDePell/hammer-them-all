@@ -147,3 +147,29 @@ test("the turn guard frees a first combatant left with the counters of an earlie
   const after = await runtime.getContainerState(pc);
   assert.deepEqual(turnRepairs({combatId: "new", round: 1, turn: 0, pass: 1, actorUuid: pc, state: after, fresh: false}), {events: [], values: {}}, "nothing more once it has shot");
 });
+
+test("a round lost on the way is counted once when the turn guard announces it", {skip: !file && "no Rule Them'All checkout"}, async () => {
+  const {turnRepairs} = await import("../src/turn-guard.mjs");
+  const {versionId, runtime, found} = await setup();
+  if (!found.ruleset.definitions.some(d => d.id === "round-en-cours")) return;
+  const pc = "Actor.marc", foe = "Actor.garde";
+  for (const uuid of [pc, foe]) await runtime.initializeContainer(versionId, uuid);
+  const read = async id => { const s = await runtime.getContainerState(pc), c = s.definitionStates[id]?.capabilityStates; return c?.value?.base ?? c?.pool?.points?.current; };
+  const play = async (round, {lost = false} = {}) => {
+    if (!lost) await runtime.emitSystemEvent("rta.combat.round", {combatId: "c", round}, [pc, foe]);
+    const {events} = turnRepairs({combatId: "c", round, turn: 0, pass: 1, actorUuid: pc, state: await runtime.getContainerState(pc), fresh: true});
+    for (const e of events) await runtime.emitSystemEvent(e.eventTypeId, e.payload, e.refs);
+    // Rule Them'All's own round, arriving late, is not counted twice.
+    if (lost) await runtime.emitSystemEvent("rta.combat.round", {combatId: "c", round}, [pc, foe]);
+    const shot = await runtime.executeAction(versionId, "attaquer-mains-nues", actionContext({actorUuid: pc, targetUuid: foe, input: {couverture: 0}, userId: "gm", isGM: true}));
+    assert.notEqual(shot.allowed, false, `round ${round}`);
+  };
+  const endurance = await read("endurance");
+  await runtime.emitSystemEvent("rta.combat.start", {combatId: "c", round: 1}, [pc, foe]);
+  await play(1);
+  await play(2, {lost: true});
+  await play(3);
+  await play(4, {lost: true});
+  assert.equal(await read("endurance"), endurance - 1, "three physical rounds, one Endurance");
+  assert.equal(await read("round-en-cours"), 4);
+});

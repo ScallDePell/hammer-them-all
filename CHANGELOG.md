@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6
+
+- Avec le Ruleset RWF 2.4.0 : un round que le combattant qui agit n'a pas compté (annonce perdue) lui est annoncé avant son tour ; son effort physique du round précédent est compté et l'Endurance baisse au troisième, sans jamais compter deux fois le même round.
+- Demande Rule Them'All 1.0.17 (combattant vaincu à 0 de Vitalité avec RWF 2.4.0).
+
 ## 0.2.5
 
 - HUD Combat : chaque combattant garde sa cible dans le combat, la même pour tous les clients (le MJ voit celle du joueur). Elle ne change que si ce combattant en choisit une autre (dans le HUD, ou en ciblant un combattant sur la scène quand c'est lui qu'on joue) ou si la cible quitte le combat ou est mise hors de combat. Un combat commence sans cible.

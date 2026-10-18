@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {turnRepairs} from "../src/turn-guard.mjs";
 
-const state = ({combat = true, pass = 0, last = 0, used = 0} = {}) => ({stateInstances: combat ? [{definitionId: "en-combat", active: true}] : [], definitionStates: {
+const state = ({combat = true, pass = 0, last = 0, used = 0, counted} = {}) => ({stateInstances: combat ? [{definitionId: "en-combat", active: true}] : [], definitionStates: {
+  ...(counted === undefined ? {} : {"round-en-cours": {capabilityStates: {value: {base: counted}}}}),
   "en-combat": {capabilityStates: {state: {active: false}}},
   "passe-en-cours": {capabilityStates: {value: {base: pass}}},
   "derniere-passe-attaque": {capabilityStates: {value: {base: last}}},
@@ -32,4 +33,11 @@ test("an Actor keeps combat marks while in combat or with a counter above 0", as
   assert.equal(combatMarks(state({combat: false})), false);
   assert.equal(combatMarks(state({combat: false, last: 1})), true);
   assert.equal(combatMarks(state()), true);
+});
+
+test("a round the combatant did not count is announced to it before its turn (RWF 2.4.0)", () => {
+  assert.deepEqual(ids(turnRepairs({...turn, round: 3, state: state({pass: 1, counted: 2}), fresh: true})), ["rta.combat.round", "rta.combat.turn"]);
+  assert.deepEqual(turnRepairs({...turn, round: 3, state: state({pass: 1, last: 1, used: 1, counted: 2}), fresh: true}).values, {}, "the round resets the counters itself");
+  assert.deepEqual(ids(turnRepairs({...turn, round: 3, state: state({pass: 1, counted: 3})})), [], "counted");
+  assert.deepEqual(ids(turnRepairs({...turn, round: 3, state: state({pass: 1})})), [], "an older Ruleset counts no round");
 });

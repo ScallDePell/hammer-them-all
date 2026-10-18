@@ -3,7 +3,7 @@
    or undone (a combat start, a new round, an initiative roll arriving after it), or when counters stay from an earlier
    combat, the combatant could do nothing until the turn was moved back and forth. After any change to the combat or to
    an Actor, the active GM checks the combatant acting: not in combat yet, it enters it; its pass is not the combat's,
-   its turn is announced again; its turn just began with this pass's attack already marked spent, the stale counters
+   its turn is announced again; a round it did not count (RWF 2.4.0) is announced to it; its turn just began with this pass's attack already marked spent, the stale counters
    go back to what they are at the start of a pass. */
 import {MODULE_ID} from "./test-request-model.mjs";
 import {hudRuleset} from "./hud-model.mjs";
@@ -22,15 +22,18 @@ export function turnRepairs({combatId, round, turn, pass, actorUuid, state, fres
   // Entering the combat resets every counter; a new round is not announced again, it would wind the combatant twice.
   const entering = !inCombat(state);
   if (entering) events.push({eventTypeId: "rta.combat.start", payload: {combatId, round}, refs: [actorUuid]});
-  if (entering || counter(state, "passe-en-cours") !== pass) events.push({eventTypeId: "rta.combat.turn", payload: {combatId, round, turn, pass}, refs: [actorUuid]});
-  if (!entering && fresh && counter(state, "derniere-passe-attaque") >= pass) {
+  // RWF 2.4.0 notes the round it counted: a round it missed is announced to it (its effort counted, its attacks reset).
+  const missedRound = !entering && Boolean(state.definitionStates?.["round-en-cours"]) && counter(state, "round-en-cours") < round;
+  if (missedRound) events.push({eventTypeId: "rta.combat.round", payload: {combatId, round}, refs: [actorUuid]});
+  if (entering || missedRound || counter(state, "passe-en-cours") !== pass) events.push({eventTypeId: "rta.combat.turn", payload: {combatId, round, turn, pass}, refs: [actorUuid]});
+  if (!entering && !missedRound && fresh && counter(state, "derniere-passe-attaque") >= pass) {
     values["derniere-passe-attaque"] = pass - 1;
     if (pass === 1 && counter(state, "attaques-utilisees") > 0) values["attaques-utilisees"] = 0;
   }
   return {events, values};
 }
 
-const COUNTERS = ["passe-en-cours", "derniere-passe-attaque", "attaques-utilisees", "effort-physique"];
+const COUNTERS = ["round-en-cours", "passe-en-cours", "derniere-passe-attaque", "attaques-utilisees", "effort-physique"];
 /** Whether an Actor still carries the marks of a combat: "En combat" or a combat counter above 0. */
 export function combatMarks(state) { return Boolean(state) && (inCombat(state) || COUNTERS.some(id => counter(state, id) > 0)); }
 
