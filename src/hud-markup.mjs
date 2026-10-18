@@ -6,20 +6,25 @@ const words = (t, key) => e(t(key));
 const fmt = (t, key, data) => Object.entries(data).reduce((text, [k, v]) => text.replaceAll(`{${k}}`, String(v)), t(key));
 const sign = n => n > 0 ? `+${n}` : String(n);
 
-/** Foundry's dice or the dice rolled on the table, chosen on each client. */
+/** Foundry's dice or the dice rolled on the table, chosen on each client: the one in use is filled. */
 function modeSwitch(mode, t) {
-  return `<div class="rwf-hud__mode" role="group" aria-label="${words(t, "RWFTOOLS.Hud.Dice")}">${["foundry", "table"].map(m =>
-    `<button type="button" data-rwf-mode="${m}" aria-pressed="${m === mode}"${m === mode ? ' class="rwf-hud__on"' : ""}>${words(t, `RWFTOOLS.Hud.Mode.${m}`)}</button>`).join("")}</div>`;
+  const icons = {foundry: "fa-dice-d20", table: "fa-hand"};
+  return `<div class="rwf-hud__mode" role="radiogroup" aria-label="${words(t, "RWFTOOLS.Hud.Dice")}"><span class="rwf-hud__mode-label">${words(t, "RWFTOOLS.Hud.Dice")}</span>${["foundry", "table"].map(m =>
+    `<button type="button" role="radio" data-rwf-mode="${m}" aria-checked="${m === mode}" class="rwf-hud__mode-option${m === mode ? " rwf-hud__mode-option--on" : ""}"><i class="fa-solid ${icons[m]}"></i> ${words(t, `RWFTOOLS.Hud.Mode.${m}`)}${m === mode ? ' <i class="fa-solid fa-check"></i>' : ""}</button>`).join("")}</div>`;
 }
 
-/** TABLE mode: the d20 (and the damage dice) the player read on the table, before the Action runs. */
+/** TABLE mode: the d20 the player read on the table, then, when it hits, the total of the damage (or healing) dice. */
 function tableForm(pending, t, error) {
   if (!pending) return "";
+  const damage = pending.stage === "damage";
+  const title = `<strong>${e(t(pending.label))}</strong>${pending.subject ? ` · ${e(t(pending.subject))}` : ""}${!damage && pending.required ? ` · ${e(fmt(t, "RWFTOOLS.Combat.Required", {n: pending.required}))}` : ""}`;
+  const field = damage
+    ? `<p class="rwf-hud__hit">${e(fmt(t, "RWFTOOLS.Hud.Hit", {d20: pending.de}))}${pending.de === 20 ? ` ${words(t, "RWFTOOLS.Hud.Critical")}` : ""}</p>
+    <label>${words(t, pending.heal ? "RWFTOOLS.Hud.Healing" : "RWFTOOLS.Hud.DamageDice")}${pending.dice ? ` (${e(t(pending.dice))})` : ""}<input type="number" name="degats" min="0" step="1" inputmode="numeric" required data-rwf-autofocus></label>`
+    : `<label>${words(t, "RWFTOOLS.Hud.D20")}<input type="number" name="de" min="1" max="20" step="1" inputmode="numeric" required data-rwf-autofocus></label>`;
   return `<form class="rwf-hud__table" data-rwf-table>
-    <p class="rwf-hud__table-title"><strong>${e(t(pending.label))}</strong>${pending.subject ? ` · ${e(t(pending.subject))}` : ""}${pending.required ? ` · ${e(fmt(t, "RWFTOOLS.Combat.Required", {n: pending.required}))}` : ""}</p>
-    <label>${words(t, "RWFTOOLS.Hud.D20")}<input type="number" name="de" min="1" max="20" step="1" inputmode="numeric" required data-rwf-autofocus></label>
-    ${pending.damage ? `<label>${words(t, pending.heal ? "RWFTOOLS.Hud.Healing" : "RWFTOOLS.Hud.DamageDice")}<input type="number" name="degats" min="0" step="1" inputmode="numeric"></label>
-    <p class="rwf-hud__hint">${words(t, "RWFTOOLS.Hud.DamageHint")}</p>` : ""}
+    <p class="rwf-hud__table-title">${title}</p>
+    ${field}
     ${error ? `<p class="rwf-hud__error">${e(t(error))}</p>` : ""}
     <div class="rwf-hud__row"><button type="submit">${words(t, "RWFTOOLS.Hud.Validate")}</button><button type="button" data-rwf-table-cancel>${words(t, "RWFTOOLS.Hud.Cancel")}</button></div></form>`;
 }
@@ -37,10 +42,12 @@ function card(c, t) {
   if (c.ammo) details.push(`<span class="rwf-hud__ammo${c.ammo.loaded === 0 ? " rwf-hud__ammo--empty" : ""}">${words(t, "RWFTOOLS.Combat.Ammo")} ${e(c.ammo.loaded)}/${e(c.ammo.magazine)} · ${words(t, "RWFTOOLS.Combat.Reserve")} ${e(c.ammo.reserve)}</span>`);
   if (c.perRound) details.push(`<span>${e(fmt(t, "RWFTOOLS.Combat.PerRound", {n: c.perRound}))}</span>`);
   const blocked = c.buttons.find(b => b.range);
+  // Nothing on the card can be used: why, in words (the Condition of the Ruleset that stops its first button).
+  const stopped = !blocked && c.kind !== "physical" && c.buttons.length && c.buttons.every(b => !b.allowed) ? c.buttons.find(b => b.reason) : null;
   return `<li class="rwf-hud__card rwf-hud__card--${e(c.kind)}">
     <div class="rwf-hud__card-head"><strong>${e(t(c.name))}</strong>${c.latent ? ` <em>${words(t, "RWFTOOLS.Combat.Latent")}</em>` : ""}${c.required ? `<span class="rwf-hud__required">${e(fmt(t, "RWFTOOLS.Combat.Required", {n: c.required}))}</span>` : ""}</div>
     ${details.length ? `<div class="rwf-hud__details">${details.join("")}</div>` : ""}
-    ${blocked ? `<p class="rwf-hud__warning">${e(fmt(t, blocked.range.key, blocked.range))}</p>` : ""}
+    ${blocked ? `<p class="rwf-hud__warning">${e(fmt(t, blocked.range.key, blocked.range))}</p>` : ""}${stopped ? `<p class="rwf-hud__hint">${e(t(stopped.reason))}</p>` : ""}
     <div class="rwf-hud__actions">${c.buttons.map(b => actionButton(b, t, c.key)).join("")}</div></li>`;
 }
 

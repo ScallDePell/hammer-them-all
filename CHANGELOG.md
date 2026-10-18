@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2
+
+- HUD Combat : le MJ voit la cible choisie par le joueur du personnage qui agit ; le sélecteur de cible ne propose que le camp opposé.
+- Choix des dés plus visible (bouton actif rempli, coché).
+- Dés sur table en deux temps : le d20, puis, si l'attaque touche, le total des dés de dégâts ou de soins (doublé automatiquement au critique).
+- Une carte d'action inutilisable dit pourquoi.
+- Demande Rule Them'All 1.0.12 (tour annoncé au combattant qui agit, dégâts sur la carte de chat).
+
 ## 0.2.1
 
 - HUD Combat : « À vous de jouer » ne s'affiche plus que pour le joueur du combattant qui agit, ou pour le MJ quand c'est un PNJ ; les autres voient « Tour de » et le nom, en couleur normale.

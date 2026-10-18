@@ -30,9 +30,8 @@
   "RWFTOOLS.Hud.Mode.foundry": "Dés Foundry",
   "RWFTOOLS.Hud.Mode.table": "Dés sur table",
   "RWFTOOLS.Hud.D20": "Résultat du d20",
-  "RWFTOOLS.Hud.DamageDice": "Dés de dégâts (total)",
-  "RWFTOOLS.Hud.Healing": "Dés de soins (total)",
-  "RWFTOOLS.Hud.DamageHint": "Laissez vide pour que Foundry lance les dégâts.",
+  "RWFTOOLS.Hud.DamageDice": "Total des dés de dégâts",
+  "RWFTOOLS.Hud.Healing": "Total des dés de soins",
   "RWFTOOLS.Hud.DamageInvalid": "Entrez un nombre entier positif pour les dégâts.",
   "RWFTOOLS.Hud.Validate": "Valider",
   "RWFTOOLS.Hud.Cancel": "Annuler",
@@ -121,5 +120,7 @@
   "RWFTOOLS.Pursuit.Ends.Escaped": "Échappé",
   "RWFTOOLS.Pursuit.Ends.CaughtUp": "Rattrapé",
   "RWFTOOLS.Pursuit.Ends.Caught": "Rattrape",
-  "RWFTOOLS.Pursuit.Ends.Lost": "Perdu"
+  "RWFTOOLS.Pursuit.Ends.Lost": "Perdu",
+  "RWFTOOLS.Hud.Hit": "Touché ({d20} au d20) : lancez les dés sur la table et entrez leur total.",
+  "RWFTOOLS.Hud.Critical": "Critique : le total sera doublé automatiquement."
 }

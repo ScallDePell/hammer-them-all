@@ -86,6 +86,7 @@ test("the combat HUD shows the RWF combatant's cards and runs its Actions", {ski
   const shot = await runtime.executeAction(versionId, "attaquer", actionContext({actorUuid: pc, targetUuid: foe, contentKey: "pistolet", input: {couverture: 0, de: 19, degats: 3}, userId: "gm", isGM: true}));
   assert.notEqual(shot.allowed, false, JSON.stringify(shot).slice(0, 300));
   assert.equal(shot.testResult.roll.total, 19, "the announced d20");
+  if (process.env.DUMP) console.log(JSON.stringify({changes: shot.changes, dice: shot.use?.dice, test: shot.testResult}, null, 1).slice(0, 5000));
   assert.equal(await vitality(), before - 3);
   assert.ok(!adapter.rolls.includes("1d20"), "no d20 thrown by Foundry");
   v = await view(5);

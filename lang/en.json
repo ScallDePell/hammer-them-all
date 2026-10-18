@@ -30,9 +30,8 @@
   "RWFTOOLS.Hud.Mode.foundry": "Foundry dice",
   "RWFTOOLS.Hud.Mode.table": "Table dice",
   "RWFTOOLS.Hud.D20": "d20 result",
-  "RWFTOOLS.Hud.DamageDice": "Damage dice (total)",
-  "RWFTOOLS.Hud.Healing": "Healing dice (total)",
-  "RWFTOOLS.Hud.DamageHint": "Leave empty for Foundry to roll the damage.",
+  "RWFTOOLS.Hud.DamageDice": "Total of the damage dice",
+  "RWFTOOLS.Hud.Healing": "Total of the healing dice",
   "RWFTOOLS.Hud.DamageInvalid": "Enter a positive whole number for the damage.",
   "RWFTOOLS.Hud.Validate": "Confirm",
   "RWFTOOLS.Hud.Cancel": "Cancel",
@@ -121,5 +120,7 @@
   "RWFTOOLS.Pursuit.Ends.Escaped": "Escaped",
   "RWFTOOLS.Pursuit.Ends.CaughtUp": "Caught",
   "RWFTOOLS.Pursuit.Ends.Caught": "Catches",
-  "RWFTOOLS.Pursuit.Ends.Lost": "Lost"
+  "RWFTOOLS.Pursuit.Ends.Lost": "Lost",
+  "RWFTOOLS.Hud.Hit": "Hit ({d20} on the d20): roll the dice on the table and enter their total.",
+  "RWFTOOLS.Hud.Critical": "Critical: the total will be doubled automatically."
 }

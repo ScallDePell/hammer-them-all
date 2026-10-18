@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {yourTurn, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, addParticipants, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
+import {yourTurn, targetingUser, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, addParticipants, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 test("each user's HUD follows the combatant acting when it is theirs, else their own character", () => {
@@ -19,6 +19,19 @@ test("only who plays the combatant acting is told it is their turn", () => {
   assert.equal(yourTurn({isGM: false, owned: false, playerOwned: false}), false, "a player, on an NPC's turn");
   assert.equal(yourTurn({isGM: true, owned: true, playerOwned: false}), true, "the GM, on an NPC's turn");
   assert.equal(yourTurn({isGM: true, owned: true, playerOwned: true}), false, "the GM, on a PC's turn");
+});
+
+test("the GM reads a player character's targets from its player, and picks among the other side", () => {
+  const users = [{id: "gm", isGM: true, active: true, owner: true}, {id: "p1", isGM: false, active: true, owner: true, characterUuid: "Actor.other"},
+    {id: "p2", isGM: false, active: true, owner: true, characterUuid: "Actor.pc"}, {id: "p3", isGM: false, active: false, owner: true, characterUuid: "Actor.pc"}];
+  assert.equal(targetingUser({viewerId: "gm", isGM: true, playerOwned: true, actorUuid: "Actor.pc", users}), "p2", "the connected player whose character it is");
+  assert.equal(targetingUser({viewerId: "gm", isGM: true, playerOwned: false, actorUuid: "Actor.npc", users}), "gm", "an NPC: the GM's own");
+  assert.equal(targetingUser({viewerId: "gm", isGM: true, playerOwned: true, actorUuid: "Actor.pc", users: users.slice(0, 1)}), "gm", "no player connected");
+  assert.equal(targetingUser({viewerId: "p2", isGM: false, playerOwned: true, actorUuid: "Actor.pc", users}), "p2");
+  const rows = [{id: "a", playerOwned: true}, {id: "b", playerOwned: false}, {id: "c", playerOwned: false}];
+  assert.deepEqual(opposingSide(rows, true).map(r => r.id), ["b", "c"]);
+  assert.deepEqual(opposingSide(rows, false).map(r => r.id), ["a"]);
+  assert.deepEqual([hits(12, 12), hits(11, 12), hits(1, 2), hits(20, 20), hits(20, null), hits(15, null)], [true, false, false, true, true, false]);
 });
 
 test("distances run edge to edge, in scene units", () => {
@@ -89,6 +102,14 @@ test("the HUD markup escapes names and disables what cannot be done", () => {
   assert.match(html, /&lt;b&gt;Bob&lt;\/b&gt;/);
   assert.match(html, /data-rwf-action="attaquer" data-rwf-content="w" disabled title="Chargeur vide"/);
   assert.doesNotMatch(html, /data-rwf-end-turn/, "not this user's turn");
+  const stage = pending => renderCombatHTML({round: 1, pass: 1, passes: 1, name: "Marc", mode: "table", cover: 0, target: null, combatant: {pools: {}, attacks: {used: 0, best: 1}, efforts: 0, cards: []}, pending}, t);
+  assert.match(stage({stage: "d20", label: "Tirer", damage: true, required: 10}), /name="de"/);
+  assert.doesNotMatch(stage({stage: "d20", label: "Tirer", damage: true, required: 10}), /name="degats"/, "damage only once it hits");
+  const damage = stage({stage: "damage", label: "Tirer", damage: true, de: 20, dice: "2d6"});
+  assert.match(damage, /name="degats"[^>]*required/);
+  assert.match(damage, /\(2d6\)/);
+  assert.match(damage, /RWFTOOLS\.Hud\.Critical/);
+  assert.match(renderCombatHTML({round: 1, pass: 1, passes: 1, name: "M", mode: "table", cover: 0, target: null, combatant: {pools: {}, attacks: {used: 0, best: 1}, efforts: 0, cards: []}}, t), /aria-checked="true" class="rwf-hud__mode-option rwf-hud__mode-option--on"/);
   assert.match(renderPursuitHTML({active: false, isGM: true}, t), /data-rwf-start/);
   assert.doesNotMatch(renderPursuitHTML({active: false, isGM: false}, t), /data-rwf-start/);
 });

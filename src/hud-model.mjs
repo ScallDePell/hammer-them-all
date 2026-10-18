@@ -54,6 +54,22 @@ export function followedCombatant({combatants = [], activeId = null, isGM = fals
 /** Whether the turn is this user's to play: a player's when they own the combatant acting, the GM's when no player does. */
 export const yourTurn = ({isGM, owned, playerOwned}) => isGM ? !playerOwned : Boolean(owned);
 
+/** Whose targets the HUD reads for a combatant: a player's own; on the GM's HUD, a player character's targets are its
+ * player's (the one connected whose character it is, else one connected who owns it), the GM's own otherwise.
+ * users: [{id, isGM, active, characterUuid, owner}] (owner: owns this combatant's Actor). Returns a user id. */
+export function targetingUser({viewerId, isGM, playerOwned, actorUuid, users = []}) {
+  if (!isGM || !playerOwned) return viewerId;
+  const players = users.filter(u => !u.isGM && u.active && u.owner);
+  return (players.find(u => u.characterUuid === actorUuid) ?? players[0])?.id ?? viewerId;
+}
+
+/** The combatants one may pick as a target: those of the other side (a player character aims at the others, anyone
+ * else at the player characters). rows: [{playerOwned, ...}]. */
+export const opposingSide = (rows, playerOwned) => rows.filter(row => Boolean(row.playerOwned) !== Boolean(playerOwned));
+
+/** Whether an announced d20 hits: it reaches the d20 the test needs (a 1 never does, a 20 always does). */
+export const hits = (d20, required) => d20 === D20_MAX || (d20 > 1 && required !== null && required !== undefined && d20 >= required);
+
 /** Gap between two tokens, edge to edge, in scene units (two tokens that touch are 0 apart).
  * a, b: {x, y, width, height} (x, y in pixels; width, height in grid squares); grid: {size, distance}. */
 export function edgeDistance(a, b, {size, distance}) {
