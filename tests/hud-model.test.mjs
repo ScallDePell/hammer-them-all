@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, addParticipants, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
+import {yourTurn, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, addParticipants, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 test("each user's HUD follows the combatant acting when it is theirs, else their own character", () => {
@@ -11,6 +11,14 @@ test("each user's HUD follows the combatant acting when it is theirs, else their
   assert.equal(followedCombatant({combatants, activeId: "a"}).id, "b");
   assert.equal(followedCombatant({combatants, activeId: "c"}).id, "c");
   assert.equal(followedCombatant({combatants: combatants.slice(0, 1), activeId: "a"}), null);
+});
+
+test("only who plays the combatant acting is told it is their turn", () => {
+  assert.equal(yourTurn({isGM: false, owned: true, playerOwned: true}), true, "the player of the acting PC");
+  assert.equal(yourTurn({isGM: false, owned: false, playerOwned: true}), false, "another player");
+  assert.equal(yourTurn({isGM: false, owned: false, playerOwned: false}), false, "a player, on an NPC's turn");
+  assert.equal(yourTurn({isGM: true, owned: true, playerOwned: false}), true, "the GM, on an NPC's turn");
+  assert.equal(yourTurn({isGM: true, owned: true, playerOwned: true}), false, "the GM, on a PC's turn");
 });
 
 test("distances run edge to edge, in scene units", () => {

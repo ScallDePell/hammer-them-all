@@ -2,7 +2,7 @@
    acting), with its resources, its target, an action card per weapon, power and physical action, and the button that
    ends its pass or its round. Every Action is the RWF Ruleset's, run through Rule Them'All. */
 import {SOCKET} from "./test-request-model.mjs";
-import {hudRuleset, followedCombatant, edgeDistance, combatantView, endTurnLabel, readWhole} from "./hud-model.mjs";
+import {hudRuleset, followedCombatant, yourTurn, edgeDistance, combatantView, endTurnLabel, readWhole} from "./hud-model.mjs";
 import {renderCombatHTML} from "./hud-markup.mjs";
 import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction} from "./hud-common.mjs";
 
@@ -50,9 +50,11 @@ export function createCombatHud() {
       const cover = target ? this.#cover.get(target.uuid) ?? 0 : 0;
       const combatant = await combatantView(runtime, {versionId, ruleset, actorUuid: followed.actorUuid, target, cover, isGM, userId: game.user.id, contentName: contentNamer(ruleset, followed.actorUuid)});
       const pass = Number(combat.getFlag?.(...PASS_FLAG) ?? 1) || 1, passes = Math.max(pass, combatant.attacks.best);
-      const myTurn = combat.combatant?.id === followed.id;
+      // "À vous de jouer" only for whoever plays the combatant acting: its owner, or the GM for a combatant no player owns.
+      const active = combat.combatant ?? null, acting = active?.id === followed.id;
+      const myTurn = Boolean(active) && yourTurn({isGM, owned: Boolean(active.isOwner), playerOwned: Boolean(active.actor?.hasPlayerOwner ?? active.hasPlayer)});
       const view = {versionId, ruleset, round: combat.round, pass, passes, turnName: combat.combatant?.name ?? null, myTurn, name: me.name, actorUuid: followed.actorUuid, combatantId: followed.id,
-        combatant, target, cover, isGM, canEndTurn: myTurn && (isGM || followed.owned), endLabel: endTurnLabel({pass, passes: combatant.attacks.best})};
+        combatant, target, cover, isGM, canEndTurn: acting && (isGM || followed.owned), endLabel: endTurnLabel({pass, passes: combatant.attacks.best})};
       if (this.#picking) view.targets = rows.filter(r => r.id !== followed.id && r.actorUuid && !r.defeated && onScene(r.combatant))
         .map(r => ({tokenId: r.combatant.token.id, name: r.combatant.name, img: r.combatant.img ?? null, current: r.combatant.token.id === target?.tokenId, distance: onScene(me) ? distanceBetween(me.token, r.combatant.token) : null}))
         .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity) || a.name.localeCompare(b.name));

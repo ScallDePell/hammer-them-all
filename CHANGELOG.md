@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- HUD Combat : « À vous de jouer » ne s'affiche plus que pour le joueur du combattant qui agit, ou pour le MJ quand c'est un PNJ ; les autres voient « Tour de » et le nom, en couleur normale.
+- Demande Rule Them'All 1.0.11 (le premier combattant après une relance d'initiative peut de nouveau attaquer).
+
 ## 0.2.0
 
 - **HUD Combat** : ressources, passes, cible et couverture, une carte par arme, pouvoir et action physique, d20 à atteindre, portée, dés de Foundry ou de la table, fin de passe ou de round (relayée au MJ pour un joueur).

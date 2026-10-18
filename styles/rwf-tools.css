@@ -36,8 +36,7 @@
 .rwf-hud__row { display: flex; align-items: center; gap: 8px; }
 .rwf-hud__row > span:first-child { flex: 1 1 auto; min-width: 0; }
 .rwf-hud__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--color-border); }
-.rwf-hud__turn { font-style: italic; }
-.rwf-hud__turn--mine { font-style: normal; font-weight: bold; color: var(--color-level-success); }
+.rwf-hud__turn--mine { font-weight: bold; color: var(--color-level-success); }
 .rwf-hud__who { display: flex; flex-direction: column; gap: 4px; }
 .rwf-hud__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .rwf-hud__stat { display: flex; flex-direction: column; align-items: center; padding: 4px; border: 1px solid var(--color-border); border-radius: 4px; }

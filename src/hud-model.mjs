@@ -51,6 +51,9 @@ export function followedCombatant({combatants = [], activeId = null, isGM = fals
   return own.find(c => c.actorUuid === characterUuid) ?? own[0] ?? (isGM ? active ?? combatants[0] ?? null : null);
 }
 
+/** Whether the turn is this user's to play: a player's when they own the combatant acting, the GM's when no player does. */
+export const yourTurn = ({isGM, owned, playerOwned}) => isGM ? !playerOwned : Boolean(owned);
+
 /** Gap between two tokens, edge to edge, in scene units (two tokens that touch are 0 apart).
  * a, b: {x, y, width, height} (x, y in pixels; width, height in grid squares); grid: {size, distance}. */
 export function edgeDistance(a, b, {size, distance}) {
