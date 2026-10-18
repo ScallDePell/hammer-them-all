@@ -146,7 +146,7 @@ export async function combatantView(runtime, {versionId, ruleset, actorUuid, tar
     pools, defense: await formula(runtime, versionId, "defense-calcul", self),
     attacks: {used: counter(state, "attaques-utilisees"), best: bestAttacks},
     efforts: counter(state, "efforts-physiques"), pass: counter(state, "passe-en-cours"), lastPass: counter(state, "derniere-passe-attaque"),
-    inCombat: Boolean(state?.definitionStates?.["en-combat"]?.capabilityStates?.state?.active),
+    inCombat: Boolean(state?.stateInstances?.some(instance => instance.definitionId === "en-combat" && instance.active !== false) || state?.definitionStates?.["en-combat"]?.capabilityStates?.state?.active),
     cards: []
   };
   const burstBonus = number(ruleset.parameters?.find(p => p.id === RWF.burstBonus)?.value) ?? 0;

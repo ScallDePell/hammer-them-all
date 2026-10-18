@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+- Le combattant qui agit peut toujours jouer sa passe : le client du MJ actif vérifie, à chaque changement du combat, que sa passe est celle du combat et que l'attaque de la passe n'est pas marquée comme déjà faite par des compteurs restés d'un combat précédent ; sinon il annonce à nouveau le tour ou remet ces compteurs, et l'écrit dans la console (« rwf-tools | … repaired »).
+- « En combat » lu sur l'état appliqué au personnage.
+- Demande Rule Them'All 1.0.13.
+
 ## 0.2.2
 
 - HUD Combat : le MJ voit la cible choisie par le joueur du personnage qui agit ; le sélecteur de cible ne propose que le camp opposé.

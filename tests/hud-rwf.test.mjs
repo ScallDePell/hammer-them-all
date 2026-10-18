@@ -125,3 +125,25 @@ test("the pursuit HUD gives each participant its gauge, its speed advantage and 
   assert.match(html, /data-rwf-move="continuer" data-rwf-who="Actor.lea"/);
   assert.match(html, /Poursuivant/);
 });
+
+test("the turn guard frees a first combatant left with the counters of an earlier combat", {skip: !file && "no Rule Them'All checkout"}, async () => {
+  const {turnRepairs} = await import("../src/turn-guard.mjs");
+  const {versionId, runtime, found, give} = await setup();
+  const pc = "Actor.marc", foe = "Actor.garde";
+  for (const uuid of [pc, foe]) await runtime.initializeContainer(versionId, uuid);
+  await give(pc, {pistolet: "arme-pistolet-9-mm"});
+  const shoot = async () => runtime.executeAction(versionId, "attaquer", actionContext({actorUuid: pc, targetUuid: foe, contentKey: "pistolet", input: {couverture: 0, de: 19, degats: 1}, userId: "gm", isGM: true}));
+  // An earlier combat, never ended: Marc shot in its first pass.
+  await runtime.emitSystemEvent("rta.combat.start", {combatId: "old", round: 1}, [pc, foe]);
+  await runtime.emitSystemEvent("rta.combat.round", {combatId: "old", round: 1}, [pc, foe]);
+  await runtime.emitSystemEvent("rta.combat.turn", {combatId: "old", round: 1, turn: 0, pass: 1}, [pc]);
+  assert.notEqual((await shoot()).allowed, false);
+  // The new combat's start and round never reached Marc: his attack of pass 1 reads as spent.
+  assert.equal((await shoot()).allowed, false, "stuck, as Luca saw it");
+  const {events, values} = turnRepairs({combatId: "new", round: 1, turn: 0, pass: 1, actorUuid: pc, state: await runtime.getContainerState(pc), fresh: true});
+  for (const e of events) await runtime.emitSystemEvent(e.eventTypeId, e.payload, e.refs);
+  for (const [id, base] of Object.entries(values)) await runtime.setDefinitionState(found.versionId, pc, id, {base});
+  assert.notEqual((await shoot()).allowed, false, "freed by the guard");
+  const after = await runtime.getContainerState(pc);
+  assert.deepEqual(turnRepairs({combatId: "new", round: 1, turn: 0, pass: 1, actorUuid: pc, state: after, fresh: false}), {events: [], values: {}}, "nothing more once it has shot");
+});
