@@ -11,7 +11,9 @@
 .rwf-request__choice label, .rwf-prompt__manual label { display: flex; flex-direction: column; gap: 4px; }
 .rwf-request__empty { margin: 0; font-style: italic; }
 .rwf-request__pending ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.rwf-request__pending h3 { margin: 0 0 8px; }
+.rwf-request__pending-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.rwf-request__pending-head h3 { margin: 0; }
+.rwf-request__pending-head button { flex: none; width: auto; }
 .rwf-request__status { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .rwf-request__status--waiting span:nth-child(2) { font-style: italic; }
 .rwf-request__status--failed span:nth-child(2) { color: var(--color-level-error); }

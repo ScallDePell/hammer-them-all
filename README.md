@@ -13,7 +13,7 @@ Au premier lancement, le module crée la macro **Demander un test** et la place 
 3. Chaque joueur choisi voit s'ouvrir une fenêtre qu'il ne peut pas fermer tant qu'il n'a pas répondu : **Lancer les dés** (dés de Foundry, Dice So Nice s'il est installé) ou son résultat du d20 lancé sur la table.
 4. Le client du MJ lance alors l'Action « Test demandé par le MJ » du Ruleset avec ce d20 et poste la carte de chat habituelle. Une réussite rapporte de la pratique, comme le prévoit RWF ; c'est le seul test hors combat qui en rapporte.
 
-La fenêtre du MJ montre les tests en attente et leurs résultats. **Annuler** retire la demande et ferme la fenêtre du joueur. Un joueur qui recharge sa page reçoit de nouveau la demande à sa reconnexion.
+La fenêtre du MJ montre les tests en attente et leurs résultats. **Annuler** retire une demande et ferme la fenêtre du joueur ; **Vider** efface toute la liste (les tests encore en attente sont annulés). Un joueur qui recharge sa page reçoit de nouveau la demande à sa reconnexion.
 
 ## Installation
 

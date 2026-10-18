@@ -64,6 +64,7 @@ export function createRequestWindow({ApplicationV2}) {
       root.querySelector("[data-rwf-dd]")?.addEventListener("change", event => { this.#ddId = event.currentTarget.value || null; sync(); });
       root.querySelector("[data-rwf-send]")?.addEventListener("click", () => this.#send());
       for (const button of root.querySelectorAll("[data-rwf-cancel]")) button.addEventListener("click", event => cancelRequest(event.currentTarget.dataset.rwfCancel));
+      root.querySelector("[data-rwf-clear]")?.addEventListener("click", () => clearRequests());
     }
     #send() {
       const view = this.#view, skill = view.skills.find(s => s.id === this.#skillId), dd = view.dds.find(d => d.id === this.#ddId);
@@ -84,6 +85,13 @@ function cancelRequest(requestId) {
   if (!entry || entry.status !== "waiting") return;
   pending.delete(requestId);
   emit(cancelMessage(entry.request));
+  refreshRequest();
+}
+
+/** Empty the list: finished tests go, tests still waiting are withdrawn from their player's screen. */
+function clearRequests() {
+  for (const {request, status} of pending.values()) if (status === "waiting") emit(cancelMessage(request));
+  for (const [requestId, {status}] of pending) if (status !== "running") pending.delete(requestId);
   refreshRequest();
 }
 

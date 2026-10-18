@@ -25,6 +25,8 @@ test("GM window: requests in progress, with Cancel while waiting", () => {
   assert.match(html, /data-rwf-cancel="r1"/);
   assert.doesNotMatch(html, /data-rwf-cancel="r2"/);
   assert.match(html, /17 → 21 · Réussite/);
+  assert.match(html, /data-rwf-clear/, "the GM empties the list");
+  assert.doesNotMatch(renderRequestHTML({rows: [], selected: new Set(), skills, dds, skillId: null, ddId: null, pending: new Map(), canSend: false}, t), /data-rwf-clear/, "nothing to empty");
 });
 
 test("player window: Foundry dice or the table d20, then what was sent", () => {

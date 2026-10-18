@@ -9,6 +9,8 @@
   "RWFTOOLS.Request.Pending": "Tests demandés",
   "RWFTOOLS.Request.Waiting": "En attente du joueur",
   "RWFTOOLS.Request.Cancel": "Annuler",
+  "RWFTOOLS.Request.Clear": "Vider",
+  "RWFTOOLS.Request.ClearHint": "Retire les tests terminés et annule ceux en attente",
   "RWFTOOLS.Request.Manual": "jet sur table",
   "RWFTOOLS.Prompt.Title": "Test demandé par le MJ",
   "RWFTOOLS.Prompt.Roll": "Lancer les dés",

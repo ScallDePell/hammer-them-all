@@ -14,7 +14,8 @@ export function renderRequestHTML({rows, selected, skills, dds, skillId, ddId, p
         <span class="rwf-request__user">${e(row.userName)}</span></label></li>`).join("")}</ul>`
     : `<p class="rwf-request__empty">${e(t("RWFTOOLS.Request.NoPlayers"))}</p>`;
   const waiting = [...pending.values()];
-  const progress = waiting.length ? `<section class="rwf-request__pending"><h3>${e(t("RWFTOOLS.Request.Pending"))}</h3><ul>${waiting.map(p => `<li class="rwf-request__status rwf-request__status--${e(p.status)}">
+  const progress = waiting.length ? `<section class="rwf-request__pending"><header class="rwf-request__pending-head"><h3>${e(t("RWFTOOLS.Request.Pending"))}</h3>
+      <button type="button" data-rwf-clear title="${e(t("RWFTOOLS.Request.ClearHint"))}">${e(t("RWFTOOLS.Request.Clear"))}</button></header><ul>${waiting.map(p => `<li class="rwf-request__status rwf-request__status--${e(p.status)}">
       <span>${e(p.request.actorName)} · ${e(p.request.skillLabel)} · ${e(p.request.ddLabel)}</span>
       <span>${e(p.status === "waiting" ? t("RWFTOOLS.Request.Waiting") : p.summary)}</span>
       ${p.status === "waiting" ? `<button type="button" data-rwf-cancel="${e(p.request.requestId)}">${e(t("RWFTOOLS.Request.Cancel"))}</button>` : ""}</li>`).join("")}</ul></section>` : "";

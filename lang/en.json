@@ -9,6 +9,8 @@
   "RWFTOOLS.Request.Pending": "Requested tests",
   "RWFTOOLS.Request.Waiting": "Waiting for the player",
   "RWFTOOLS.Request.Cancel": "Cancel",
+  "RWFTOOLS.Request.Clear": "Clear",
+  "RWFTOOLS.Request.ClearHint": "Removes finished tests and cancels the ones still waiting",
   "RWFTOOLS.Request.Manual": "table roll",
   "RWFTOOLS.Prompt.Title": "Test requested by the GM",
   "RWFTOOLS.Prompt.Roll": "Roll the dice",
