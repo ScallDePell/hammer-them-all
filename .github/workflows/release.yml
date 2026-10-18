@@ -1,0 +1,40 @@
+name: Release
+
+# A manual run from main: the release is named after module.json's version.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ScallDePell/Rule-Them-All
+          path: rule-them-all
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests
+        run: RTA_REPO=rule-them-all node --test tests/*.test.mjs
+      - name: Version
+        id: version
+        run: echo "tag=v$(node -p "require('./module.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Build the zip
+        run: |
+          mkdir -p dist/rwf-tools
+          cp -r module.json rwf-tools.mjs README.md CHANGELOG.md lang src styles dist/rwf-tools/
+          cp module.json dist/module.json
+          cd dist && zip -qr rwf-tools.zip rwf-tools
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: RWF tools ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            dist/module.json
+            dist/rwf-tools.zip

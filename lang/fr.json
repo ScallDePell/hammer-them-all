@@ -1,0 +1,23 @@
+{
+  "RWFTOOLS.Macro.Name": "Demander un test",
+  "RWFTOOLS.Request.Title": "Demander un test",
+  "RWFTOOLS.Request.Players": "Joueurs connectés",
+  "RWFTOOLS.Request.NoPlayers": "Aucun joueur connecté n'a de personnage joueur RWF.",
+  "RWFTOOLS.Request.Skill": "Compétence",
+  "RWFTOOLS.Request.DD": "DD",
+  "RWFTOOLS.Request.Send": "Envoyer le test",
+  "RWFTOOLS.Request.Pending": "Tests demandés",
+  "RWFTOOLS.Request.Waiting": "En attente du joueur",
+  "RWFTOOLS.Request.Cancel": "Annuler",
+  "RWFTOOLS.Request.Manual": "jet sur table",
+  "RWFTOOLS.Prompt.Title": "Test demandé par le MJ",
+  "RWFTOOLS.Prompt.Roll": "Lancer les dés",
+  "RWFTOOLS.Prompt.Manual": "Ou mon résultat du d20",
+  "RWFTOOLS.Prompt.Submit": "Valider",
+  "RWFTOOLS.Prompt.Invalid": "Entrez un nombre entier de 1 à 20.",
+  "RWFTOOLS.Prompt.Sent": "Résultat envoyé au MJ :",
+  "RWFTOOLS.Error.NoRuleset": "Aucun Ruleset Rule Them'All n'est actif.",
+  "RWFTOOLS.Error.NotRwf": "Le Ruleset actif n'a pas l'Action « Test demandé par le MJ » : importez et activez RWF 2.1.0 ou plus récent.",
+  "RWFTOOLS.Error.GMOnly": "Seul le MJ demande un test.",
+  "RWFTOOLS.Error.NotAllowed": "Le test demandé a été refusé."
+}

@@ -1,0 +1,23 @@
+{
+  "RWFTOOLS.Macro.Name": "Request a test",
+  "RWFTOOLS.Request.Title": "Request a test",
+  "RWFTOOLS.Request.Players": "Connected players",
+  "RWFTOOLS.Request.NoPlayers": "No connected player has an RWF player character.",
+  "RWFTOOLS.Request.Skill": "Skill",
+  "RWFTOOLS.Request.DD": "DC",
+  "RWFTOOLS.Request.Send": "Send the test",
+  "RWFTOOLS.Request.Pending": "Requested tests",
+  "RWFTOOLS.Request.Waiting": "Waiting for the player",
+  "RWFTOOLS.Request.Cancel": "Cancel",
+  "RWFTOOLS.Request.Manual": "table roll",
+  "RWFTOOLS.Prompt.Title": "Test requested by the GM",
+  "RWFTOOLS.Prompt.Roll": "Roll the dice",
+  "RWFTOOLS.Prompt.Manual": "Or my d20 result",
+  "RWFTOOLS.Prompt.Submit": "Confirm",
+  "RWFTOOLS.Prompt.Invalid": "Enter a whole number from 1 to 20.",
+  "RWFTOOLS.Prompt.Sent": "Result sent to the GM:",
+  "RWFTOOLS.Error.NoRuleset": "No Rule Them'All Ruleset is active.",
+  "RWFTOOLS.Error.NotRwf": "The active Ruleset has no \"Test demandé par le MJ\" Action: import and activate RWF 2.1.0 or later.",
+  "RWFTOOLS.Error.GMOnly": "Only the GM requests a test.",
+  "RWFTOOLS.Error.NotAllowed": "The requested test was refused."
+}
