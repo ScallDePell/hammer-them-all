@@ -370,7 +370,7 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
       row.advantage = speedAdvantage(row.speed, against.length ? Math.max(...against.map(r => r.speed)) : null);
     } else {
       const target = byUuid.get(row.targetUuid);
-      row.target = target && !target.status.done ? {uuid: target.uuid, name: target.name} : null;
+      row.target = target && !target.status.done ? {uuid: target.uuid, name: target.name, gauge: target.gauge} : null;
       row.advantage = speedAdvantage(row.speed, row.target ? target.speed : null);
     }
   }

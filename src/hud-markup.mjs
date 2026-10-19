@@ -81,9 +81,9 @@ export function renderCombatHTML(view, t) {
 /* ---------- Pursuit ---------- */
 
 /** A fugitive's gap gauge from −bound to +bound: the steps from 0 to where it stands are filled, green toward +bound
- * (getting away), red toward −bound (caught). */
-function gauge(row, bound, t) {
-  const steps = [], tone = row.gauge > 0 ? "good" : "bad";
+ * (getting away), red toward −bound (caught). A pursuer sees its quarry's gauge with the colours the other way round. */
+function gauge(row, bound, t, {chaser = false} = {}) {
+  const steps = [], tone = (row.gauge > 0) !== chaser ? "good" : "bad";
   for (let n = -bound; n <= bound; n++) {
     const filled = n !== 0 && (row.gauge > 0 ? n > 0 && n <= row.gauge : n < 0 && n >= row.gauge);
     steps.push(`<span class="rwf-hud__step${n === 0 ? " rwf-hud__step--zero" : ""}${filled ? ` rwf-hud__step--${tone}` : ""}${n === row.gauge ? " rwf-hud__step--here" : ""}" title="${e(sign(n))}"></span>`);
@@ -100,7 +100,7 @@ function runner(row, view, t) {
     : row.active ? `<span class="rwf-pursuit__now">${words(t, "RWFTOOLS.Pursuit.ItsTurn")}</span>` : "";
   const below = row.role === "fuyard"
     ? `${gauge(row, view.bound, t)}${row.status.done ? "" : `<p class="rwf-pursuit__chase">${row.chasers?.length ? e(fmt(t, "RWFTOOLS.Pursuit.ChasedBy", {names: row.chasers.map(c => c.name).join(", ")})) : words(t, "RWFTOOLS.Pursuit.NotChased")}</p>`}`
-    : row.status.done ? "" : `<p class="rwf-pursuit__chase">${row.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(fmt(t, "RWFTOOLS.Pursuit.Chases", {name: row.target.name}))}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</p>`;
+    : row.status.done ? "" : `${row.target ? gauge({gauge: row.target.gauge, ends: row.ends}, view.bound, t, {chaser: true}) : ""}<p class="rwf-pursuit__chase">${row.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(fmt(t, "RWFTOOLS.Pursuit.Chases", {name: row.target.name}))}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</p>`;
   return `<li class="rwf-pursuit__runner${row.active ? " rwf-pursuit__runner--active" : ""}${row.status.done ? " rwf-pursuit__runner--done" : ""}"${row.active ? ' aria-current="true"' : ""}>
     <div class="rwf-pursuit__line"><span class="rwf-pursuit__rank">${e(row.rank)}.</span><strong>${e(row.name)}</strong><span class="rwf-pursuit__means">${e(meansName(row, t))}</span>${tag}</div>
     ${below}</li>`;

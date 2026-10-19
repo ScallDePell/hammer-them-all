@@ -142,6 +142,8 @@ test("the pursuit HUD: a gap gauge per fugitive, pursuers on their quarry, moves
   assert.match(html, /data-rwf-end-turn/);
   assert.match(html, /rwf-pursuit__runner--active/);
   assert.equal((html.match(/rwf-hud__step--bad/g) ?? []).length, -row(thug).gauge, "the gauge fills red from 0 to where the Garde is");
+  assert.equal(row(driver).target.gauge, row(thug).gauge, "a pursuer sees its quarry's gap");
+  assert.equal((html.match(/rwf-hud__step--good/g) ?? []).length, -2 * row(thug).gauge, "green for its two pursuers: they close in");
   assert.match(html, /Poursuivi par Léa, Marc/);
   assert.match(html, /Chasse Garde/);
   assert.equal(v.over, false);

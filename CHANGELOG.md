@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2
+
+- Chaque poursuivant montre la jauge du fuyard qu'il chasse, colorée de son point de vue : en vert quand il se rapproche (vers Rattrapé), en rouge quand le fuyard s'éloigne (vers Semé).
+
 ## 0.4.1
 
 - Corrige l'issue d'un participant (rattrapé, semé, à bout de souffle) qui n'était pas gardée par la poursuite : Foundry découpait l'identifiant du participant à ses points. L'issue était annoncée plusieurs fois dans le chat, et un poursuivant dont le fuyard était rattrapé ne passait pas à un autre fuyard. Une poursuite lancée avant cette version est à relancer.
