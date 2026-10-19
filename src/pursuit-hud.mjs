@@ -213,6 +213,8 @@ export function createPursuitHud() {
         await combat.startCombat();
         await savePursuit(emptyPursuit());
         await chat(`${t("RWFTOOLS.Pursuit.Started")} ${fmtText(t("RWFTOOLS.Pursuit.FleeBonus"), {n: FLEE_BONUS})}`);
+        // The players with a character in it see the pursuit open on their screen.
+        game.socket.emit(SOCKET, {type: "pursuit.open", combatId: combat.id});
       } catch (error) { this.#message = error?.message ?? String(error); notifyError(error); }
       finally { this.#busy = false; }
       this.render();
@@ -301,6 +303,15 @@ export async function servePursuitTarget(message, senderId) {
   const target = pursuit.participants.find(p => p.uuid === message.targetUuid && p.role === "fuyard" && !pursuit.outcomes[p.uuid]);
   if (!chaser || !target || !combat.combatants.get(chaser.combatantId)?.testUserPermission?.(user, "OWNER")) return;
   try { await saveRunning(combat, {...pursuit, participants: pursuit.participants.map(p => p.uuid === chaser.uuid ? {...p, targetUuid: target.uuid} : p)}); } catch (error) { notifyError(error); }
+}
+
+/** Player client: the GM launched a pursuit; its HUD opens when one of this user's characters takes part. */
+export function servePursuitOpen(message) {
+  const game = globalThis.game;
+  if (message?.type !== "pursuit.open" || game.user.isGM) return;
+  const combat = game.combats?.get?.(message.combatId);
+  if (!combat || !isPursuitCombat(combat)) return;
+  if (running(combat).participants.some(p => combat.combatants.get(p.combatantId)?.actor?.isOwner)) openPursuitHud();
 }
 
 export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {}) {

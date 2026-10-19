@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3
+
+- Quand le MJ lance une poursuite, le HUD Poursuite s'ouvre tout seul chez chaque joueur connecté qui possède un participant.
+
 ## 0.4.2
 
 - Chaque poursuivant montre la jauge du fuyard qu'il chasse, colorée de son point de vue : en vert quand il se rapproche (vers Rattrapé), en rouge quand le fuyard s'éloigne (vers Semé).
