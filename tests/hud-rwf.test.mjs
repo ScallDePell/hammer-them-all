@@ -117,6 +117,10 @@ test("the pursuit HUD: two sides in turn order, the advantage over the other sid
   assert.equal(v.current.uuid, driver);
   assert.deepEqual(v.current.moves.map(m => m.actionId), ["poursuite-vehicule-continuer", "poursuite-vehicule-risque", "poursuite-vehicule-raccourci", "poursuite-arret"]);
   assert.equal(row(runner).moves, undefined, "only the one whose turn it is has moves");
+  assert.deepEqual(v.current.moves.slice(0, 3).map(m => m.modifier), [0, -2, 2], "a risk costs 2, a shortcut gives 2");
+  assert.equal(v.dd, 13);
+  const [keep, risk, cut] = v.current.moves;
+  assert.ok(Number.isInteger(keep.required) && risk.required === Math.min(20, keep.required + 2) && cut.required === Math.max(2, keep.required - 2), "the d20 each move needs");
   assert.equal((await read({...pursuit, cap: 0.5}, driver)).rows.find(r => r.uuid === driver).speed, 0.5, "the terrain caps the car");
   assert.equal((await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit, order: [], activeUuid: driver, canAct: () => false})).current.moves.length, 0, "not this user's to play");
 
@@ -134,6 +138,7 @@ test("the pursuit HUD: two sides in turn order, the advantage over the other sid
   assert.match(html, /data-rwf-move="continuer"/);
   assert.match(html, /data-rwf-end-turn/);
   assert.match(html, /rwf-pursuit__runner--active/);
+  assert.equal((html.match(/rwf-hud__step--good/g) ?? []).length, row(driver).gauge, "the gauge fills from 0 to where Léa is");
   assert.match(html, /Poursuivants/);
 });
 

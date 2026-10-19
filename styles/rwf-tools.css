@@ -78,15 +78,21 @@
 .rwf-hud__track { flex: 1 1 auto; display: flex; gap: 4px; }
 .rwf-hud__step { flex: 1 1 0; height: 12px; border: 1px solid var(--color-border); border-radius: 4px; }
 .rwf-hud__step--zero { border-width: 2px; }
-.rwf-hud__step--here { background: var(--color-border-highlight); }
+.rwf-hud__step--good { background: var(--color-level-success); border-color: var(--color-level-success); }
+.rwf-hud__step--bad { background: var(--color-level-error); border-color: var(--color-level-error); }
+.rwf-hud__step--here { box-shadow: 0 0 4px var(--color-shadow-highlight); }
+.rwf-hud__gauge-value { flex: 0 0 24px; text-align: center; font-size: var(--font-size-12); }
+.rwf-hud__gauge-value--good { color: var(--color-level-success); }
+.rwf-hud__gauge-value--bad { color: var(--color-level-error); }
 .rwf-pursuit__turn { display: flex; flex-direction: column; gap: 8px; padding: 8px; border: 1px solid var(--color-border-highlight); border-radius: 4px; }
 .rwf-pursuit__line { display: flex; align-items: baseline; gap: 8px; }
 .rwf-pursuit__line > strong { flex: 1 1 auto; min-width: 0; }
+.rwf-pursuit__rank { flex: none; min-width: 2ch; opacity: 0.8; }
 .rwf-pursuit__role, .rwf-pursuit__means { flex: none; font-size: var(--font-size-12); opacity: 0.8; }
 .rwf-pursuit__now { flex: none; font-size: var(--font-size-12); font-weight: bold; color: var(--color-level-success); }
 .rwf-pursuit__outcome { flex: none; font-size: var(--font-size-12); font-weight: bold; }
 .rwf-pursuit__zones { display: grid; grid-template-columns: 1fr; gap: 12px; }
-@container (min-width: 560px) { .rwf-pursuit__zones { grid-template-columns: 1fr 1fr; } }
+@container (min-width: 720px) { .rwf-pursuit__zones { grid-template-columns: 1fr 1fr; } }
 .rwf-pursuit__zone { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .rwf-pursuit__zone-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 8px 4px; border-bottom: 1px solid var(--color-border); font-size: var(--font-size-14); }
 .rwf-pursuit__zone-title small { font-weight: normal; font-size: var(--font-size-12); opacity: 0.8; }
@@ -95,7 +101,7 @@
 .rwf-pursuit__runner--active { border-color: var(--color-border-highlight); box-shadow: 0 0 4px var(--color-shadow-highlight); }
 .rwf-pursuit__runner--done { opacity: 0.6; }
 .rwf-pursuit__setup { display: flex; align-items: center; gap: 8px; }
-.rwf-pursuit__zone .rwf-pursuit__setup { padding: 0 8px; }
+.rwf-pursuit__zone .rwf-pursuit__setup, .rwf-pursuit__available .rwf-pursuit__setup { padding: 0 8px; }
 .rwf-pursuit__setup > strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rwf-pursuit__setup select { flex: 0 1 128px; min-width: 0; }
 .rwf-pursuit__cap { display: flex; align-items: center; gap: 8px; }
@@ -104,3 +110,5 @@
 .rwf-pursuit__settings { border-top: 1px solid var(--color-border); padding-top: 4px; }
 .rwf-pursuit__settings summary { cursor: pointer; font-weight: bold; }
 .rwf-pursuit__settings-body { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
+.rwf-pursuit__available { display: flex; flex-direction: column; gap: 4px; }
+.rwf-pursuit__join { flex: none; font-size: var(--font-size-12); }

@@ -262,10 +262,11 @@ export function readRunningPursuit(flag) {
   return {cap: Math.max(0, number(value.cap) ?? 0), participants: readParticipants(value.participants), outcomes};
 }
 
-/** New participants join the side the draft says: the fleeing side ("pnj" or "pj"), the others pursue. */
+/** New participants join the side they are given, else the side the draft says: the fleeing side ("pnj" or "pj"),
+ * the others pursue. */
 export function addParticipants(pursuit, candidates) {
   const next = {...pursuit, participants: [...pursuit.participants]};
-  for (const c of candidates) if (!next.participants.some(p => p.uuid === c.uuid)) next.participants.push(readParticipant({...c, role: roleOf(c.playerOwned, next.fleeing), means: FOOT}));
+  for (const c of candidates) if (!next.participants.some(p => p.uuid === c.uuid)) next.participants.push(readParticipant({...c, role: ROLES.includes(c.role) ? c.role : roleOf(c.playerOwned, next.fleeing), means: FOOT}));
   return next;
 }
 /** Who flees: the non-player characters or the player characters; every participant takes its side again. */
@@ -287,6 +288,15 @@ export const gaugeEnds = role => role === "fuyard" ? ["RWFTOOLS.Pursuit.Ends.Cau
 
 /** The Action a pursuit move runs: on foot it is the character's own, in a vehicle the vehicle's. */
 export const moveAction = (move, means) => means === FOOT ? `poursuite-a-pied-${move}` : `poursuite-vehicule-${move}`;
+/** The Formula of a move's test bonus (characteristic, mastery, handling, the move's own bonus or malus). */
+const moveBonusFormula = (move, means) => means === FOOT ? `bonus-poursuite-a-pied-${move}` : `bonus-poursuite-vehicule-${move}`;
+/** What a move adds to its test: a shortcut's bonus, a risk's malus (the Ruleset's parameters), nothing to keep going. */
+export function moveModifier(ruleset, move) {
+  const param = id => number(ruleset.parameters?.find(x => x.id === id)?.value);
+  if (move === "raccourci") return param("bonus-raccourci") ?? 2;
+  if (move === "risque") return -(param("malus-risque") ?? 2);
+  return 0;
+}
 
 /** Whether the pursuit is over: no one left running on one of the sides. rows: [{role, status: {done}}]. */
 export const pursuitOver = rows => ROLES.some(role => !rows.some(r => r.role === role && !r.status.done));
@@ -319,11 +329,11 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
   const rank = uuid => { const i = order.indexOf(uuid); return i < 0 ? Infinity : i; };
   const participants = [...pursuit.participants].sort((a, b) => rank(a.uuid) - rank(b.uuid));
   const rows = [];
-  for (const p of participants) {
+  for (const [index, p] of participants.entries()) {
     const {state, vehicles, vehicle, means, speed} = await meansOf(runtime, versionId, ruleset, p, {cap: pursuit.cap, contentName});
     const gauge = counter(state, RWF.gauge), outcome = pursuit.outcomes?.[p.uuid];
     const status = outcome ? {key: outcome, done: true} : pursuitStatus(p.role, gauge, bound);
-    rows.push({...p, means, vehicles, vehicle, speed, gauge, status, ends: gaugeEnds(p.role), active: p.uuid === activeUuid, playable: Boolean(state) && canAct(p.uuid),
+    rows.push({...p, rank: index + 1, means, vehicles, vehicle, speed, gauge, status, ends: gaugeEnds(p.role), active: p.uuid === activeUuid, playable: Boolean(state) && canAct(p.uuid),
       endurance: means === FOOT ? await runtime.tokenBarValue(versionId, p.uuid, "rta.endurance.points").catch(() => null) : null});
   }
   for (const row of rows) {
@@ -331,14 +341,17 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
     row.advantage = speedAdvantage(row.speed, others.length ? Math.max(...others.map(r => r.speed)) : null);
   }
   const current = rows.find(r => r.active) ?? null;
+  const dd = number(await formula(runtime, versionId, "dd-de-poursuite", actionContext({actorUuid: current?.uuid ?? null}))) ?? number(ruleset.parameters?.find(x => x.id === "dd-poursuite")?.value);
   if (current) {
     current.moves = [];
     if (current.playable && !current.status.done) {
       const context = actionContext({actorUuid: current.uuid, contentKey: current.vehicle?.key ?? null, input: {vitesse: current.advantage}, userId, isGM});
-      for (const move of RWF.moves) current.moves.push({move, actionId: moveAction(move, current.means), contentKey: current.vehicle?.key ?? null, label: `RWFTOOLS.Pursuit.Move.${move}`, ...(await usable(runtime, versionId, ruleset, moveAction(move, current.means), context))});
+      for (const move of RWF.moves) current.moves.push({move, actionId: moveAction(move, current.means), contentKey: current.vehicle?.key ?? null, label: `RWFTOOLS.Pursuit.Move.${move}`,
+        modifier: moveModifier(ruleset, move), required: requiredD20(dd, await formula(runtime, versionId, moveBonusFormula(move, current.means), context)),
+        ...(await usable(runtime, versionId, ruleset, moveAction(move, current.means), context))});
       current.moves.push({move: "stop", actionId: RWF.stop, contentKey: null, label: "RWFTOOLS.Pursuit.Move.stop", ...(await usable(runtime, versionId, ruleset, RWF.stop, context))});
     }
   }
   const sides = Object.fromEntries(ROLES.map(role => [role, rows.filter(r => r.role === role)]));
-  return {phase: "running", bound, cap: pursuit.cap, rows, sides, current, over: pursuitOver(rows)};
+  return {phase: "running", bound, dd, cap: pursuit.cap, rows, sides, current, over: pursuitOver(rows)};
 }

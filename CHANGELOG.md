@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Jauge de poursuite colorée selon l'avancement : remplie de 0 jusqu'à la position, en vert vers le bon bout (s'échapper, rattraper), en rouge vers le mauvais, avec la valeur affichée.
+- Préparer la poursuite sans sélection prend tous les jetons RWF de la scène ; les autres jetons de la scène sont listés sous « Aussi sur la scène », avec un bouton Fuyard et un bouton Poursuivant (aussi dans les Réglages pendant la poursuite). Plus de bouton « Ajouter la sélection ».
+- Le participant qui joue voit ce que fait une manœuvre (DD, avancée de la jauge, avantage de vitesse) et, sur chaque bouton, le bonus ou malus et le d20 à atteindre ; les autres voient « En attente de la manœuvre de … ». Les participants sont numérotés dans l'ordre de jeu.
+
 ## 0.3.0
 
 - HUD Poursuite refait. Le MJ prépare la poursuite : **Qui fuit ?** (les PNJ ou les PJ), puis le camp et le déplacement de chacun. **Lancer la poursuite** crée un combat Foundry à une passe par round, dans l'ordre de l'initiative RWF ; les fuyards ont +2 au premier round.

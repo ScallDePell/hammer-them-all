@@ -82,6 +82,7 @@ test("a pursuit is prepared in the world: who flees, each side, each means", () 
   p = setFleeing(p, "pj");
   assert.deepEqual(p.participants.map(x => x.role), ["fuyard", "poursuivant"]);
   assert.equal(addParticipants(p, [{uuid: "pc2", name: "Léa", playerOwned: true}]).participants[2].role, "fuyard", "newcomers follow who flees");
+  assert.equal(addParticipants(p, [{uuid: "pc2", name: "Léa", playerOwned: true, role: "poursuivant"}]).participants[2].role, "poursuivant", "a side given wins");
   assert.equal(canLaunch(p), true);
   assert.equal(canLaunch({...p, participants: p.participants.slice(0, 1)}), false, "someone on each side");
   assert.deepEqual(readRunningPursuit({cap: 2, participants: [{uuid: "a", combatantId: "c", role: "fuyard"}], outcomes: {a: "RWFTOOLS.Pursuit.Status.Escaped", b: 3}}),
@@ -104,7 +105,7 @@ test("every word of the HUDs is translated, in French and in English", () => {
   const sources = ["hud-model", "hud-markup", "combat-hud", "pursuit-hud", "hud-common", "test-request"].map(f => readFileSync(new URL(`../src/${f}.mjs`, import.meta.url), "utf8")).join("\n");
   const fixed = [...sources.matchAll(/RWFTOOLS\.[A-Za-z0-9.]*[A-Za-z0-9]/g)].map(m => m[0]);
   const prefixed = {"RWFTOOLS.Combat.Action": ["tirer-rafale", "tirer-full-auto", "recharger", "utiliser-pouvoir", "pouvoir-degats", "pouvoir-soins", "sprinter", "reprendre-son-souffle"],
-    "RWFTOOLS.Hud.Mode": ["foundry", "table"], "RWFTOOLS.Pursuit.Move": ["continuer", "risque", "raccourci", "stop"], "RWFTOOLS.Pursuit.Roles": ["poursuivant", "fuyard"], "RWFTOOLS.Pursuit.Side": ["poursuivant", "fuyard"], "RWFTOOLS.Pursuit.Fleeing": ["pnj", "pj"]};
+    "RWFTOOLS.Hud.Mode": ["foundry", "table"], "RWFTOOLS.Pursuit.Move": ["continuer", "risque", "raccourci", "stop"], "RWFTOOLS.Pursuit.Roles": ["poursuivant", "fuyard"], "RWFTOOLS.Pursuit.Side": ["poursuivant", "fuyard"], "RWFTOOLS.Pursuit.Fleeing": ["pnj", "pj"], "RWFTOOLS.Pursuit.MoveHelp": ["continuer", "risque", "raccourci", "stop"]};
   const keys = new Set([...fixed.filter(k => !(k in prefixed)), ...Object.entries(prefixed).flatMap(([p, ids]) => ids.map(id => `${p}.${id}`))]);
   for (const file of ["fr", "en"]) {
     const lang = JSON.parse(readFileSync(new URL(`../lang/${file}.json`, import.meta.url), "utf8")), names = Object.keys(lang);

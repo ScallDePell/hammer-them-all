@@ -40,6 +40,20 @@ function sceneCandidates() {
   return out;
 }
 
+/** Every token of a scene whose Actor plays under the RWF Ruleset, once per Actor. */
+async function sceneTokens(scene, versionId) {
+  const seen = new Set(), out = [];
+  for (const token of scene?.tokens ?? []) {
+    const actor = token.actor;
+    if (!actor?.uuid || seen.has(actor.uuid)) continue;
+    seen.add(actor.uuid);
+    let state = null;
+    try { state = await rta().runtime.getContainerState(actor.uuid); } catch { state = null; }
+    if (state?.rulesetVersionId === versionId) out.push({uuid: actor.uuid, tokenId: token.id, name: token.name ?? actor.name, playerOwned: Boolean(actor.hasPlayerOwner)});
+  }
+  return out;
+}
+
 /** A participant's gauge goes back to 0 (the RWF Action "Nouvelle poursuite"); no chat card. */
 async function resetGauges(versionId, uuids) {
   for (const uuid of uuids) {
@@ -93,10 +107,14 @@ export function createPursuitHud() {
         const owner = uuid => isGM || Boolean(globalThis.fromUuidSync?.(uuid)?.isOwner);
         const view = await pursuitView(runtime, {versionId, ruleset, pursuit, order, activeUuid, canAct: owner, isGM, userId: game.user.id, contentName});
         const myTurn = Boolean(active) && yourTurn({isGM, owned: Boolean(active.isOwner), playerOwned: Boolean(active.actor?.hasPlayerOwner)});
-        return {...view, isGM, myTurn, round: combat.round, combatId: combat.id, combatantId: active?.id ?? null, versionId, ruleset};
+        const others = isGM ? (await sceneTokens(combat.scene, versionId)).filter(c => !pursuit.participants.some(p => p.uuid === c.uuid)) : [];
+        return {...view, isGM, myTurn, round: combat.round, combatId: combat.id, combatantId: active?.id ?? null, versionId, ruleset, available: others};
       }
       const draft = storedPursuit();
-      if (draft.phase === "setup") return {...(await setupView(runtime, {versionId, ruleset, pursuit: draft, contentName})), isGM, fleeBonus: FLEE_BONUS, versionId, ruleset};
+      if (draft.phase === "setup") {
+        const others = isGM ? (await sceneTokens(globalThis.canvas?.scene, versionId)).filter(c => !draft.participants.some(p => p.uuid === c.uuid)) : [];
+        return {...(await setupView(runtime, {versionId, ruleset, pursuit: draft, contentName})), isGM, fleeBonus: FLEE_BONUS, versionId, ruleset, available: others};
+      }
       return {phase: "none", isGM};
     }
     async _renderHTML() {
@@ -119,7 +137,7 @@ export function createPursuitHud() {
       on("[data-rwf-fleeing]", event => this.#editDraft(p => setFleeing(p, event.currentTarget.dataset.rwfFleeing)));
       on("[data-rwf-launch]", () => this.#launch());
       on("[data-rwf-cancel]", () => this.#editDraft(() => emptyPursuit()));
-      on("[data-rwf-add]", () => this.#add());
+      on("[data-rwf-join]", event => this.#join(event.currentTarget.dataset.rwfJoin, event.currentTarget.dataset.rwfSide));
       on("[data-rwf-end]", () => this.#finish());
       on("[data-rwf-cap]", event => this.#edit(p => ({...p, cap: Math.max(0, Number(event.currentTarget.value) || 0)})), "change");
       on("[data-rwf-role]", event => { const {rwfRole: uuid, rwfTo: role} = event.currentTarget.dataset; if (ROLES.includes(role)) this.#edit(p => ({...p, participants: p.participants.map(x => x.uuid === uuid ? {...x, role} : x)})); });
@@ -141,29 +159,24 @@ export function createPursuitHud() {
       if (!globalThis.game.user.isGM) return;
       try { await savePursuit(change(storedPursuit())); } catch (error) { notifyError(error); }
     }
-    #candidates(known) {
-      const candidates = sceneCandidates().filter(c => !known.some(p => p.uuid === c.uuid));
-      this.#message = candidates.length ? null : "RWFTOOLS.Pursuit.SelectFirst";
-      if (!candidates.length) this.render();
-      return candidates;
-    }
+    /** The GM prepares a pursuit: the tokens selected (or targeted) take part, else every RWF token of the scene. */
     async #prepare() {
-      const candidates = this.#candidates([]);
-      if (candidates.length) await savePursuit({...addParticipants(emptyPursuit(), candidates), phase: "setup"});
+      const found = hudRuleset(rta()?.configurator);
+      if (found.reason) return;
+      const selected = sceneCandidates(), candidates = selected.length ? selected : await sceneTokens(globalThis.canvas?.scene, found.versionId);
+      this.#message = candidates.length ? null : "RWFTOOLS.Pursuit.NoTokens";
+      if (!candidates.length) return this.render();
+      await savePursuit({...addParticipants(emptyPursuit(), candidates), phase: "setup"});
     }
-    async #add() {
+    /** A token of the scene joins one side. In a running pursuit: its gauge from 0, its initiative rolled. */
+    async #join(uuid, role) {
+      const candidate = this.#view?.available?.find(c => c.uuid === uuid);
+      if (!globalThis.game.user.isGM || !candidate || !ROLES.includes(role)) return;
       const combat = pursuitCombat();
-      if (!combat?.started) {
-        const draft = storedPursuit(), candidates = this.#candidates(draft.participants);
-        if (candidates.length) await savePursuit(addParticipants(draft, candidates));
-        return;
-      }
-      // Joining a running pursuit: its gauge from 0, its initiative rolled, its turn in the next round's order.
-      const pursuit = running(combat), candidates = this.#candidates(pursuit.participants);
-      if (!candidates.length) return;
+      if (!combat?.started) return this.#editDraft(p => addParticipants(p, [{...candidate, role}]));
+      const pursuit = running(combat);
       try {
-        const fleeing = pursuit.participants.find(p => p.role === "fuyard" && p.playerOwned) ? "pj" : "pnj";
-        const added = addParticipants({fleeing, participants: []}, candidates).participants;
+        const added = addParticipants({fleeing: "pnj", participants: []}, [{...candidate, role}]).participants;
         await resetGauges(this.#view?.versionId, added.map(p => p.uuid));
         const joined = await joinCombat(combat, added);
         await saveRunning(combat, {...pursuit, participants: [...pursuit.participants, ...joined]});
