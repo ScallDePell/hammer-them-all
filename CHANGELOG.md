@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.3
+
+- Les joueurs voient enfin bouger l'écart des personnages qu'ils ne jouent pas : le MJ tient à jour l'écart de chacun dans la poursuite, et le HUD des joueurs le lit là.
+- Les jauges se lisent du côté du camp joué : + et vert quand son camp gagne du terrain. Le même écart s'affiche +1 chez les poursuivants et −1 chez les fuyards ; la légende passe de « Rattrapé … Semé » à « Semé … Rattrapé » côté poursuivants. Le MJ lit les jauges du côté des personnages non joueurs.
+
 ## 0.6.2
 
 - Une poursuite lancée par une version plus ancienne (combattants reliés dans le désordre) se répare d'elle-même : chaque participant est relié au combattant de son jeton à chaque lecture. Le joueur ne joue plus au tour d'un Vilain et retrouve ses manœuvres à son tour.

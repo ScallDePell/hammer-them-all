@@ -87,10 +87,10 @@ test("a pursuit is prepared in the world: who flees, each side, each means", () 
   assert.equal(addParticipants(p, [{uuid: "pc2", name: "Léa", playerOwned: true, role: "poursuivant"}]).participants[2].role, "poursuivant", "a side given wins");
   assert.equal(canLaunch(p), true);
   assert.equal(canLaunch({...p, participants: p.participants.slice(0, 1)}), false, "someone on each side");
-  const stored = runningPursuitFlag({cap: 2, participants: [{uuid: "Scene.s.Token.t.Actor.a", combatantId: "c", role: "fuyard"}], outcomes: {"Scene.s.Token.t.Actor.a": "RWFTOOLS.Pursuit.Status.Escaped"}});
-  assert.ok(Array.isArray(stored.outcomes), "no uuid as a key: Foundry would split it at its dots");
-  assert.deepEqual(readRunningPursuit({...stored, outcomes: [...stored.outcomes, {uuid: "b", key: 3}]}),
-    {cap: 2, participants: [{uuid: "Scene.s.Token.t.Actor.a", name: "", role: "fuyard", means: "pied", playerOwned: false, combatantId: "c"}], outcomes: {"Scene.s.Token.t.Actor.a": "RWFTOOLS.Pursuit.Status.Escaped"}});
+  const stored = runningPursuitFlag({cap: 2, participants: [{uuid: "Scene.s.Token.t.Actor.a", combatantId: "c", role: "fuyard"}], outcomes: {"Scene.s.Token.t.Actor.a": "RWFTOOLS.Pursuit.Status.Escaped"}, shares: {"Scene.s.Token.t.Actor.a": -1}});
+  assert.ok(Array.isArray(stored.outcomes) && Array.isArray(stored.shares), "no uuid as a key: Foundry would split it at its dots");
+  assert.deepEqual(readRunningPursuit({...stored, outcomes: [...stored.outcomes, {uuid: "b", key: 3}], shares: [...stored.shares, {uuid: "b", share: "x"}]}),
+    {cap: 2, participants: [{uuid: "Scene.s.Token.t.Actor.a", name: "", role: "fuyard", means: "pied", playerOwned: false, combatantId: "c"}], outcomes: {"Scene.s.Token.t.Actor.a": "RWFTOOLS.Pursuit.Status.Escaped"}, shares: {"Scene.s.Token.t.Actor.a": -1}});
   assert.deepEqual([speedAdvantage(2, 1), speedAdvantage(-1, -1), speedAdvantage(-1, 1), speedAdvantage(1, null)], [1, 0, -1, 0]);
   assert.equal(pursuitStatus(3, 3).key, "RWFTOOLS.Pursuit.Status.Escaped");
   assert.equal(pursuitStatus(-3, 3).key, "RWFTOOLS.Pursuit.Status.CaughtUp");

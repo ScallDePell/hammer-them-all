@@ -439,9 +439,12 @@ export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {
         }
       }
       if (view.over) return endPursuit(combat);
+      // Every share in the pursuit, for the players' HUDs.
+      const shares = Object.fromEntries(view.rows.map(r => [r.uuid, r.share]));
+      const now = running(combat);
+      if (JSON.stringify(shares) !== JSON.stringify(now.shares)) await saveRunning(combat, {...now, shares});
       // A pursuer whose fugitive is out of the pursuit chases another one still running.
-      const shares = new Map(view.rows.map(r => [r.uuid, r.share]));
-      const after = running(combat), retargeted = assignTargets(after.participants, uuid => !after.outcomes[uuid], uuid => shares.get(uuid));
+      const after = running(combat), retargeted = assignTargets(after.participants, uuid => !after.outcomes[uuid], uuid => shares[uuid]);
       if (JSON.stringify(retargeted) !== JSON.stringify(after.participants)) await saveRunning(combat, {...after, participants: retargeted});
       const done = new Set(view.rows.filter(r => r.status.done).map(r => r.combatantId));
       if (combat.combatant && done.has(combat.combatant.id)) await passTurn(combat.id, combat.combatant.id);

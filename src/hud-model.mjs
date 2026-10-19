@@ -264,10 +264,13 @@ export function readPursuit(stored) {
 export function readRunningPursuit(flag) {
   const value = flag && typeof flag === "object" ? flag : {};
   const outcomes = Object.fromEntries((Array.isArray(value.outcomes) ? value.outcomes : []).filter(o => typeof o?.uuid === "string" && typeof o?.key === "string").map(o => [o.uuid, o.key]));
-  return {cap: Math.max(0, number(value.cap) ?? 0), participants: readParticipants(value.participants), outcomes};
+  // Each participant's share of the gap, as the active GM last read it: players cannot always read the others' state.
+  const shares = Object.fromEntries((Array.isArray(value.shares) ? value.shares : []).filter(o => typeof o?.uuid === "string" && Number.isFinite(Number(o?.share))).map(o => [o.uuid, Number(o.share)]));
+  return {cap: Math.max(0, number(value.cap) ?? 0), participants: readParticipants(value.participants), outcomes, shares};
 }
 /** The flag a running pursuit is stored as (outcomes as a list, see readRunningPursuit). */
-export const runningPursuitFlag = pursuit => ({...pursuit, outcomes: Object.entries(pursuit.outcomes ?? {}).map(([uuid, key]) => ({uuid, key}))});
+export const runningPursuitFlag = pursuit => ({...pursuit, outcomes: Object.entries(pursuit.outcomes ?? {}).map(([uuid, key]) => ({uuid, key})),
+  shares: Object.entries(pursuit.shares ?? {}).map(([uuid, share]) => ({uuid, share}))});
 
 /** New participants join the side they are given, else the side the draft says: the fleeing side ("pnj" or "pj"),
  * the others pursue. */
@@ -372,7 +375,9 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
   for (const [index, p] of participants.entries()) {
     const {state, vehicles, vehicle, means, speed} = await meansOf(runtime, versionId, ruleset, p, {cap: pursuit.cap, contentName});
     const endurance = means === FOOT ? await runtime.tokenBarValue(versionId, p.uuid, "rta.endurance.points").catch(() => null) : null;
-    const share = counter(state, RWF.gauge), outcome = pursuit.outcomes?.[p.uuid];
+    // The GM reads every share; a player reads its own characters' and takes the others' from the pursuit.
+    const known = isGM || canAct(p.uuid) ? null : pursuit.shares?.[p.uuid];
+    const share = Number.isFinite(known) ? known : counter(state, RWF.gauge), outcome = pursuit.outcomes?.[p.uuid];
     const exhausted = Boolean(endurance) && Number(endurance.value) <= 0;
     const status = outcome ? {key: outcome, done: true} : exhausted ? EXHAUSTED : RUNNING;
     rows.push({...p, rank: index + 1, means, vehicles, vehicle, speed, share, gauge: null, status, endurance, ends: GAUGE_ENDS, active: p.uuid === activeUuid, playable: Boolean(state) && canAct(p.uuid)});
@@ -413,8 +418,9 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
     }
   }
   const sides = Object.fromEntries(ROLES.map(role => [role, rows.filter(r => r.role === role)]));
-  // The colours follow the side this user plays: a player who only plays pursuers sees closing in as good news.
-  const plays = role => rows.some(r => r.role === role && r.playable);
-  const perspective = !isGM && plays("poursuivant") && !plays("fuyard") ? "poursuivant" : "fuyard";
+  // The gauges are read from the side this user plays (the GM: the non-player characters' side): a pursuer's side sees
+  // closing in as +, a fugitive's side getting away.
+  const plays = role => rows.some(r => r.role === role && (isGM ? !r.playerOwned : r.playable));
+  const perspective = plays("poursuivant") && !plays("fuyard") ? "poursuivant" : "fuyard";
   return {phase: "running", bound, dd, cap: pursuit.cap, rows, sides, current, perspective, over: pursuitOver(rows)};
 }

@@ -150,6 +150,13 @@ test("the pursuit HUD: a gap gauge per fugitive, pursuers on their quarry, moves
   assert.match(html, />\d\. Léa<.*>\d\. Marc</s);
   const chaserHTML = renderPursuitHTML({...v, perspective: "poursuivant", isGM: false, round: 1, myTurn: false, mode: "foundry"}, t);
   assert.equal((chaserHTML.match(/rwf-hud__step--good/g) ?? []).length, -row(driver).gauge, "seen from the pursuers' side, Léa closing in is green");
+  assert.match(chaserHTML, new RegExp(`Léa<.*?rwf-hud__gauge-value--good">\\+${-row(driver).gauge}<`, "s"), "and her gap reads +");
+  assert.match(chaserHTML, /rwf-pursuit__legend"><span>Semé<\/span><span>Rattrapé</, "the legend turns round with it");
+  assert.equal(v.perspective, "fuyard", "the GM reads the gauges from the side of the characters he plays");
+  // Marc's player cannot read the others' state: their shares come from the pursuit, as the GM last read them.
+  const player = await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: {...pursuit, shares: {[driver]: -2, [thug]: 0}}, order: [thug, driver, runner], canAct: uuid => uuid === runner, userId: "marc"});
+  assert.deepEqual([player.rows.find(r => r.uuid === driver).share, player.rows.find(r => r.uuid === runner).share], [-2, 0]);
+  assert.equal(player.perspective, "poursuivant");
   assert.match(html, /fa-arrow-right"><\/i> Garde/, "each pursuer names its quarry");
   assert.equal(v.over, false);
 
