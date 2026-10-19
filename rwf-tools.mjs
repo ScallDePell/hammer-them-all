@@ -2,7 +2,7 @@ import {MODULE_ID, SOCKET} from "./src/test-request-model.mjs";
 import {installTestRequests, ensureMacros, openTestRequest} from "./src/test-request.mjs";
 import {registerHudSettings, refreshOnChanges} from "./src/hud-common.mjs";
 import {COMBAT_HUD_ID, openCombatHud, serveEndTurn, serveTarget, installCombatTargets} from "./src/combat-hud.mjs";
-import {PURSUIT_HUD_ID, openPursuitHud, installPursuitKeeper} from "./src/pursuit-hud.mjs";
+import {PURSUIT_HUD_ID, openPursuitHud, installPursuitKeeper, servePursuitTarget} from "./src/pursuit-hud.mjs";
 import {installTurnGuard} from "./src/turn-guard.mjs";
 
 Hooks.once("init", () => {
@@ -17,6 +17,7 @@ Hooks.once("ready", async () => {
     const sender = typeof senderId === "string" ? senderId : null;
     if (message?.type === "hud.endTurn") serveEndTurn(message, sender);
     if (message?.type === "hud.target") serveTarget(message, sender);
+    if (message?.type === "pursuit.target") servePursuitTarget(message, sender);
   });
   refreshOnChanges([COMBAT_HUD_ID, PURSUIT_HUD_ID]);
   installTurnGuard();

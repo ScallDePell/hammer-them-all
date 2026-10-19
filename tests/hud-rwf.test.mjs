@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import {existsSync, readFileSync, readdirSync} from "node:fs";
 import {resolve} from "node:path";
 import {pathToFileURL} from "node:url";
-import {hudRuleset, combatantView, actionContext, pursuitView, setupView, addParticipants, emptyPursuit} from "../src/hud-model.mjs";
+import {hudRuleset, combatantView, actionContext, pursuitView, setupView, addParticipants, emptyPursuit, assignTargets} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 const repo = resolve(process.env.RTA_REPO ?? new URL("../../rule-them-all", import.meta.url).pathname);
@@ -96,7 +96,7 @@ test("the combat HUD shows the RWF combatant's cards and runs its Actions", {ski
   assert.equal(button("pistolet", "recharger").allowed, false, "the pass's attack is spent");
 });
 
-test("the pursuit HUD: two sides in turn order, the advantage over the other side, moves for the one whose turn it is", {skip: !file && "no Rule Them'All checkout"}, async () => {
+test("the pursuit HUD: a gap gauge per fugitive, pursuers on their quarry, moves for the one whose turn it is", {skip: !file && "no Rule Them'All checkout"}, async () => {
   const {versionId, runtime, found, give} = await setup();
   const runner = "Actor.marc", driver = "Actor.lea", thug = "Actor.garde";
   for (const uuid of [runner, driver, thug]) await runtime.initializeContainer(versionId, uuid);
@@ -104,18 +104,25 @@ test("the pursuit HUD: two sides in turn order, the advantage over the other sid
   const draft = addParticipants(emptyPursuit(), [{uuid: runner, name: "Marc", playerOwned: true}, {uuid: driver, name: "Léa", playerOwned: true}, {uuid: thug, name: "Garde", playerOwned: false}]);
   const prepared = await setupView(runtime, {versionId, ruleset: found.ruleset, pursuit: draft});
   assert.deepEqual(prepared.rows.find(r => r.uuid === driver).vehicles.map(v => v.key), ["auto"], "the GM picks among the vehicles it owns");
+  assert.deepEqual(prepared.fugitives.map(f => f.uuid), [thug]);
+  assert.equal(prepared.rows.find(r => r.uuid === runner).targetUuid, thug, "each pursuer chases a fugitive");
   assert.equal(prepared.canLaunch, true);
-  const pursuit = {cap: 0, outcomes: {}, participants: draft.participants.map((p, i) => ({...p, combatantId: `c${i}`, means: p.uuid === driver ? "auto" : p.means}))};
+  const pursuit = {cap: 0, outcomes: {}, participants: assignTargets(draft.participants).map((p, i) => ({...p, combatantId: `c${i}`, means: p.uuid === driver ? "auto" : p.means}))};
   const read = (p, activeUuid) => pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: p, order: [thug, driver, runner], activeUuid, isGM: true, userId: "gm"});
   let v = await read(pursuit, driver);
   const row = uuid => v.rows.find(r => r.uuid === uuid);
   assert.deepEqual(v.rows.map(r => r.uuid), [thug, driver, runner], "turn order");
   assert.deepEqual(v.sides.fuyard.map(r => r.uuid), [thug]);
   assert.deepEqual(v.sides.poursuivant.map(r => r.uuid), [driver, runner]);
+  assert.deepEqual([row(thug).gauge, row(driver).gauge, row(runner).gauge], [0, null, null], "only a fugitive has a gauge");
+  assert.deepEqual(row(thug).chasers.map(r => r.uuid), [driver, runner]);
+  assert.equal(row(driver).target.uuid, thug);
   assert.deepEqual([row(runner).speed, row(driver).speed, row(thug).speed], [-1, 1, -1]);
-  assert.deepEqual([row(runner).advantage, row(driver).advantage, row(thug).advantage], [0, 1, -1], "against the fastest of the other side");
+  assert.deepEqual([row(runner).advantage, row(driver).advantage, row(thug).advantage], [0, 1, -1], "a fugitive against its fastest chaser, a pursuer against its quarry");
   assert.equal(v.current.uuid, driver);
+  assert.deepEqual(v.current.targets.map(r => r.uuid), [thug]);
   assert.deepEqual(v.current.moves.map(m => m.actionId), ["poursuite-vehicule-continuer", "poursuite-vehicule-risque", "poursuite-vehicule-raccourci", "poursuite-arret"]);
+  assert.ok(v.current.moves.every(m => m.targetUuid === thug && m.sens === -1), "a pursuer's moves work on its quarry's gauge");
   assert.equal(row(runner).moves, undefined, "only the one whose turn it is has moves");
   assert.deepEqual(v.current.moves.slice(0, 3).map(m => m.modifier), [0, -2, 2], "a risk costs 2, a shortcut gives 2");
   assert.equal(v.dd, 13);
@@ -124,22 +131,32 @@ test("the pursuit HUD: two sides in turn order, the advantage over the other sid
   assert.equal((await read({...pursuit, cap: 0.5}, driver)).rows.find(r => r.uuid === driver).speed, 0.5, "the terrain caps the car");
   assert.equal((await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit, order: [], activeUuid: driver, canAct: () => false})).current.moves.length, 0, "not this user's to play");
 
-  // Léa keeps going with a good d20: her gauge moves toward catching the quarry.
-  const move = await runtime.executeAction(versionId, "poursuite-vehicule-continuer", actionContext({actorUuid: driver, contentKey: "auto", input: {vitesse: 1, de: 18}, userId: "gm", isGM: true}));
-  assert.notEqual(move.allowed, false);
-  v = await read(pursuit, driver);
-  assert.ok(row(driver).gauge > 0, "the gauge moved");
+  // Léa keeps going with a good d20: the Garde's gap shrinks.
+  const move = await runtime.executeAction(versionId, keep.actionId, actionContext({actorUuid: driver, targetUuid: thug, contentKey: "auto", input: {vitesse: 1, sens: -1, de: 18}, userId: "gm", isGM: true}));
+  assert.notEqual(move.allowed, false, JSON.stringify(move).slice(0, 300));
+  v = await read(pursuit, thug);
+  assert.ok(row(thug).gauge < 0, "the pursuer pulled the fugitive's gauge down");
+  assert.ok(v.current.moves.every(m => m.targetUuid === thug && m.sens === 1), "a fugitive's moves work on its own gauge");
+  const html = renderPursuitHTML({...v, isGM: true, round: 1, myTurn: true, mode: "foundry"}, t);
+  assert.match(html, /data-rwf-move="continuer"/);
+  assert.match(html, /data-rwf-end-turn/);
+  assert.match(html, /rwf-pursuit__runner--active/);
+  assert.equal((html.match(/rwf-hud__step--bad/g) ?? []).length, -row(thug).gauge, "the gauge fills red from 0 to where the Garde is");
+  assert.match(html, /Poursuivi par Léa, Marc/);
+  assert.match(html, /Chasse Garde/);
+  assert.equal(v.over, false);
+
+  // Marc runs out of breath: out of the race, and the pursuit goes on with Léa.
+  await runtime.setDefinitionState(versionId, runner, "endurance", {pools: {points: 0}});
+  v = await read(pursuit, runner);
+  assert.equal(row(runner).status.key, "RWFTOOLS.Pursuit.Status.Exhausted");
+  assert.equal(v.current.moves.length, 0, "an exhausted runner has no move");
+  assert.deepEqual(row(thug).chasers.map(r => r.uuid), [driver]);
   assert.equal(v.over, false);
   v = await read({...pursuit, outcomes: {[thug]: "RWFTOOLS.Pursuit.Status.CaughtUp"}}, driver);
   assert.equal(row(thug).status.done, true);
   assert.equal(v.over, true, "no one left fleeing");
-  assert.equal(row(driver).advantage, 0, "no one left to compare with");
-  const html = renderPursuitHTML({...(await read(pursuit, driver)), isGM: true, round: 1, myTurn: true, mode: "foundry"}, t);
-  assert.match(html, /data-rwf-move="continuer"/);
-  assert.match(html, /data-rwf-end-turn/);
-  assert.match(html, /rwf-pursuit__runner--active/);
-  assert.equal((html.match(/rwf-hud__step--good/g) ?? []).length, row(driver).gauge, "the gauge fills from 0 to where Léa is");
-  assert.match(html, /Poursuivants/);
+  assert.equal(row(driver).target, null, "no one left to chase");
 });
 
 test("the turn guard frees a first combatant left with the counters of an earlier combat", {skip: !file && "no Rule Them'All checkout"}, async () => {

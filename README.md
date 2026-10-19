@@ -2,7 +2,7 @@
 
 Outils de jeu de Real World Fantasy pour Foundry VTT v14, par-dessus [Rule Them'All](https://github.com/ScallDePell/Rule-Them-All) et son Ruleset RWF. Module privé : les outils propres à RWF vivent ici, jamais dans Rule Them'All.
 
-Il demande Rule Them'All 1.0.17 ou plus récent et le Ruleset RWF 2.2.0 ou plus récent (2.4.0 conseillé), actif dans le monde.
+Il demande Rule Them'All 1.0.17 ou plus récent et le Ruleset RWF 2.5.0 ou plus récent, actif dans le monde.
 
 ## Les macros
 
@@ -35,13 +35,15 @@ La macro **HUD Combat** ouvre, sur chaque client, une fenêtre qui suit le comba
 
 La macro **HUD Poursuite** ouvre la poursuite en cours, la même pour tout le monde. Une poursuite se joue comme un combat Foundry, dans l'ordre de l'initiative.
 
-- **Préparer :** **Préparer la poursuite** prend les jetons sélectionnés (ou ciblés), sinon tous les jetons RWF de la scène. Il répond à **Qui fuit ?** (les PNJ ou les PJ), puis ajuste chaque participant : son camp (bouton ⇄), son déplacement (à pied ou l'un de ses véhicules), ou le retire. Les autres jetons de la scène sont listés sous **Aussi sur la scène**, avec un bouton Fuyard et un bouton Poursuivant ; **Vitesse maximale du terrain** plafonne les vitesses (0 : pas de limite).
-- **Lancer la poursuite :** crée un combat Foundry marqué comme poursuite, avec une seule passe par round. L'initiative RWF est lancée et les fuyards ont +2 au premier round ; elle est relancée à chaque round, sans bonus. La jauge de chacun repart de 0. Le HUD Combat ne s'occupe pas de ce combat.
-- **En haut du HUD :** le round et à qui c'est le tour, le choix des dés (Foundry ou sur la table), puis le participant dont c'est le tour : son déplacement, son avantage de vitesse, son Endurance à pied. Celui qui le joue (son joueur, ou le MJ) a ses coups : **Continuer**, **Prendre un risque**, **Raccourci** et **S'arrêter**, chacun avec son bonus ou malus et le d20 à atteindre, et un rappel de ce que fait le test. Un coup joué passe le tour ; **Passer le tour** le passe sans jouer.
-- **Deux zones, Fuyards et Poursuivants :** chaque participant dans l'ordre de l'initiative, numéroté dans l'ordre de jeu, avec sa jauge de −3 à +3, remplie depuis 0 en vert vers le bon bout et en rouge vers le mauvais ; celui dont c'est le tour est encadré.
-- **Avantage de vitesse :** +1, 0 ou −1 contre le plus rapide du camp d'en face encore en course, calculé seul et passé aux Actions.
-- **Fin :** à +3 un fuyard s'est échappé et un poursuivant a rattrapé sa cible ; à −3 un fuyard s'est fait rattraper et un poursuivant a perdu sa cible. Le chat l'annonce, le participant est marqué vaincu dans le suivi de combat et ses tours sont passés. Quand un camp n'a plus personne en course, la poursuite se termine : le chat donne l'issue de chacun et le combat est supprimé.
-- **Réglages** (MJ, repliés en bas) : vitesse maximale du terrain, camp et déplacement de chacun, ajouter un jeton de la scène, retirer un participant, **Terminer la poursuite**.
+- **Préparer :** **Préparer la poursuite** prend les jetons sélectionnés (ou ciblés), sinon tous les jetons RWF de la scène. Il répond à **Qui fuit ?** (les PNJ ou les PJ), puis ajuste chaque participant : son camp (bouton ⇄), le fuyard que chasse chaque poursuivant (réparti d'office entre les fuyards), son déplacement (à pied ou l'un de ses véhicules), ou le retire. Les autres jetons de la scène sont listés sous **Aussi sur la scène**, avec un bouton Fuyard et un bouton Poursuivant ; **Vitesse maximale du terrain** plafonne les vitesses (0 : pas de limite).
+- **Lancer la poursuite :** crée un combat Foundry marqué comme poursuite, avec une seule passe par round. L'initiative RWF est lancée et les fuyards ont +2 au premier round ; elle est relancée à chaque round, sans bonus. La jauge de chaque fuyard repart de 0. Le HUD Combat ne s'occupe pas de ce combat.
+- **Une jauge d'écart par fuyard :** de −3 (rattrapé) à +3 (il a semé ses poursuivants). La manœuvre réussie d'un fuyard fait monter sa jauge ; celle d'un poursuivant fait baisser la jauge du fuyard qu'il chasse. Plusieurs poursuivants sur le même fuyard s'additionnent. Les poursuivants n'ont pas de jauge : ils montrent le fuyard qu'ils chassent.
+- **En haut du HUD :** le round et à qui c'est le tour, le choix des dés (Foundry ou sur la table), puis le participant dont c'est le tour : son déplacement, son avantage de vitesse, son Endurance à pied et, pour un poursuivant, sa **Cible** (que son joueur ou le MJ peut changer). Celui qui le joue a ses manœuvres : **Continuer**, **Prendre un risque**, **Raccourci** et **S'arrêter**, chacune avec son bonus ou malus et le d20 à atteindre, et un rappel de ce que fait le test. Une manœuvre jouée passe le tour ; **Passer le tour** le passe sans jouer.
+- **Deux zones, Fuyards et Poursuivants :** chaque participant numéroté dans l'ordre de jeu ; un fuyard avec sa jauge, remplie depuis 0 en vert vers +3 et en rouge vers −3, et ceux qui le poursuivent ; un poursuivant avec le fuyard qu'il chasse. Celui dont c'est le tour est encadré.
+- **Avantage de vitesse :** +1, 0 ou −1, celui d'un fuyard contre le plus rapide de ses poursuivants, celui d'un poursuivant contre le fuyard qu'il chasse, calculé seul et passé aux Actions.
+- **À bout de souffle :** à pied, à 0 d'Endurance, un participant passe en Incapacité physique (Ruleset RWF) et sort de la course : le chat l'annonce, il est marqué vaincu et ses tours sont passés.
+- **Fin :** à −3 un fuyard est rattrapé (le chat nomme ceux qui l'ont rattrapé), à +3 il a semé ses poursuivants. Il est marqué vaincu dans le suivi de combat et ses tours sont passés ; les poursuivants qui le chassaient passent à un autre fuyard encore en course. Quand un camp n'a plus personne en course, la poursuite se termine : le chat donne l'issue de chacun et le combat est supprimé.
+- **Réglages** (MJ, repliés en bas) : vitesse maximale du terrain, camp, cible et déplacement de chacun, ajouter un jeton de la scène, retirer un participant, **Terminer la poursuite**.
 
 ## Installation
 

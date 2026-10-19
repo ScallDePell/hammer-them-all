@@ -91,6 +91,7 @@
 .rwf-pursuit__role, .rwf-pursuit__means { flex: none; font-size: var(--font-size-12); opacity: 0.8; }
 .rwf-pursuit__now { flex: none; font-size: var(--font-size-12); font-weight: bold; color: var(--color-level-success); }
 .rwf-pursuit__outcome { flex: none; font-size: var(--font-size-12); font-weight: bold; }
+.rwf-pursuit__chase { margin: 0; font-size: var(--font-size-12); opacity: 0.8; }
 .rwf-pursuit__zones { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @container (min-width: 720px) { .rwf-pursuit__zones { grid-template-columns: 1fr 1fr; } }
 .rwf-pursuit__zone { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

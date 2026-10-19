@@ -48,16 +48,20 @@ const combat = {round: 2, pass: 1, passes: 2, myTurn: true, turnName: "Marc Dura
   pending: {stage: "damage", de: 14, dice: "2d8", label: "RWFTOOLS.Combat.Shoot", subject: "Fusil d'assaut", required: 10, damage: true}};
 const move = (m, allowed = true) => ({move: m, label: `RWFTOOLS.Pursuit.Move.${m}`, allowed});
 const car = {key: "auto", name: "Citadine", speed: 1};
-const status = (role, gauge) => gauge >= 3 ? {key: role === "fuyard" ? "RWFTOOLS.Pursuit.Status.Escaped" : "RWFTOOLS.Pursuit.Status.Caught", done: true} : {key: "RWFTOOLS.Pursuit.Status.Running", done: false};
-const row = (uuid, name, role, gauge, extra) => ({uuid, name, role, gauge, means: "pied", vehicles: [car], vehicle: null, speed: -1, advantage: 0, endurance: {value: 6, max: 7}, status: status(role, gauge),
-  ends: role === "fuyard" ? ["RWFTOOLS.Pursuit.Ends.CaughtUp", "RWFTOOLS.Pursuit.Ends.Escaped"] : ["RWFTOOLS.Pursuit.Ends.Lost", "RWFTOOLS.Pursuit.Ends.Caught"], active: false, ...extra});
-const lea = row("l", "Léa Martin", "poursuivant", -2, {rank: 3, means: "auto", vehicle: car, speed: 1, advantage: 1, endurance: null, active: true,
+const status = gauge => gauge >= 3 ? {key: "RWFTOOLS.Pursuit.Status.Escaped", done: true} : gauge <= -3 ? {key: "RWFTOOLS.Pursuit.Status.CaughtUp", done: true} : {key: "RWFTOOLS.Pursuit.Status.Running", done: false};
+const ENDS = ["RWFTOOLS.Pursuit.Ends.CaughtUp", "RWFTOOLS.Pursuit.Ends.Escaped"];
+const runner = (uuid, name, gauge, extra) => ({uuid, name, role: "fuyard", gauge, means: "pied", vehicles: [car], vehicle: null, speed: -1, advantage: 0, endurance: {value: 6, max: 7}, status: status(gauge), ends: ENDS, active: false, ...extra});
+const chaser = (uuid, name, target, extra) => ({uuid, name, role: "poursuivant", gauge: null, targetUuid: target?.uuid, target, means: "pied", vehicles: [car], vehicle: null, speed: -1, advantage: 0, endurance: {value: 6, max: 7}, status: {key: "RWFTOOLS.Pursuit.Status.Running", done: false}, ends: ENDS, active: false, ...extra});
+const guard = {uuid: "g", name: "Garde du corps"}, driver = {uuid: "c", name: "Chauffeur"};
+const lea = chaser("l", "Léa Martin", guard, {rank: 3, means: "auto", vehicle: car, speed: 1, advantage: 1, endurance: null, active: true, playable: true, targets: [guard, driver],
   moves: [["continuer", 0, 11], ["risque", -2, 13], ["raccourci", 2, 9], ["stop", undefined, null]].map(([m, modifier, required]) => ({...move(m), modifier, required}))});
-const rowsRun = [row("g", "Garde du corps", "fuyard", 1, {rank: 1}), row("c", "Chauffeur", "fuyard", 3, {rank: 2}), lea, row("m", "Marc Durand", "poursuivant", 0, {rank: 4})];
+const marc = chaser("m", "Marc Durand", driver, {rank: 4, endurance: {value: 0, max: 7}, status: {key: "RWFTOOLS.Pursuit.Status.Exhausted", done: true}});
+const ines = chaser("i", "Inès Garcia", driver, {rank: 5});
+const rowsRun = [runner("g", "Garde du corps", -2, {rank: 1, advantage: -1, chasers: [lea]}), runner("c", "Chauffeur", 1, {rank: 2, means: "auto", vehicle: car, speed: 1, advantage: 1, chasers: [ines]}), lea, marc, ines];
 const others = [{uuid: "x", name: "Passant"}, {uuid: "y", name: "Chien errant"}];
 const chase = {phase: "running", round: 2, bound: 3, dd: 13, available: others, cap: 0, rows: rowsRun, sides: {fuyard: rowsRun.slice(0, 2), poursuivant: rowsRun.slice(2)}, current: lea, over: false, myTurn: true};
-const prepared = {phase: "setup", isGM: true, available: others, fleeing: "pnj", cap: 0, fleeBonus: 2, canLaunch: true,
-  rows: [row("g", "Garde du corps", "fuyard", 0), row("c", "Chauffeur", "fuyard", 0, {means: "auto", vehicle: car}), row("l", "Léa Martin", "poursuivant", 0), row("m", "Marc Durand", "poursuivant", 0)]};
+const prepared = {phase: "setup", isGM: true, available: others, fleeing: "pnj", cap: 0, fleeBonus: 2, canLaunch: true, fugitives: [guard, driver],
+  rows: [runner("g", "Garde du corps", 0), runner("c", "Chauffeur", 0, {means: "auto", vehicle: car}), chaser("l", "Léa Martin", null, {targetUuid: "g"}), chaser("m", "Marc Durand", null, {targetUuid: "c"})]};
 await tab.setViewportSize({width: 1000, height: 1100});
 await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML(combat, t), "rwf-hud-app", 400) +
   frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: true, mode: "foundry", settingsOpen: true}, t), "rwf-hud-app", 440)));

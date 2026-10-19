@@ -80,8 +80,8 @@ export function renderCombatHTML(view, t) {
 
 /* ---------- Pursuit ---------- */
 
-/** The gauge from −bound to +bound: the steps from 0 to where the participant is are filled, green toward its +bound
- * (escaping, catching up), red toward its −bound (caught, lost). */
+/** A fugitive's gap gauge from −bound to +bound: the steps from 0 to where it stands are filled, green toward +bound
+ * (getting away), red toward −bound (caught). */
 function gauge(row, bound, t) {
   const steps = [], tone = row.gauge > 0 ? "good" : "bad";
   for (let n = -bound; n <= bound; n++) {
@@ -93,28 +93,38 @@ function gauge(row, bound, t) {
 }
 const meansName = (row, t) => row.vehicle ? t(row.vehicle.name) : t("RWFTOOLS.Pursuit.OnFoot");
 
-/** A participant in its side's list: name, means, its gauge below; the one whose turn it is stands out. */
+/** A participant in its side's list: name and means; a fugitive's gap gauge below, with who chases it; a pursuer's
+ * target. The one whose turn it is stands out. */
 function runner(row, view, t) {
   const tag = row.status.done ? `<span class="rwf-pursuit__outcome">${words(t, row.status.key)}</span>`
     : row.active ? `<span class="rwf-pursuit__now">${words(t, "RWFTOOLS.Pursuit.ItsTurn")}</span>` : "";
+  const below = row.role === "fuyard"
+    ? `${gauge(row, view.bound, t)}${row.status.done ? "" : `<p class="rwf-pursuit__chase">${row.chasers?.length ? e(fmt(t, "RWFTOOLS.Pursuit.ChasedBy", {names: row.chasers.map(c => c.name).join(", ")})) : words(t, "RWFTOOLS.Pursuit.NotChased")}</p>`}`
+    : row.status.done ? "" : `<p class="rwf-pursuit__chase">${row.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(fmt(t, "RWFTOOLS.Pursuit.Chases", {name: row.target.name}))}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</p>`;
   return `<li class="rwf-pursuit__runner${row.active ? " rwf-pursuit__runner--active" : ""}${row.status.done ? " rwf-pursuit__runner--done" : ""}"${row.active ? ' aria-current="true"' : ""}>
     <div class="rwf-pursuit__line"><span class="rwf-pursuit__rank">${e(row.rank)}.</span><strong>${e(row.name)}</strong><span class="rwf-pursuit__means">${e(meansName(row, t))}</span>${tag}</div>
-    ${gauge(row, view.bound, t)}</li>`;
+    ${below}</li>`;
 }
 
 function zone(role, rows, view, t) {
   const count = view.phase === "setup" ? "" : `<small>${e(fmt(t, "RWFTOOLS.Pursuit.StillRunning", {n: rows.filter(r => !r.status.done).length}))}</small>`;
   return `<section class="rwf-pursuit__zone rwf-pursuit__zone--${role}"><h3 class="rwf-pursuit__zone-title">${words(t, `RWFTOOLS.Pursuit.Side.${role}`)}${count}</h3>
-    ${rows.length ? `<ul class="rwf-pursuit__list">${rows.map(row => view.phase === "setup" ? setupLine(row, t) : runner(row, view, t)).join("")}</ul>` : `<p class="rwf-hud__empty">${words(t, "RWFTOOLS.Pursuit.NoOne")}</p>`}</section>`;
+    ${rows.length ? `<ul class="rwf-pursuit__list">${rows.map(row => view.phase === "setup" ? setupLine(row, view, t) : runner(row, view, t)).join("")}</ul>` : `<p class="rwf-hud__empty">${words(t, "RWFTOOLS.Pursuit.NoOne")}</p>`}</section>`;
 }
 
 function meansSelect(row, t) {
   return `<select data-rwf-means="${e(row.uuid)}" aria-label="${words(t, "RWFTOOLS.Pursuit.Means")}"><option value="pied"${row.means === "pied" ? " selected" : ""}>${words(t, "RWFTOOLS.Pursuit.OnFoot")}</option>${row.vehicles.map(v => `<option value="${e(v.key)}"${v.key === row.means ? " selected" : ""}>${e(t(v.name))}</option>`).join("")}</select>`;
 }
-/** The GM's line for a participant: its means, the other side, out of the pursuit. */
-function setupLine(row, t) {
+/** The fugitive a pursuer chases, to pick among those still running. */
+function chaseSelect(row, fugitives, attr, t) {
+  if (!fugitives.length) return "";
+  return `<select ${attr}="${e(row.uuid)}" aria-label="${words(t, "RWFTOOLS.Pursuit.Chase")}" title="${words(t, "RWFTOOLS.Pursuit.Chase")}">${fugitives.map(f => `<option value="${e(f.uuid)}"${f.uuid === (row.targetUuid ?? row.target?.uuid) ? " selected" : ""}>${e(f.name)}</option>`).join("")}</select>`;
+}
+/** The GM's line for a participant: its means, whom it chases (a pursuer), the other side, out of the pursuit. */
+function setupLine(row, view, t) {
   const other = row.role === "fuyard" ? "poursuivant" : "fuyard";
-  return `<li class="rwf-pursuit__setup"><strong>${e(row.name)}</strong>${meansSelect(row, t)}
+  const fugitives = view.fugitives ?? view.rows.filter(r => r.role === "fuyard" && !r.status?.done).map(r => ({uuid: r.uuid, name: r.name}));
+  return `<li class="rwf-pursuit__setup"><strong>${e(row.name)}</strong>${row.role === "poursuivant" ? chaseSelect(row, fugitives, "data-rwf-target", t) : ""}${meansSelect(row, t)}
     <button type="button" class="rwf-hud__icon" data-rwf-role="${e(row.uuid)}" data-rwf-to="${other}" title="${e(fmt(t, "RWFTOOLS.Pursuit.MoveTo", {side: t(`RWFTOOLS.Pursuit.Side.${other}`)}))}"><i class="fa-solid fa-right-left"></i></button>
     <button type="button" class="rwf-hud__icon" data-rwf-remove="${e(row.uuid)}" title="${words(t, "RWFTOOLS.Pursuit.Remove")}"><i class="fa-solid fa-xmark"></i></button></li>`;
 }
@@ -148,15 +158,20 @@ function turnPanel(view, t) {
   const c = view.current;
   if (!c) return "";
   const facts = [`${e(meansName(c, t))}`, `${e(fmt(t, "RWFTOOLS.Pursuit.Advantage", {n: sign(c.advantage)}))}`, ...(c.endurance ? [`${words(t, "RWFTOOLS.Combat.Endurance")} ${e(c.endurance.value)}/${e(c.endurance.max)}`] : [])];
-  const moves = c.moves?.length ? `<p class="rwf-hud__hint">${e(fmt(t, "RWFTOOLS.Pursuit.MovesHint", {dd: view.dd ?? "?", n: sign(c.advantage)}))}</p><div class="rwf-hud__actions">${c.moves.map(m => {
+  // A pursuer's target: its player (or the GM) picks among the fugitives still running.
+  const chase = c.role !== "poursuivant" || c.status.done ? ""
+    : c.playable && c.targets?.length > 1 ? `<label class="rwf-pursuit__cap"><span>${words(t, "RWFTOOLS.Pursuit.Chase")}</span>${chaseSelect(c, c.targets, "data-rwf-chase", t)}</label>`
+    : `<p class="rwf-pursuit__chase">${c.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(fmt(t, "RWFTOOLS.Pursuit.Chases", {name: c.target.name}))}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</p>`;
+  const hint = c.role === "fuyard" ? fmt(t, "RWFTOOLS.Pursuit.MovesHintFlee", {dd: view.dd ?? "?", n: sign(c.advantage)}) : fmt(t, "RWFTOOLS.Pursuit.MovesHintChase", {dd: view.dd ?? "?", n: sign(c.advantage), name: c.target?.name ?? "?"});
+  const moves = c.moves?.length ? `<p class="rwf-hud__hint">${e(hint)}</p><div class="rwf-hud__actions">${c.moves.map(m => {
     const reason = m.reason ? t(m.reason) : t(`RWFTOOLS.Pursuit.MoveHelp.${m.move}`);
     const extra = [m.modifier ? sign(m.modifier) : "", m.required ? `${m.required}+` : ""].filter(Boolean).join(" · ");
     return `<button type="button" class="rwf-hud__action" data-rwf-move="${e(m.move)}"${m.allowed ? "" : " disabled"} title="${e(reason)}">${words(t, m.label)}${extra ? ` <small>${e(extra)}</small>` : ""}</button>`;
   }).join("")}</div>
     <button type="button" class="rwf-hud__end" data-rwf-end-turn><i class="fa-solid fa-forward"></i> ${words(t, "RWFTOOLS.Pursuit.SkipTurn")}</button>` : "";
   return `<section class="rwf-pursuit__turn"><div class="rwf-pursuit__line"><strong>${e(c.name)}</strong><span class="rwf-pursuit__role">${words(t, `RWFTOOLS.Pursuit.Roles.${c.role}`)}</span></div>
-    <div class="rwf-hud__details">${facts.map(f => `<span>${f}</span>`).join("")}</div>
-    ${moves ? "" : `<p class="rwf-hud__hint">${e(fmt(t, "RWFTOOLS.Pursuit.Waiting", {name: c.name}))}</p>`}${tableForm(view.pending, t, view.error)}${moves}</section>`;
+    <div class="rwf-hud__details">${facts.map(f => `<span>${f}</span>`).join("")}</div>${chase}
+    ${moves ? "" : `<p class="rwf-hud__hint">${e(c.status.done ? `${c.name} : ${t(c.status.key)}` : fmt(t, "RWFTOOLS.Pursuit.Waiting", {name: c.name}))}</p>`}${tableForm(view.pending, t, view.error)}${moves}</section>`;
 }
 
 /** The GM's settings of a running pursuit, folded away: terrain, sides and means, add, remove, finish. */
@@ -164,7 +179,7 @@ function settings(view, t) {
   if (!view.isGM) return "";
   return `<details class="rwf-pursuit__settings"${view.settingsOpen ? " open" : ""} data-rwf-settings><summary>${words(t, "RWFTOOLS.Pursuit.Settings")}</summary><div class="rwf-pursuit__settings-body">
     ${capField(view.cap, t)}
-    <ul class="rwf-pursuit__list">${view.rows.map(row => setupLine(row, t)).join("")}</ul>
+    <ul class="rwf-pursuit__list">${view.rows.map(row => setupLine(row, view, t)).join("")}</ul>
     ${available(view, t)}
     <button type="button" data-rwf-end><i class="fa-solid fa-flag-checkered"></i> ${words(t, "RWFTOOLS.Pursuit.Finish")}</button></div></details>`;
 }

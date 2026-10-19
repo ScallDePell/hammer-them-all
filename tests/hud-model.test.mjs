@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, readRunningPursuit, addParticipants, setFleeing, canLaunch, pursuitOver, emptyPursuit, speedAdvantage, pursuitStatus, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
+import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, readRunningPursuit, addParticipants, setFleeing, canLaunch, pursuitOver, emptyPursuit, speedAdvantage, pursuitStatus, assignTargets, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 test("each user's HUD follows the combatant acting when it is theirs, else their own character", () => {
@@ -64,11 +64,12 @@ test("the d20 needed and the d20 announced", () => {
   assert.equal(endTurnLabel({pass: 2, passes: 2}), "RWFTOOLS.Combat.EndRound");
 });
 
-test("the HUD asks for RWF 2.2.0 or later", () => {
+test("the HUD asks for RWF 2.5.0 or later", () => {
   const configurator = actions => ({getActiveVersionId: () => "v", getRuntimeRuleset: () => ({actions: actions.map(id => ({id}))})});
   assert.equal(hudRuleset({getActiveVersionId: () => null}).reason, "RWFTOOLS.Error.NoRuleset");
   assert.equal(hudRuleset(configurator(["recharger"])).reason, "RWFTOOLS.Error.NotRwfHud");
-  assert.equal(hudRuleset(configurator(["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer"])).versionId, "v");
+  assert.equal(hudRuleset(configurator(["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer"])).reason, "RWFTOOLS.Error.NotRwfHud", "2.4.0 has no exhaustion");
+  assert.equal(hudRuleset(configurator(["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer", "epuisement"])).versionId, "v");
 });
 
 test("a pursuit is prepared in the world: who flees, each side, each means", () => {
@@ -88,11 +89,14 @@ test("a pursuit is prepared in the world: who flees, each side, each means", () 
   assert.deepEqual(readRunningPursuit({cap: 2, participants: [{uuid: "a", combatantId: "c", role: "fuyard"}], outcomes: {a: "RWFTOOLS.Pursuit.Status.Escaped", b: 3}}),
     {cap: 2, participants: [{uuid: "a", name: "", role: "fuyard", means: "pied", playerOwned: false, combatantId: "c"}], outcomes: {a: "RWFTOOLS.Pursuit.Status.Escaped"}});
   assert.deepEqual([speedAdvantage(2, 1), speedAdvantage(-1, -1), speedAdvantage(-1, 1), speedAdvantage(1, null)], [1, 0, -1, 0]);
-  assert.equal(pursuitStatus("fuyard", 3).key, "RWFTOOLS.Pursuit.Status.Escaped");
-  assert.equal(pursuitStatus("poursuivant", 3).key, "RWFTOOLS.Pursuit.Status.Caught");
-  assert.equal(pursuitStatus("fuyard", -3).key, "RWFTOOLS.Pursuit.Status.CaughtUp");
-  assert.equal(pursuitStatus("poursuivant", -3).done, true);
-  assert.equal(pursuitStatus("poursuivant", 2).done, false);
+  assert.equal(pursuitStatus(3, 3).key, "RWFTOOLS.Pursuit.Status.Escaped");
+  assert.equal(pursuitStatus(-3, 3).key, "RWFTOOLS.Pursuit.Status.CaughtUp");
+  assert.equal(pursuitStatus(-4, 4).done, true, "the bound comes from the Ruleset");
+  assert.equal(pursuitStatus(2, 3).done, false);
+  const crowd = [{uuid: "f1", role: "fuyard", targetUuid: "x"}, {uuid: "f2", role: "fuyard"}, {uuid: "p1", role: "poursuivant", targetUuid: "f2"}, {uuid: "p2", role: "poursuivant"}, {uuid: "p3", role: "poursuivant", targetUuid: "gone"}];
+  assert.deepEqual(assignTargets(crowd).map(p => p.targetUuid), [undefined, undefined, "f2", "f1", "f1"], "a pursuer keeps its quarry, the others go to the least chased");
+  assert.deepEqual(assignTargets(crowd, uuid => uuid !== "f2").map(p => p.targetUuid), [undefined, undefined, "f1", "f1", "f1"], "a fugitive out of the race is chased no more");
+  assert.deepEqual(assignTargets(crowd, () => false).map(p => p.targetUuid), [undefined, undefined, undefined, undefined, undefined], "no one left to chase");
   const row = (role, done) => ({role, status: {done}});
   assert.equal(pursuitOver([row("fuyard", false), row("poursuivant", false), row("poursuivant", true)]), false);
   assert.equal(pursuitOver([row("fuyard", true), row("poursuivant", false)]), true, "no one left fleeing");

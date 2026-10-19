@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- Poursuite à jauge d'écart : chaque fuyard a une jauge de −3 (rattrapé) à +3 (il a semé ses poursuivants). La manœuvre d'un fuyard fait monter sa jauge, celle d'un poursuivant fait baisser la jauge du fuyard qu'il chasse ; plusieurs poursuivants sur un fuyard s'additionnent. Avant, chacun avait sa propre jauge et un fuyard pouvait n'être jamais rattrapé.
+- Chaque poursuivant chasse un fuyard, réparti d'office entre eux et modifiable par le MJ (préparation, Réglages) ou par son joueur à son tour (**Cible**). Quand son fuyard sort de la course, il passe à un autre.
+- L'avantage de vitesse d'un fuyard se compte contre le plus rapide de ses poursuivants, celui d'un poursuivant contre le fuyard qu'il chasse.
+- À pied à 0 d'Endurance, un participant est à bout de souffle : il sort de la poursuite (annoncé dans le chat, marqué vaincu, tours passés).
+- Demande le Ruleset RWF 2.5.0 (jauge d'écart, Incapacité physique automatique à 0 d'Endurance).
+
 ## 0.3.1
 
 - Jauge de poursuite colorée selon l'avancement : remplie de 0 jusqu'à la position, en vert vers le bon bout (s'échapper, rattraper), en rouge vers le mauvais, avec la valeur affichée.
