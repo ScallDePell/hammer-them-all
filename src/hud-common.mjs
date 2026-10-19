@@ -32,12 +32,14 @@ export function refusal(result, ruleset) {
 }
 
 /** Run an RWF Action for a combatant and post its chat card; returns the result, throws when it is refused. */
-export async function runAction({versionId, ruleset, actorUuid, actionId, targetUuid = null, contentKey = null, input = {}}) {
+export async function runAction({versionId, ruleset, actorUuid, actionId, targetUuid = null, contentKey = null, input = {}, combatant = null}) {
   const game = globalThis.game, runtime = rta().runtime;
   const result = await runtime.executeAction(versionId, actionId, actionContext({actorUuid, targetUuid, contentKey, input, userId: game.user?.id ?? null, isGM: game.user?.isGM}));
   if (!result?.allowed) throw new Error(refusal(result, ruleset));
-  const actor = globalThis.fromUuidSync?.(actorUuid);
-  await rta().chat.postActionCard(result, versionId, {speaker: globalThis.ChatMessage.getSpeaker({actor})});
+  // The card speaks for the one who acted: its combatant's token when there is one, never the token the user has selected.
+  const actor = combatant?.actor ?? globalThis.fromUuidSync?.(actorUuid), token = combatant?.token ?? actor?.token ?? null;
+  const speaker = actor || token ? globalThis.ChatMessage.getSpeaker({actor, token, alias: combatant?.name ?? token?.name ?? actor?.name}) : null;
+  await rta().chat.postActionCard(result, versionId, speaker ? {speaker} : {});
   return result;
 }
 

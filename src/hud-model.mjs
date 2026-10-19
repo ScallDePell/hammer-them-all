@@ -327,7 +327,9 @@ export const pursuitOver = rows => ROLES.some(role => !rows.some(r => r.role ===
 /** A participant's means and speed: on foot, or one of its vehicles, capped by the terrain. */
 async function meansOf(runtime, versionId, ruleset, p, {cap, contentName}) {
   let state = null, contents = [];
-  try { state = await runtime.getContainerState(p.uuid); contents = await runtime.listOwnedContents(versionId, p.uuid, actionContext({actorUuid: p.uuid})); } catch { state = null; }
+  // Read apart: a player's client that cannot list someone's vehicles still reads its gauge.
+  try { state = await runtime.getContainerState(p.uuid); } catch (error) { console.warn("RWF tools | Pursuit state not read", p.uuid, error); }
+  try { contents = await runtime.listOwnedContents(versionId, p.uuid, actionContext({actorUuid: p.uuid})); } catch (error) { console.warn("RWF tools | Pursuit vehicles not read", p.uuid, error); }
   const footSpeed = number(ruleset.parameters?.find(x => x.id === RWF.footSpeed)?.value) ?? -1;
   const vehicles = contents.filter(r => r.contentTypeId === RWF.vehicleType).map(r => ({key: r.key, name: contentName(r, p.uuid), speed: number(r.fields?.vitesse) ?? 0, handling: number(r.fields?.maniabilite) ?? 0}));
   const vehicle = vehicles.find(v => v.key === p.means) ?? null, raw = vehicle ? vehicle.speed : footSpeed;

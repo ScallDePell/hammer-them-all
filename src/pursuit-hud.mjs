@@ -77,6 +77,18 @@ async function joinCombat(combat, participants) {
   return created.map((c, i) => ({...joined[i].p, uuid: c.actor?.uuid ?? joined[i].p.uuid, combatantId: c.id}));
 }
 
+/** Once the pursuit has started, the fugitives get their +2: each fugitive's initiative is read again from the combat
+ * (rolled first if it still has none), raised, and the round starts with the best initiative. */
+async function raiseFugitives(combat, joined) {
+  const fugitives = () => joined.filter(p => p.role === "fuyard").map(p => combat.combatants.get(p.combatantId)).filter(Boolean);
+  const unrolled = fugitives().filter(c => !Number.isFinite(Number(c.initiative)) || c.initiative === null || c.initiative === "");
+  if (unrolled.length) await combat.rollInitiative(unrolled.map(c => c.id));
+  const raised = fugitives().filter(c => Number.isFinite(Number(c.initiative)) && c.initiative !== null).map(c => ({_id: c.id, initiative: Number(c.initiative) + FLEE_BONUS}));
+  if (raised.length) await combat.updateEmbeddedDocuments("Combatant", raised);
+  if (Number(combat.turn) !== 0) await combat.update({turn: 0});
+  console.info("RWF tools | Pursuit initiative", (combat.turns ?? []).map(c => `${c.name} ${c.initiative}`).join(" · "));
+}
+
 export function createPursuitHud() {
   return class PursuitHud extends ApplicationV2() {
     static DEFAULT_OPTIONS = {id: PURSUIT_HUD_ID, classes: ["rwf-tools-app", "rwf-hud-app"], position: {width: 440, height: "auto"}, window: {title: "RWFTOOLS.Pursuit.Title", icon: "fa-solid fa-gauge-high", resizable: true}};
@@ -207,10 +219,8 @@ export function createPursuitHud() {
         const combat = await CombatClass.create({scene: scene.id, active: true, flags: {[MODULE_ID]: {[PURSUIT_FLAG]: {cap: draft.cap, participants: [], outcomes: []}}, "rule-them-all": {singlePass: true}}});
         const joined = await joinCombat(combat, assignTargets(draft.participants));
         await saveRunning(combat, {cap: draft.cap, participants: joined, outcomes: {}});
-        const raised = joined.filter(p => p.role === "fuyard").map(p => combat.combatants.get(p.combatantId)).filter(Boolean)
-          .map(c => ({_id: c.id, initiative: (Number(c.initiative) || 0) + FLEE_BONUS}));
-        if (raised.length) await combat.updateEmbeddedDocuments("Combatant", raised);
         await combat.startCombat();
+        await raiseFugitives(combat, joined);
         await savePursuit(emptyPursuit());
         await chat(`${t("RWFTOOLS.Pursuit.Started")} ${fmtText(t("RWFTOOLS.Pursuit.FleeBonus"), {n: FLEE_BONUS})}`);
         // The players with a character in it see the pursuit open on their screen.
@@ -248,7 +258,8 @@ export function createPursuitHud() {
       const view = this.#view;
       this.#busy = true;
       try {
-        await runAction({versionId: view.versionId, ruleset: view.ruleset, actorUuid: uuid, actionId, contentKey, targetUuid, input});
+        const combatant = globalThis.game.combats?.get?.(view.combatId)?.combatants?.get?.(combatantId) ?? null;
+        await runAction({versionId: view.versionId, ruleset: view.ruleset, actorUuid: uuid, actionId, contentKey, targetUuid, input, combatant});
         await passTurn(view.combatId, combatantId);
       } catch (error) { this.#message = error?.message ?? String(error); notifyError(error); }
       finally { this.#busy = false; }

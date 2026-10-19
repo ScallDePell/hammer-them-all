@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4
+
+- La carte de chat d'une manœuvre (et d'une action du HUD Combat) parle au nom du combattant qui agit, et plus du jeton sélectionné par le MJ.
+- Le +2 d'initiative des fuyards est donné une fois la poursuite lancée, sur leur initiative relue dans le combat, puis le round commence par la meilleure initiative. La console note l'ordre obtenu (« RWF tools | Pursuit initiative »).
+- Le HUD lit la jauge d'un participant même quand ce client ne peut pas lister ses véhicules ; un échec de lecture est noté dans la console.
+
 ## 0.4.3
 
 - Quand le MJ lance une poursuite, le HUD Poursuite s'ouvre tout seul chez chaque joueur connecté qui possède un participant.

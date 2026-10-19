@@ -139,7 +139,8 @@ export function createCombatHud() {
     async #run({actionId, contentKey, input}) {
       const view = this.#view;
       this.#busy = true;
-      try { await runAction({versionId: view.versionId, ruleset: view.ruleset, actorUuid: view.actorUuid, actionId, targetUuid: view.target?.uuid ?? null, contentKey, input}); }
+      const combatant = view.combatantId ? globalThis.game.combat?.combatants?.get?.(view.combatantId) ?? null : null;
+      try { await runAction({versionId: view.versionId, ruleset: view.ruleset, actorUuid: view.actorUuid, actionId, targetUuid: view.target?.uuid ?? null, contentKey, input, combatant}); }
       catch (error) { this.#message = error?.message ?? String(error); notifyError(error); }
       finally { this.#busy = false; }
       this.render();
