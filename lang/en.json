@@ -126,6 +126,7 @@
   "RWFTOOLS.Pursuit.MoveTo": "Move to {side}",
   "RWFTOOLS.Pursuit.ItsTurn": "Their turn",
   "RWFTOOLS.Pursuit.FleeBonus": "The fleeing side gets +{n} initiative in the first round.",
+  "RWFTOOLS.Pursuit.Order": "Turn order: {list}.",
   "RWFTOOLS.Pursuit.BothSides": "At least one fleeing participant and one pursuer are needed.",
   "RWFTOOLS.Pursuit.Launch": "Start the pursuit",
   "RWFTOOLS.Pursuit.SkipTurn": "Skip the turn",

@@ -83,11 +83,16 @@ async function raiseFugitives(combat, joined) {
   const fugitives = () => joined.filter(p => p.role === "fuyard").map(p => combat.combatants.get(p.combatantId)).filter(Boolean);
   const unrolled = fugitives().filter(c => !Number.isFinite(Number(c.initiative)) || c.initiative === null || c.initiative === "");
   if (unrolled.length) await combat.rollInitiative(unrolled.map(c => c.id));
-  const raised = fugitives().filter(c => Number.isFinite(Number(c.initiative)) && c.initiative !== null).map(c => ({_id: c.id, initiative: Number(c.initiative) + FLEE_BONUS}));
+  const rolled = new Map(), raised = [];
+  for (const c of fugitives()) if (Number.isFinite(Number(c.initiative)) && c.initiative !== null) { rolled.set(c.id, Number(c.initiative)); raised.push({_id: c.id, initiative: Number(c.initiative) + FLEE_BONUS}); }
   if (raised.length) await combat.updateEmbeddedDocuments("Combatant", raised);
   if (Number(combat.turn) !== 0) await combat.update({turn: 0});
+  // The order, each fugitive's initiative shown with its bonus: "Luca 13.33 + 2 = 15.33 · Vilain 15.32".
+  const order = (combat.turns ?? []).map(c => rolled.has(c.id) ? `${escapeHTML(c.name)} ${rolled.get(c.id)} + ${FLEE_BONUS} = <strong>${c.initiative}</strong>` : `${escapeHTML(c.name)} <strong>${c.initiative}</strong>`);
   console.info("RWF tools | Pursuit initiative", (combat.turns ?? []).map(c => `${c.name} ${c.initiative}`).join(" · "));
+  return order.join(" · ");
 }
+const escapeHTML = text => String(text ?? "").replace(/[&<>"]/g, ch => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[ch]);
 
 export function createPursuitHud() {
   return class PursuitHud extends ApplicationV2() {
@@ -220,9 +225,9 @@ export function createPursuitHud() {
         const joined = await joinCombat(combat, assignTargets(draft.participants));
         await saveRunning(combat, {cap: draft.cap, participants: joined, outcomes: {}});
         await combat.startCombat();
-        await raiseFugitives(combat, joined);
+        const order = await raiseFugitives(combat, joined);
         await savePursuit(emptyPursuit());
-        await chat(`${t("RWFTOOLS.Pursuit.Started")} ${fmtText(t("RWFTOOLS.Pursuit.FleeBonus"), {n: FLEE_BONUS})}`);
+        await chat(`${t("RWFTOOLS.Pursuit.Started")} ${fmtText(t("RWFTOOLS.Pursuit.FleeBonus"), {n: FLEE_BONUS})}${order ? `<br>${fmtText(t("RWFTOOLS.Pursuit.Order"), {list: order})}` : ""}`);
         // The players with a character in it see the pursuit open on their screen.
         game.socket.emit(SOCKET, {type: "pursuit.open", combatId: combat.id});
       } catch (error) { this.#message = error?.message ?? String(error); notifyError(error); }

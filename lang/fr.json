@@ -126,6 +126,7 @@
   "RWFTOOLS.Pursuit.MoveTo": "Passer dans les {side}",
   "RWFTOOLS.Pursuit.ItsTurn": "À son tour",
   "RWFTOOLS.Pursuit.FleeBonus": "Les fuyards ont +{n} à l'initiative au premier round.",
+  "RWFTOOLS.Pursuit.Order": "Ordre de jeu : {list}.",
   "RWFTOOLS.Pursuit.BothSides": "Il faut au moins un fuyard et un poursuivant.",
   "RWFTOOLS.Pursuit.Launch": "Lancer la poursuite",
   "RWFTOOLS.Pursuit.SkipTurn": "Passer le tour",

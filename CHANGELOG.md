@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.5
+
+- Le message de début de poursuite donne l'ordre de jeu, avec le +2 de chaque fuyard (« Luca 13.33 + 2 = 15.33 · Vilain 15.32 · … »).
+
 ## 0.4.4
 
 - La carte de chat d'une manœuvre (et d'une action du HUD Combat) parle au nom du combattant qui agit, et plus du jeton sélectionné par le MJ.
