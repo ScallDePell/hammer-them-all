@@ -174,6 +174,22 @@ function turnPanel(view, t) {
     ${moves ? "" : `<p class="rwf-hud__hint">${e(c.status.done ? `${c.name} : ${t(c.status.key)}` : fmt(t, "RWFTOOLS.Pursuit.Waiting", {name: c.name}))}</p>`}${tableForm(view.pending, t, view.error)}${moves}</section>`;
 }
 
+/** The GM splits the pursuit: the participants ticked run on in a pursuit of their own. */
+function splitBox(view, t) {
+  if (!view.split) return "";
+  const live = view.rows.filter(r => !r.status.done), picked = new Set(view.split.picked);
+  return `<section class="rwf-pursuit__available"><h3 class="rwf-pursuit__zone-title">${words(t, "RWFTOOLS.Pursuit.Split")}</h3>
+    <p class="rwf-hud__hint">${words(t, "RWFTOOLS.Pursuit.SplitHint")}</p>
+    <ul class="rwf-pursuit__list">${live.map(r => `<li class="rwf-pursuit__setup"><label class="rwf-pursuit__pick"><input type="checkbox" data-rwf-split-pick="${e(r.uuid)}"${picked.has(r.uuid) ? " checked" : ""}> <strong>${e(r.name)}</strong></label><span class="rwf-pursuit__role">${words(t, `RWFTOOLS.Pursuit.Roles.${r.role}`)}</span></li>`).join("")}</ul>
+    <button type="button" data-rwf-split${view.split.canSplit ? "" : " disabled"}><i class="fa-solid fa-code-branch"></i> ${words(t, "RWFTOOLS.Pursuit.Split")}</button></section>`;
+}
+/** One tab per pursuit running, when a pursuit was split. */
+function pursuitTabs(view, t) {
+  if (!(view.pursuits?.length > 1)) return "";
+  return `<nav class="rwf-pursuit__tabs" aria-label="${words(t, "RWFTOOLS.Pursuit.Pursuits")}">${view.pursuits.map(p =>
+    `<button type="button" class="rwf-hud__mode-option${p.current ? " rwf-hud__mode-option--on" : ""}" data-rwf-pursuit="${e(p.id)}" aria-pressed="${p.current}">${e(p.label)}</button>`).join("")}</nav>`;
+}
+
 /** The GM's settings of a running pursuit, folded away: terrain, sides and means, add, remove, finish. */
 function settings(view, t) {
   if (!view.isGM) return "";
@@ -181,6 +197,7 @@ function settings(view, t) {
     ${capField(view.cap, t)}
     <ul class="rwf-pursuit__list">${view.rows.map(row => setupLine(row, view, t)).join("")}</ul>
     ${available(view, t)}
+    ${splitBox(view, t)}
     <button type="button" data-rwf-end><i class="fa-solid fa-flag-checkered"></i> ${words(t, "RWFTOOLS.Pursuit.Finish")}</button></div></details>`;
 }
 
@@ -193,7 +210,7 @@ export function renderPursuitHTML(view, t) {
     ${view.isGM ? `<button type="button" data-rwf-start><i class="fa-solid fa-gauge-high"></i> ${words(t, "RWFTOOLS.Pursuit.Start")}</button>` : ""}${message(view.message, t)}</div>`;
   const turn = view.current ? (view.myTurn ? `<span class="rwf-hud__turn rwf-hud__turn--mine">${words(t, "RWFTOOLS.Combat.YourTurn")}</span>` : `<span class="rwf-hud__turn">${e(fmt(t, "RWFTOOLS.Combat.TurnOf", {name: view.current.name}))}</span>`) : "";
   return `<div class="rwf-hud rwf-hud--pursuit"><header class="rwf-hud__head"><span>${e(fmt(t, "RWFTOOLS.Pursuit.Round", {round: view.round}))}</span>${turn}</header>
-    ${modeSwitch(view.mode, t)}${message(view.message, t)}${turnPanel(view, t)}
+    ${pursuitTabs(view, t)}${modeSwitch(view.mode, t)}${message(view.message, t)}${turnPanel(view, t)}
     <div class="rwf-pursuit__zones">${zone("fuyard", view.sides.fuyard, view, t)}${zone("poursuivant", view.sides.poursuivant, view, t)}</div>
     ${settings(view, t)}</div>`;
 }

@@ -5,7 +5,7 @@
    "Progression de poursuite"), then the turn passes. The active GM notes who reached a bound, skips their turns and
    ends the pursuit once a side has no one left running. */
 import {MODULE_ID, SOCKET} from "./test-request-model.mjs";
-import {RWF, ROLES, FOOT, FLEE_BONUS, hudRuleset, readPursuit, readRunningPursuit, runningPursuitFlag, addParticipants, assignTargets, setFleeing, canLaunch, emptyPursuit, setupView, pursuitView, actionContext, readWhole, yourTurn} from "./hud-model.mjs";
+import {RWF, ROLES, FOOT, FLEE_BONUS, hudRuleset, readPursuit, readRunningPursuit, runningPursuitFlag, addParticipants, assignTargets, setFleeing, canLaunch, emptyPursuit, setupView, pursuitView, actionContext, readWhole, yourTurn, splitCheck} from "./hud-model.mjs";
 import {renderPursuitHTML} from "./hud-markup.mjs";
 import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction} from "./hud-common.mjs";
 
@@ -15,13 +15,19 @@ export const PURSUIT_FLAG = "pursuit";
 export const storedPursuit = () => { try { return readPursuit(globalThis.game.settings.get(MODULE_ID, "pursuit")); } catch { return emptyPursuit(); } };
 const savePursuit = pursuit => globalThis.game.settings.set(MODULE_ID, "pursuit", readPursuit(pursuit));
 
-/** The combat running the pursuit: the current combat when it is one, else any pursuit started in the world. */
-export function pursuitCombat() {
-  const game = globalThis.game, isPursuit = c => Boolean(c?.getFlag?.(MODULE_ID, PURSUIT_FLAG));
-  if (isPursuit(game.combat)) return game.combat;
-  return [...(game.combats ?? [])].find(c => isPursuit(c) && c.started) ?? [...(game.combats ?? [])].find(isPursuit) ?? null;
-}
 export const isPursuitCombat = combat => Boolean(combat?.getFlag?.(MODULE_ID, PURSUIT_FLAG));
+/** The pursuits running in the world (a pursuit split in two runs as two combats). */
+export const pursuitCombats = () => [...(globalThis.game.combats ?? [])].filter(c => isPursuitCombat(c) && c.started);
+/** The combat of the pursuit to show: the one asked for (combatId) while it runs, else the current combat when it is a
+ * pursuit, else (a player) one where this user plays someone, else the first running, else any pursuit combat. */
+export function pursuitCombat(combatId = null) {
+  const game = globalThis.game, list = pursuitCombats();
+  const asked = combatId ? list.find(c => c.id === combatId) : null;
+  if (asked) return asked;
+  if (isPursuitCombat(game.combat) && game.combat.started) return game.combat;
+  const mine = game.user?.isGM ? null : list.find(c => [...(c.combatants ?? [])].some(x => x.isOwner || x.actor?.isOwner));
+  return mine ?? list[0] ?? [...(game.combats ?? [])].find(isPursuitCombat) ?? null;
+}
 const running = combat => readRunningPursuit(combat.getFlag(MODULE_ID, PURSUIT_FLAG));
 const saveRunning = (combat, pursuit) => combat.update({[`flags.${MODULE_ID}.${PURSUIT_FLAG}`]: runningPursuitFlag(pursuit)});
 const chat = text => globalThis.ChatMessage.create({content: `<p><strong>${t("RWFTOOLS.Pursuit.Title")}</strong> · ${text}</p>`});
@@ -103,6 +109,11 @@ export function createPursuitHud() {
     #message = null;
     #busy = false;
     #settingsOpen = false;
+    #combatId = null;
+    #split = new Set();
+    /** The pursuit this window shows (several run once a pursuit is split). */
+    #combat() { return pursuitCombat(this.#combatId); }
+    show(combatId) { this.#combatId = combatId ?? null; this.#split.clear(); return this; }
 
     async _prepareContext(options) {
       const context = await super._prepareContext(options);
@@ -115,17 +126,26 @@ export function createPursuitHud() {
       if (found.reason) return {reason: found.reason};
       const game = globalThis.game, isGM = Boolean(game.user.isGM), {versionId, ruleset} = found, runtime = rta().runtime;
       const contentName = (row, uuid) => contentNamer(ruleset, uuid)(row);
-      const combat = pursuitCombat();
+      const combat = this.#combat();
       if (combat?.started) {
+        this.#combatId = combat.id;
         const pursuit = running(combat), turns = [...(combat.turns ?? [])];
         const byCombatant = new Map(pursuit.participants.map(p => [p.combatantId, p]));
         const order = turns.map(c => byCombatant.get(c.id)?.uuid).filter(Boolean);
         const active = combat.combatant ?? null, activeUuid = active ? byCombatant.get(active.id)?.uuid ?? null : null;
-        const owner = uuid => isGM || Boolean(globalThis.fromUuidSync?.(uuid)?.isOwner);
+        // Whether this user plays a participant: its token's actor, else the Actor behind the token (a player's client
+        // may not have the token's actor ready yet).
+        const owns = combatant => Boolean(combatant?.isOwner || combatant?.actor?.isOwner || game.actors?.get?.(combatant?.actorId)?.isOwner);
+        const byUuid = new Map(pursuit.participants.map(p => [p.uuid, p]));
+        const owner = uuid => isGM || owns(combat.combatants.get(byUuid.get(uuid)?.combatantId)) || Boolean(globalThis.fromUuidSync?.(uuid)?.isOwner);
         const view = await pursuitView(runtime, {versionId, ruleset, pursuit, order, activeUuid, canAct: owner, isGM, userId: game.user.id, contentName});
-        const myTurn = Boolean(active) && yourTurn({isGM, owned: Boolean(active.isOwner), playerOwned: Boolean(active.actor?.hasPlayerOwner)});
+        const myTurn = Boolean(active) && yourTurn({isGM, owned: owns(active), playerOwned: Boolean(active.actor?.hasPlayerOwner ?? game.actors?.get?.(active.actorId)?.hasPlayerOwner)});
         const others = isGM ? (await sceneTokens(combat.scene, versionId)).filter(c => !pursuit.participants.some(p => p.uuid === c.uuid)) : [];
-        return {...view, isGM, myTurn, round: combat.round, combatId: combat.id, combatantId: active?.id ?? null, versionId, ruleset, available: others};
+        // Several pursuits: one tab each, named after its fugitives.
+        const all = pursuitCombats(), pursuits = all.length > 1 ? all.map(c => ({id: c.id, current: c.id === combat.id,
+          label: running(c).participants.filter(p => p.role === "fuyard").map(p => p.name).join(", ") || c.id})) : [];
+        const split = isGM ? {picked: [...this.#split].filter(uuid => byUuid.has(uuid)), ...splitCheck(view.rows, this.#split)} : null;
+        return {...view, isGM, myTurn, round: combat.round, combatId: combat.id, combatantId: active?.id ?? null, versionId, ruleset, available: others, pursuits, split};
       }
       const draft = storedPursuit();
       if (draft.phase === "setup") {
@@ -162,13 +182,16 @@ export function createPursuitHud() {
       on("[data-rwf-chase]", event => this.#chase(event.currentTarget.dataset.rwfChase, event.currentTarget.value), "change");
       on("[data-rwf-means]", event => { const uuid = event.currentTarget.dataset.rwfMeans, means = event.currentTarget.value || FOOT; this.#edit(p => ({...p, participants: p.participants.map(x => x.uuid === uuid ? {...x, means} : x)})); }, "change");
       on("[data-rwf-remove]", event => this.#remove(event.currentTarget.dataset.rwfRemove));
+      on("[data-rwf-pursuit]", event => this.#showPursuit(event.currentTarget.dataset.rwfPursuit));
+      on("[data-rwf-split-pick]", event => { const uuid = event.currentTarget.dataset.rwfSplitPick; if (event.currentTarget.checked) this.#split.add(uuid); else this.#split.delete(uuid); this.render(); }, "change");
+      on("[data-rwf-split]", () => this.#splitPursuit());
       root.querySelector("[data-rwf-autofocus]")?.focus();
     }
 
     /** A change to the pursuit, prepared or running (the GM only). */
     async #edit(change) {
       if (!globalThis.game.user.isGM) return;
-      const combat = pursuitCombat();
+      const combat = this.#combat();
       try {
         if (combat?.started) await saveRunning(combat, change(running(combat)));
         else await savePursuit(change(storedPursuit()));
@@ -191,7 +214,7 @@ export function createPursuitHud() {
     async #join(uuid, role) {
       const candidate = this.#view?.available?.find(c => c.uuid === uuid);
       if (!globalThis.game.user.isGM || !candidate || !ROLES.includes(role)) return;
-      const combat = pursuitCombat();
+      const combat = this.#combat();
       if (!combat?.started) return this.#editDraft(p => addParticipants(p, [{...candidate, role}]));
       const pursuit = running(combat);
       try {
@@ -202,7 +225,7 @@ export function createPursuitHud() {
       } catch (error) { notifyError(error); }
     }
     async #remove(uuid) {
-      const combat = pursuitCombat();
+      const combat = this.#combat();
       if (!combat?.started) return this.#editDraft(p => ({...p, participants: p.participants.filter(x => x.uuid !== uuid)}));
       const pursuit = running(combat), gone = pursuit.participants.find(p => p.uuid === uuid);
       try {
@@ -234,8 +257,45 @@ export function createPursuitHud() {
       finally { this.#busy = false; }
       this.render();
     }
+    /** Another pursuit in this window; the GM's combat tracker follows it. */
+    async #showPursuit(combatId) {
+      const combat = pursuitCombats().find(c => c.id === combatId);
+      if (!combat) return;
+      this.show(combat.id);
+      if (globalThis.game.user.isGM && !combat.active) { try { await combat.activate(); } catch (error) { notifyError(error); } }
+      this.render();
+    }
+    /** The GM splits the pursuit: the participants picked run on in a combat of their own, keeping their initiative,
+     * gauge and outcome; each pursuer of either part chases a fugitive of its part. */
+    async #splitPursuit() {
+      const game = globalThis.game, combat = this.#combat();
+      if (!game.user.isGM || !combat?.started || this.#busy) return;
+      const pursuit = running(combat), rows = this.#view?.rows ?? [];
+      if (!splitCheck(rows, this.#split).canSplit) return;
+      this.#busy = true;
+      try {
+        const leaving = pursuit.participants.filter(p => this.#split.has(p.uuid)), staying = pursuit.participants.filter(p => !this.#split.has(p.uuid));
+        const gaps = new Map(rows.map(r => [r.uuid, r.gauge])), running_ = uuid => !pursuit.outcomes[uuid], gap = uuid => gaps.get(uuid);
+        const CombatClass = globalThis.CONFIG?.Combat?.documentClass ?? globalThis.Combat;
+        const other = await CombatClass.create({scene: combat.scene?.id ?? globalThis.canvas?.scene?.id, active: true, flags: {[MODULE_ID]: {[PURSUIT_FLAG]: {cap: pursuit.cap, participants: [], outcomes: []}}, "rule-them-all": {singlePass: true}}});
+        const old = leaving.map(p => combat.combatants.get(p.combatantId)).filter(Boolean);
+        const created = await other.createEmbeddedDocuments("Combatant", old.map(c => ({tokenId: c.tokenId, sceneId: c.sceneId, actorId: c.actorId, hidden: c.hidden, initiative: c.initiative, defeated: c.defeated})));
+        const moved = leaving.map(p => { const i = old.findIndex(c => c.id === p.combatantId); return i < 0 ? null : {...p, combatantId: created[i].id}; }).filter(Boolean);
+        const outcomes = Object.fromEntries(Object.entries(pursuit.outcomes).filter(([uuid]) => moved.some(p => p.uuid === uuid)));
+        await saveRunning(other, {cap: pursuit.cap, participants: assignTargets(moved, running_, gap), outcomes});
+        await saveRunning(combat, {...pursuit, participants: assignTargets(staying, running_, gap), outcomes: Object.fromEntries(Object.entries(pursuit.outcomes).filter(([uuid]) => !this.#split.has(uuid)))});
+        if (old.length) await combat.deleteEmbeddedDocuments("Combatant", old.map(c => c.id));
+        await other.startCombat();
+        const names = list => list.map(p => escapeHTML(p.name)).join(", ");
+        await chat(fmtText(t("RWFTOOLS.Pursuit.SplitDone"), {a: names(staying), b: names(moved)}));
+        game.socket.emit(SOCKET, {type: "pursuit.open", combatId: other.id});
+        this.show(other.id);
+      } catch (error) { this.#message = error?.message ?? String(error); notifyError(error); }
+      finally { this.#busy = false; }
+      this.render();
+    }
     async #finish() {
-      const combat = pursuitCombat();
+      const combat = this.#combat();
       if (!globalThis.game.user.isGM || !combat) return;
       this.#pending = null;
       await endPursuit(combat);
@@ -272,7 +332,7 @@ export function createPursuitHud() {
     }
     /** The fugitive a pursuer chases, picked on its turn: the GM writes it, a player asks the active GM's client. */
     async #chase(uuid, targetUuid) {
-      const game = globalThis.game, combat = pursuitCombat();
+      const game = globalThis.game, combat = this.#combat();
       if (!combat || !targetUuid) return;
       if (game.user.isGM) return this.#edit(p => ({...p, participants: p.participants.map(x => x.uuid === uuid ? {...x, targetUuid} : x)}));
       game.socket.emit(SOCKET, {type: "pursuit.target", combatId: combat.id, uuid, targetUuid, userId: game.user.id});
@@ -327,20 +387,30 @@ export function servePursuitOpen(message) {
   if (message?.type !== "pursuit.open" || game.user.isGM) return;
   const combat = game.combats?.get?.(message.combatId);
   if (!combat || !isPursuitCombat(combat)) return;
-  if (running(combat).participants.some(p => combat.combatants.get(p.combatantId)?.actor?.isOwner)) openPursuitHud();
+  const owns = c => Boolean(c?.isOwner || c?.actor?.isOwner || game.actors?.get?.(c?.actorId)?.isOwner);
+  if (running(combat).participants.some(p => owns(combat.combatants.get(p.combatantId)))) openPursuitHud(combat.id);
 }
 
 export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {}) {
   let timer = null, busy = false, again = false;
   const check = async () => {
-    const combat = pursuitCombat();
-    if (!activeGM() || !combat?.started || !rta()?.runtime) return;
+    if (!activeGM() || !rta()?.runtime || !pursuitCombats().length) return;
     if (busy) { again = true; return; }
     busy = true;
     try {
       await rta().configuratorReady;
       const found = hudRuleset(rta().configurator);
       if (found.reason) return;
+      for (const combat of pursuitCombats()) await keep(combat, found);
+    } catch (error) { console.error(`${MODULE_ID} | Pursuit check failed`, error); }
+    finally {
+      busy = false;
+      if (again) { again = false; later(); }
+    }
+  };
+  /** One pursuit: outcomes noted, targets kept on running fugitives, done turns skipped, the end. */
+  const keep = async (combat, found) => {
+    try {
       const pursuit = running(combat), view = await pursuitView(rta().runtime, {versionId: found.versionId, ruleset: found.ruleset, pursuit, canAct: () => false});
       const reached = view.rows.filter(r => r.status.done && !pursuit.outcomes[r.uuid]);
       if (reached.length) {
@@ -354,15 +424,12 @@ export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {
       }
       if (view.over) return endPursuit(combat);
       // A pursuer whose fugitive is out of the pursuit chases another one still running.
-      const after = running(combat), retargeted = assignTargets(after.participants, uuid => !after.outcomes[uuid]);
+      const gaps = new Map(view.rows.map(r => [r.uuid, r.gauge]));
+      const after = running(combat), retargeted = assignTargets(after.participants, uuid => !after.outcomes[uuid], uuid => gaps.get(uuid));
       if (JSON.stringify(retargeted) !== JSON.stringify(after.participants)) await saveRunning(combat, {...after, participants: retargeted});
       const done = new Set(view.rows.filter(r => r.status.done).map(r => r.combatantId));
       if (combat.combatant && done.has(combat.combatant.id)) await passTurn(combat.id, combat.combatant.id);
-    } catch (error) { console.error(`${MODULE_ID} | Pursuit check failed`, error); }
-    finally {
-      busy = false;
-      if (again) { again = false; later(); }
-    }
+    } catch (error) { console.error(`${MODULE_ID} | Pursuit check failed`, combat.id, error); }
   };
   const later = () => { clearTimeout(timer); timer = setTimeout(check, delay); };
   for (const hook of ["combatStart", "combatTurnChange", "updateCombat", "updateCombatant", "updateActor", "updateToken"]) hooks.on(hook, later);
@@ -371,8 +438,9 @@ export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {
 }
 
 let PursuitHud = null;
-export function openPursuitHud() {
+export function openPursuitHud(combatId = null) {
   PursuitHud ??= createPursuitHud();
-  const open = globalThis.foundry.applications.instances.get(PURSUIT_HUD_ID);
-  return (open ?? new PursuitHud()).render({force: true});
+  const open = globalThis.foundry.applications.instances.get(PURSUIT_HUD_ID) ?? new PursuitHud();
+  if (combatId) open.show(combatId);
+  return open.render({force: true});
 }

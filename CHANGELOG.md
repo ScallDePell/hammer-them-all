@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- **Scinder la poursuite** (Réglages du MJ) : les participants cochés partent dans une poursuite à part, un autre combat Foundry, en gardant leur initiative, leur jauge et leur issue. Il faut au moins un fuyard et un poursuivant de chaque côté. Le chat annonce la séparation, les joueurs concernés voient la nouvelle poursuite s'ouvrir.
+- Avec plusieurs poursuites, le HUD montre un onglet par poursuite, nommé d'après ses fuyards ; côté MJ, le suivi de combat suit l'onglet choisi. Un joueur voit d'office celle où il joue.
+- Un poursuivant sans cible chasse le fuyard le plus proche (la jauge la plus basse), puis le moins poursuivi.
+- Un joueur dont le jeton n'a pas encore son acteur prêt sur son client est reconnu comme propriétaire par l'acteur du jeton : il garde ses manœuvres à son tour.
+
 ## 0.4.5
 
 - Le message de début de poursuite donne l'ordre de jeu, avec le +2 de chaque fuyard (« Luca 13.33 + 2 = 15.33 · Vilain 15.32 · … »).

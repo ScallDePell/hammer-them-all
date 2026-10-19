@@ -148,5 +148,9 @@
   "RWFTOOLS.Pursuit.Chase": "Cible",
   "RWFTOOLS.Pursuit.NoTarget": "Aucun fuyard à chasser.",
   "RWFTOOLS.Pursuit.MovesHintFlee": "Choisissez une manœuvre : un test à DD {dd}. Votre écart grandit de 1 sur une réussite, de 2 sur un critique, et baisse de 1 sur un échec, de 2 sur une complication, plus l'avantage de vitesse ({n}). Le tour passe ensuite.",
-  "RWFTOOLS.Pursuit.MovesHintChase": "Choisissez une manœuvre : un test à DD {dd}. L'écart de {name} baisse de 1 sur une réussite, de 2 sur un critique, et grandit de 1 sur un échec, de 2 sur une complication, plus l'avantage de vitesse ({n}). Le tour passe ensuite."
+  "RWFTOOLS.Pursuit.MovesHintChase": "Choisissez une manœuvre : un test à DD {dd}. L'écart de {name} baisse de 1 sur une réussite, de 2 sur un critique, et grandit de 1 sur un échec, de 2 sur une complication, plus l'avantage de vitesse ({n}). Le tour passe ensuite.",
+  "RWFTOOLS.Pursuit.Split": "Scinder la poursuite",
+  "RWFTOOLS.Pursuit.SplitHint": "Cochez ceux qui partent dans une poursuite à part : il faut au moins un fuyard et un poursuivant de chaque côté. Chacun garde son initiative et sa jauge.",
+  "RWFTOOLS.Pursuit.SplitDone": "la poursuite se scinde : {a} d'un côté, {b} de l'autre.",
+  "RWFTOOLS.Pursuit.Pursuits": "Poursuites en cours"
 }

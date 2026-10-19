@@ -279,21 +279,30 @@ export const setFleeing = (pursuit, fleeing) => FLEEING.includes(fleeing) ? {...
 /** Whether a prepared pursuit can start: someone on each side. */
 export const canLaunch = pursuit => ROLES.every(role => pursuit.participants.some(p => p.role === role));
 
-/** Each pursuer chases a fugitive still running: the one it chases if it still runs, else the one fewest pursuers
- * chase (the first of them). running(uuid): whether that fugitive still runs (all do by default). */
-export function assignTargets(participants, running = () => true) {
+/** Each pursuer chases a fugitive still running: the one it chases if it still runs, else the closest one (the lowest
+ * gap, gap(uuid), all 0 by default), the one fewest pursuers chase among equals, then the first of them.
+ * running(uuid): whether that fugitive still runs (all do by default). */
+export function assignTargets(participants, running = () => true, gap = () => 0) {
   const fleeing = participants.filter(p => p.role === "fuyard" && running(p.uuid));
-  const load = new Map(fleeing.map(f => [f.uuid, 0]));
+  const load = new Map(fleeing.map(f => [f.uuid, 0])), order = new Map(fleeing.map((f, i) => [f.uuid, i]));
   const keep = p => p.role === "poursuivant" && load.has(p.targetUuid);
   for (const p of participants) if (keep(p)) load.set(p.targetUuid, load.get(p.targetUuid) + 1);
+  const closest = () => [...load.keys()].sort((a, b) => (Number(gap(a)) || 0) - (Number(gap(b)) || 0) || load.get(a) - load.get(b) || order.get(a) - order.get(b))[0] ?? null;
   return participants.map(p => {
     if (p.role !== "poursuivant") { const {targetUuid, ...rest} = p; return rest; }
     if (keep(p)) return p;
-    const pick = [...load].sort((a, b) => a[1] - b[1])[0]?.[0] ?? null;
+    const pick = closest();
     if (!pick) { const {targetUuid, ...rest} = p; return rest; }
     load.set(pick, load.get(pick) + 1);
     return {...p, targetUuid: pick};
   });
+}
+
+/** Whether a running pursuit can split with the participants picked (uuids): each part keeps a fugitive and a pursuer
+ * still running. rows: [{uuid, role, status: {done}}]. */
+export function splitCheck(rows, picked) {
+  const live = rows.filter(r => !r.status?.done), has = list => ROLES.every(role => list.some(r => r.role === role));
+  return {canSplit: has(live.filter(r => picked.has(r.uuid))) && has(live.filter(r => !picked.has(r.uuid)))};
 }
 
 /** Sign of a speed difference: +1 faster than the other side, −1 slower, 0 as fast (or no one to compare with). */

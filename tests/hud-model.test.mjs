@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, readRunningPursuit, runningPursuitFlag, addParticipants, setFleeing, canLaunch, pursuitOver, emptyPursuit, speedAdvantage, pursuitStatus, assignTargets, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
+import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, readRunningPursuit, runningPursuitFlag, addParticipants, setFleeing, canLaunch, pursuitOver, emptyPursuit, speedAdvantage, pursuitStatus, assignTargets, splitCheck, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 test("each user's HUD follows the combatant acting when it is theirs, else their own character", () => {
@@ -98,7 +98,12 @@ test("a pursuit is prepared in the world: who flees, each side, each means", () 
   const crowd = [{uuid: "f1", role: "fuyard", targetUuid: "x"}, {uuid: "f2", role: "fuyard"}, {uuid: "p1", role: "poursuivant", targetUuid: "f2"}, {uuid: "p2", role: "poursuivant"}, {uuid: "p3", role: "poursuivant", targetUuid: "gone"}];
   assert.deepEqual(assignTargets(crowd).map(p => p.targetUuid), [undefined, undefined, "f2", "f1", "f1"], "a pursuer keeps its quarry, the others go to the least chased");
   assert.deepEqual(assignTargets(crowd, uuid => uuid !== "f2").map(p => p.targetUuid), [undefined, undefined, "f1", "f1", "f1"], "a fugitive out of the race is chased no more");
+  assert.deepEqual(assignTargets(crowd, () => true, uuid => ({f1: 1, f2: -2})[uuid]).map(p => p.targetUuid), [undefined, undefined, "f2", "f2", "f2"], "the closest fugitive first");
   assert.deepEqual(assignTargets(crowd, () => false).map(p => p.targetUuid), [undefined, undefined, undefined, undefined, undefined], "no one left to chase");
+  const four = [["f1", "fuyard"], ["f2", "fuyard"], ["p1", "poursuivant"], ["p2", "poursuivant"]].map(([uuid, role]) => ({uuid, role, status: {done: false}}));
+  assert.equal(splitCheck(four, new Set(["f2", "p2"])).canSplit, true);
+  assert.equal(splitCheck(four, new Set(["f2"])).canSplit, false, "a fugitive alone cannot run off on its own pursuit");
+  assert.equal(splitCheck(four, new Set(["f1", "f2", "p2"])).canSplit, false, "both parts keep a fugitive");
   const row = (role, done) => ({role, status: {done}});
   assert.equal(pursuitOver([row("fuyard", false), row("poursuivant", false), row("poursuivant", true)]), false);
   assert.equal(pursuitOver([row("fuyard", true), row("poursuivant", false)]), true, "no one left fleeing");

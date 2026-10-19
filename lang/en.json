@@ -148,5 +148,9 @@
   "RWFTOOLS.Pursuit.Chase": "Target",
   "RWFTOOLS.Pursuit.NoTarget": "No fugitive left to chase.",
   "RWFTOOLS.Pursuit.MovesHintFlee": "Choose a move: a test at DD {dd}. Your gap grows by 1 on a success, 2 on a critical, and shrinks by 1 on a failure, 2 on a complication, plus the speed advantage ({n}). Then the turn passes.",
-  "RWFTOOLS.Pursuit.MovesHintChase": "Choose a move: a test at DD {dd}. {name}'s gap shrinks by 1 on a success, 2 on a critical, and grows by 1 on a failure, 2 on a complication, plus the speed advantage ({n}). Then the turn passes."
+  "RWFTOOLS.Pursuit.MovesHintChase": "Choose a move: a test at DD {dd}. {name}'s gap shrinks by 1 on a success, 2 on a critical, and grows by 1 on a failure, 2 on a complication, plus the speed advantage ({n}). Then the turn passes.",
+  "RWFTOOLS.Pursuit.Split": "Split the pursuit",
+  "RWFTOOLS.Pursuit.SplitHint": "Tick those who go off in a pursuit of their own: each part needs at least one fugitive and one pursuer. Everyone keeps their initiative and gauge.",
+  "RWFTOOLS.Pursuit.SplitDone": "the pursuit splits: {a} on one side, {b} on the other.",
+  "RWFTOOLS.Pursuit.Pursuits": "Running pursuits"
 }

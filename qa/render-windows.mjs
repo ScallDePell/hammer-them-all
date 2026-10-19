@@ -59,7 +59,9 @@ const marc = chaser("m", "Marc Durand", driver, {rank: 4, endurance: {value: 0, 
 const ines = chaser("i", "Inès Garcia", driver, {rank: 5});
 const rowsRun = [runner("g", "Garde du corps", -2, {rank: 1, advantage: -1, chasers: [lea]}), runner("c", "Chauffeur", 1, {rank: 2, means: "auto", vehicle: car, speed: 1, advantage: 1, chasers: [ines]}), lea, marc, ines];
 const others = [{uuid: "x", name: "Passant"}, {uuid: "y", name: "Chien errant"}];
-const chase = {phase: "running", round: 2, bound: 3, dd: 13, available: others, cap: 0, rows: rowsRun, sides: {fuyard: rowsRun.slice(0, 2), poursuivant: rowsRun.slice(2)}, current: lea, over: false, myTurn: true};
+const pursuits = [{id: "a", label: "Garde du corps, Chauffeur", current: true}, {id: "b", label: "Passant"}];
+const split = {picked: ["c", "i"], canSplit: true};
+const chase = {pursuits, split, phase: "running", round: 2, bound: 3, dd: 13, available: others, cap: 0, rows: rowsRun, sides: {fuyard: rowsRun.slice(0, 2), poursuivant: rowsRun.slice(2)}, current: lea, over: false, myTurn: true};
 const prepared = {phase: "setup", isGM: true, available: others, fleeing: "pnj", cap: 0, fleeBonus: 2, canLaunch: true, fugitives: [guard, driver],
   rows: [runner("g", "Garde du corps", 0), runner("c", "Chauffeur", 0, {means: "auto", vehicle: car}), chaser("l", "Léa Martin", null, {targetUuid: "g"}), chaser("m", "Marc Durand", null, {targetUuid: "c"})]};
 await tab.setViewportSize({width: 1000, height: 1100});
