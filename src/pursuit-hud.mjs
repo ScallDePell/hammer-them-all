@@ -29,7 +29,15 @@ export function pursuitCombat(combatId = null) {
   return mine ?? list[0] ?? [...(game.combats ?? [])].find(isPursuitCombat) ?? null;
 }
 const running = combat => readRunningPursuit(combat.getFlag(MODULE_ID, PURSUIT_FLAG));
-const saveRunning = (combat, pursuit) => combat.update({[`flags.${MODULE_ID}.${PURSUIT_FLAG}`]: runningPursuitFlag(pursuit)});
+/** Saves a running pursuit (GM). A pursuer that changes target starts its own share of the gap again from 0: its gap
+ * with the new target is that fugitive's share. */
+async function saveRunning(combat, pursuit) {
+  const before = new Map(running(combat).participants.map(p => [p.uuid, p.targetUuid]));
+  await combat.update({[`flags.${MODULE_ID}.${PURSUIT_FLAG}`]: runningPursuitFlag(pursuit)});
+  const retargeted = pursuit.participants.filter(p => p.role === "poursuivant" && before.get(p.uuid) && p.targetUuid && before.get(p.uuid) !== p.targetUuid).map(p => p.uuid);
+  const found = retargeted.length ? hudRuleset(rta()?.configurator) : null;
+  if (found?.versionId) await resetGauges(found.versionId, retargeted);
+}
 const chat = text => globalThis.ChatMessage.create({content: `<p><strong>${t("RWFTOOLS.Pursuit.Title")}</strong> · ${text}</p>`});
 const activeGM = () => { const game = globalThis.game; return game.user.isGM && (!game.users.activeGM || game.users.activeGM === game.user); };
 
@@ -275,7 +283,7 @@ export function createPursuitHud() {
       this.#busy = true;
       try {
         const leaving = pursuit.participants.filter(p => this.#split.has(p.uuid)), staying = pursuit.participants.filter(p => !this.#split.has(p.uuid));
-        const gaps = new Map(rows.map(r => [r.uuid, r.gauge])), running_ = uuid => !pursuit.outcomes[uuid], gap = uuid => gaps.get(uuid);
+        const shares = new Map(rows.map(r => [r.uuid, r.share])), running_ = uuid => !pursuit.outcomes[uuid], gap = uuid => shares.get(uuid);
         const CombatClass = globalThis.CONFIG?.Combat?.documentClass ?? globalThis.Combat;
         const other = await CombatClass.create({scene: combat.scene?.id ?? globalThis.canvas?.scene?.id, active: true, flags: {[MODULE_ID]: {[PURSUIT_FLAG]: {cap: pursuit.cap, participants: [], outcomes: []}}, "rule-them-all": {singlePass: true}}});
         const old = leaving.map(p => combat.combatants.get(p.combatantId)).filter(Boolean);
@@ -416,7 +424,7 @@ export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {
       if (reached.length) {
         await saveRunning(combat, {...pursuit, outcomes: {...pursuit.outcomes, ...Object.fromEntries(reached.map(r => [r.uuid, r.status.key]))}});
         for (const r of reached) {
-          const by = r.role === "fuyard" && r.status.key === "RWFTOOLS.Pursuit.Status.CaughtUp" && r.chasers?.length ? ` (${r.chasers.map(c => c.name).join(", ")})` : "";
+          const by = r.role === "fuyard" && r.status.key === "RWFTOOLS.Pursuit.Status.CaughtUp" && r.chasers?.some(c => c.gauge <= -view.bound) ? ` (${r.chasers.filter(c => c.gauge <= -view.bound).map(c => c.name).join(", ")})` : "";
           await chat(`${r.name} : ${t(r.status.key)}${by}`);
           const combatant = combat.combatants.get(r.combatantId);
           if (combatant && !combatant.isDefeated) await combatant.update({defeated: true});
@@ -424,8 +432,8 @@ export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {
       }
       if (view.over) return endPursuit(combat);
       // A pursuer whose fugitive is out of the pursuit chases another one still running.
-      const gaps = new Map(view.rows.map(r => [r.uuid, r.gauge]));
-      const after = running(combat), retargeted = assignTargets(after.participants, uuid => !after.outcomes[uuid], uuid => gaps.get(uuid));
+      const shares = new Map(view.rows.map(r => [r.uuid, r.share]));
+      const after = running(combat), retargeted = assignTargets(after.participants, uuid => !after.outcomes[uuid], uuid => shares.get(uuid));
       if (JSON.stringify(retargeted) !== JSON.stringify(after.participants)) await saveRunning(combat, {...after, participants: retargeted});
       const done = new Set(view.rows.filter(r => r.status.done).map(r => r.combatantId));
       if (combat.combatant && done.has(combat.combatant.id)) await passTurn(combat.id, combat.combatant.id);

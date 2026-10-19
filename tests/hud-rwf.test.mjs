@@ -114,7 +114,7 @@ test("the pursuit HUD: a gap gauge per fugitive, pursuers on their quarry, moves
   assert.deepEqual(v.rows.map(r => r.uuid), [thug, driver, runner], "turn order");
   assert.deepEqual(v.sides.fuyard.map(r => r.uuid), [thug]);
   assert.deepEqual(v.sides.poursuivant.map(r => r.uuid), [driver, runner]);
-  assert.deepEqual([row(thug).gauge, row(driver).gauge, row(runner).gauge], [0, null, null], "only a fugitive has a gauge");
+  assert.deepEqual([row(thug).gauge, row(driver).gauge, row(runner).gauge], [0, 0, 0], "each pursuer's gap, the fugitive's closest");
   assert.deepEqual(row(thug).chasers.map(r => r.uuid), [driver, runner]);
   assert.equal(row(driver).target.uuid, thug);
   assert.deepEqual([row(runner).speed, row(driver).speed, row(thug).speed], [-1, 1, -1]);
@@ -131,20 +131,22 @@ test("the pursuit HUD: a gap gauge per fugitive, pursuers on their quarry, moves
   assert.equal((await read({...pursuit, cap: 0.5}, driver)).rows.find(r => r.uuid === driver).speed, 0.5, "the terrain caps the car");
   assert.equal((await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit, order: [], activeUuid: driver, canAct: () => false})).current.moves.length, 0, "not this user's to play");
 
-  // Léa keeps going with a good d20: the Garde's gap shrinks.
+  // Léa keeps going with a good d20: her gap with the Garde shrinks, not Marc's.
   const move = await runtime.executeAction(versionId, keep.actionId, actionContext({actorUuid: driver, targetUuid: thug, contentKey: "auto", input: {vitesse: 1, sens: -1, de: 18}, userId: "gm", isGM: true}));
   assert.notEqual(move.allowed, false, JSON.stringify(move).slice(0, 300));
   v = await read(pursuit, thug);
-  assert.ok(row(thug).gauge < 0, "the pursuer pulled the fugitive's gauge down");
+  assert.ok(row(driver).gauge < 0, "Léa closed in");
+  assert.equal(row(runner).gauge, 0, "Marc did not move");
+  assert.equal(row(thug).gauge, row(driver).gauge, "the Garde's gauge is its closest pursuer's gap");
+  assert.equal(row(thug).share, 0, "the Garde's own share did not move");
   assert.ok(v.current.moves.every(m => m.targetUuid === thug && m.sens === 1), "a fugitive's moves work on its own gauge");
   const html = renderPursuitHTML({...v, isGM: true, round: 1, myTurn: true, mode: "foundry"}, t);
   assert.match(html, /data-rwf-move="continuer"/);
   assert.match(html, /data-rwf-end-turn/);
   assert.match(html, /rwf-pursuit__runner--active/);
   assert.equal((html.match(/rwf-hud__step--bad/g) ?? []).length, -row(thug).gauge, "the gauge fills red from 0 to where the Garde is");
-  assert.equal(row(driver).target.gauge, row(thug).gauge, "a pursuer sees its quarry's gap");
-  assert.equal((html.match(/rwf-hud__step--good/g) ?? []).length, -2 * row(thug).gauge, "green for its two pursuers: they close in");
-  assert.match(html, /Poursuivi par Léa, Marc/);
+  assert.equal((html.match(/rwf-hud__step--good/g) ?? []).length, -row(driver).gauge, "green for Léa only: she closes in");
+  assert.match(html, /Poursuivi par Léa \(-\d\), Marc \(0\)/);
   assert.match(html, /Chasse Garde/);
   assert.equal(v.over, false);
 

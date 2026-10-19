@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- Un écart par poursuivant : chaque poursuivant a son propre écart avec le fuyard qu'il chasse. La manœuvre d'un poursuivant ne change que le sien ; celle d'un fuyard l'éloigne de tous ses poursuivants. Deux poursuivants qui réussissent ne rapprochent plus le fuyard de deux cases, et l'échec de l'un ne fait plus reculer l'autre.
+- À −3 un poursuivant rattrape sa cible ; à +3 il est semé et sort de la poursuite. Un fuyard a semé ses poursuivants quand tous ceux qui le chassaient sont semés.
+- Le fuyard montre l'écart de son poursuivant le plus proche, et celui de chacun (« Poursuivi par Vilain (−1), Vilain (+1) »). Un poursuivant qui change de cible repart de l'écart de ce fuyard.
+- Demande le Ruleset RWF 2.6.0.
+
 ## 0.5.0
 
 - **Scinder la poursuite** (Réglages du MJ) : les participants cochés partent dans une poursuite à part, un autre combat Foundry, en gardant leur initiative, leur jauge et leur issue. Il faut au moins un fuyard et un poursuivant de chaque côté. Le chat annonce la séparation, les joueurs concernés voient la nouvelle poursuite s'ouvrir.

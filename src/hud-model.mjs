@@ -2,7 +2,7 @@
    context they run its Actions in. Nothing here touches the screen or Foundry: the combat, the tokens and the
    names come in as plain data. */
 
-/** The RWF Ruleset (2.5.0 or later) as the HUDs use it. */
+/** The RWF Ruleset (2.6.0 or later) as the HUDs use it. */
 export const RWF = Object.freeze({
   weaponType: "arme", powerType: "pouvoir", vehicleType: "vehicule",
   unarmed: "attaquer-mains-nues", sprint: "sprinter", rest: "reprendre-son-souffle",
@@ -13,7 +13,7 @@ export const RWF = Object.freeze({
   moves: ["continuer", "risque", "raccourci"],
   stop: "poursuite-arret", reset: "poursuite-nouvelle",
   gauge: "progression-poursuite", gaugeBound: "poursuite-borne", footSpeed: "vitesse-a-pied", burstBonus: "bonus-rafale",
-  // What the HUD needs the Ruleset to have: the 2.2.0 combat rules, the 2.5.0 pursuit gap and exhaustion.
+  // What the HUD needs the Ruleset to have: the 2.2.0 combat rules, the 2.5.0 exhaustion (and the 2.6.0 pursuit shares, checked below).
   required: ["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer", "epuisement"]
 });
 export const D20_MIN = 1, D20_MAX = 20;
@@ -29,6 +29,8 @@ export function hudRuleset(configurator) {
   let ruleset = null;
   try { ruleset = configurator.getRuntimeRuleset?.(versionId, "published"); } catch { ruleset = null; }
   if (!RWF.required.every(id => ruleset?.actions?.some(action => action.id === id && enabled(action)))) return {reason: "RWFTOOLS.Error.NotRwfHud"};
+  // 2.6.0: each character moves its own share of the pursuit gap.
+  if (ruleset.effects?.find(effect => effect.id === "avancer-poursuite")?.targetRole !== "self") return {reason: "RWFTOOLS.Error.NotRwfHud"};
   return {versionId, ruleset};
 }
 
@@ -290,7 +292,7 @@ export function assignTargets(participants, running = () => true, gap = () => 0)
   const closest = () => [...load.keys()].sort((a, b) => (Number(gap(a)) || 0) - (Number(gap(b)) || 0) || load.get(a) - load.get(b) || order.get(a) - order.get(b))[0] ?? null;
   return participants.map(p => {
     if (p.role !== "poursuivant") { const {targetUuid, ...rest} = p; return rest; }
-    if (keep(p)) return p;
+    if (keep(p) || (p.targetUuid && !running(p.uuid))) return p;
     const pick = closest();
     if (!pick) { const {targetUuid, ...rest} = p; return rest; }
     load.set(pick, load.get(pick) + 1);
@@ -315,6 +317,8 @@ export function pursuitStatus(gauge, bound = 3) {
   return {key: "RWFTOOLS.Pursuit.Status.Running", done: false};
 }
 const EXHAUSTED = {key: "RWFTOOLS.Pursuit.Status.Exhausted", done: true};
+const RUNNING = {key: "RWFTOOLS.Pursuit.Status.Running", done: false}, LOST = {key: "RWFTOOLS.Pursuit.Status.Lost", done: true};
+const CAUGHT = {key: "RWFTOOLS.Pursuit.Status.CaughtUp", done: true}, ESCAPED = {key: "RWFTOOLS.Pursuit.Status.Escaped", done: true};
 /** The words at the two ends of a fugitive's gauge (−bound, +bound). */
 export const GAUGE_ENDS = ["RWFTOOLS.Pursuit.Ends.CaughtUp", "RWFTOOLS.Pursuit.Ends.Escaped"];
 
@@ -368,22 +372,30 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
   for (const [index, p] of participants.entries()) {
     const {state, vehicles, vehicle, means, speed} = await meansOf(runtime, versionId, ruleset, p, {cap: pursuit.cap, contentName});
     const endurance = means === FOOT ? await runtime.tokenBarValue(versionId, p.uuid, "rta.endurance.points").catch(() => null) : null;
-    const gauge = p.role === "fuyard" ? counter(state, RWF.gauge) : null, outcome = pursuit.outcomes?.[p.uuid];
+    const share = counter(state, RWF.gauge), outcome = pursuit.outcomes?.[p.uuid];
     const exhausted = Boolean(endurance) && Number(endurance.value) <= 0;
-    const status = outcome ? {key: outcome, done: true} : exhausted ? EXHAUSTED : p.role === "fuyard" ? pursuitStatus(gauge, bound) : {key: "RWFTOOLS.Pursuit.Status.Running", done: false};
-    rows.push({...p, rank: index + 1, means, vehicles, vehicle, speed, gauge, status, endurance, ends: GAUGE_ENDS, active: p.uuid === activeUuid, playable: Boolean(state) && canAct(p.uuid)});
+    const status = outcome ? {key: outcome, done: true} : exhausted ? EXHAUSTED : RUNNING;
+    rows.push({...p, rank: index + 1, means, vehicles, vehicle, speed, share, gauge: null, status, endurance, ends: GAUGE_ENDS, active: p.uuid === activeUuid, playable: Boolean(state) && canAct(p.uuid)});
   }
   const byUuid = new Map(rows.map(r => [r.uuid, r]));
-  for (const row of rows) {
-    if (row.role === "fuyard") {
-      row.chasers = rows.filter(r => r.role === "poursuivant" && r.targetUuid === row.uuid && !r.status.done);
-      const against = row.chasers.length ? row.chasers : rows.filter(r => r.role === "poursuivant" && !r.status.done);
-      row.advantage = speedAdvantage(row.speed, against.length ? Math.max(...against.map(r => r.speed)) : null);
-    } else {
-      const target = byUuid.get(row.targetUuid);
-      row.target = target && !target.status.done ? {uuid: target.uuid, name: target.name, gauge: target.gauge} : null;
-      row.advantage = speedAdvantage(row.speed, row.target ? target.speed : null);
-    }
+  // A pursuer's gap with its target: the fugitive's share plus its own. At +bound the pursuer is lost.
+  for (const row of rows.filter(r => r.role === "poursuivant")) {
+    const target = byUuid.get(row.targetUuid);
+    const live = target && !target.status.done ? target : null;
+    row.gauge = live ? live.share + row.share : null;
+    if (!row.status.done && row.gauge !== null && row.gauge >= bound) row.status = LOST;
+    row.target = live ? {uuid: live.uuid, name: live.name, gauge: row.gauge} : null;
+    row.advantage = speedAdvantage(row.speed, live ? live.speed : null);
+  }
+  // A fugitive: caught by a pursuer at −bound, away once every pursuer on it is lost; its gauge is its closest chaser's gap.
+  for (const row of rows.filter(r => r.role === "fuyard")) {
+    const on = rows.filter(r => r.role === "poursuivant" && r.targetUuid === row.uuid);
+    row.chasers = on.filter(r => !r.status.done).map(r => ({uuid: r.uuid, name: r.name, gauge: r.gauge, speed: r.speed}));
+    row.gauge = row.chasers.length ? Math.min(...row.chasers.map(c => c.gauge)) : null;
+    if (!row.status.done && row.gauge !== null && row.gauge <= -bound) row.status = CAUGHT;
+    else if (!row.status.done && !row.chasers.length && on.some(r => r.status.key === LOST.key)) row.status = ESCAPED;
+    const against = row.chasers.length ? row.chasers : rows.filter(r => r.role === "poursuivant" && !r.status.done);
+    row.advantage = speedAdvantage(row.speed, against.length ? Math.max(...against.map(r => r.speed)) : null);
   }
   const current = rows.find(r => r.active) ?? null;
   const dd = number(await formula(runtime, versionId, "dd-de-poursuite", actionContext({actorUuid: current?.uuid ?? null}))) ?? number(ruleset.parameters?.find(x => x.id === "dd-poursuite")?.value);

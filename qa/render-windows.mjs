@@ -53,11 +53,11 @@ const ENDS = ["RWFTOOLS.Pursuit.Ends.CaughtUp", "RWFTOOLS.Pursuit.Ends.Escaped"]
 const runner = (uuid, name, gauge, extra) => ({uuid, name, role: "fuyard", gauge, means: "pied", vehicles: [car], vehicle: null, speed: -1, advantage: 0, endurance: {value: 6, max: 7}, status: status(gauge), ends: ENDS, active: false, ...extra});
 const chaser = (uuid, name, target, extra) => ({uuid, name, role: "poursuivant", gauge: null, targetUuid: target?.uuid, target, means: "pied", vehicles: [car], vehicle: null, speed: -1, advantage: 0, endurance: {value: 6, max: 7}, status: {key: "RWFTOOLS.Pursuit.Status.Running", done: false}, ends: ENDS, active: false, ...extra});
 const guard = {uuid: "g", name: "Garde du corps", gauge: -2}, driver = {uuid: "c", name: "Chauffeur", gauge: 1};
-const lea = chaser("l", "Léa Martin", guard, {rank: 3, means: "auto", vehicle: car, speed: 1, advantage: 1, endurance: null, active: true, playable: true, targets: [guard, driver],
+const lea = chaser("l", "Léa Martin", guard, {gauge: -2, rank: 3, means: "auto", vehicle: car, speed: 1, advantage: 1, endurance: null, active: true, playable: true, targets: [guard, driver],
   moves: [["continuer", 0, 11], ["risque", -2, 13], ["raccourci", 2, 9], ["stop", undefined, null]].map(([m, modifier, required]) => ({...move(m), modifier, required}))});
-const marc = chaser("m", "Marc Durand", driver, {rank: 4, endurance: {value: 0, max: 7}, status: {key: "RWFTOOLS.Pursuit.Status.Exhausted", done: true}});
-const ines = chaser("i", "Inès Garcia", driver, {rank: 5});
-const rowsRun = [runner("g", "Garde du corps", -2, {rank: 1, advantage: -1, chasers: [lea]}), runner("c", "Chauffeur", 1, {rank: 2, means: "auto", vehicle: car, speed: 1, advantage: 1, chasers: [ines]}), lea, marc, ines];
+const marc = chaser("m", "Marc Durand", guard, {gauge: 1, rank: 4});
+const ines = chaser("i", "Inès Garcia", driver, {gauge: 1, rank: 5});
+const rowsRun = [runner("g", "Garde du corps", -2, {rank: 1, advantage: -1, chasers: [lea, marc]}), runner("c", "Chauffeur", 1, {rank: 2, means: "auto", vehicle: car, speed: 1, advantage: 1, chasers: [ines]}), lea, marc, ines];
 const others = [{uuid: "x", name: "Passant"}, {uuid: "y", name: "Chien errant"}];
 const pursuits = [{id: "a", label: "Garde du corps, Chauffeur", current: true}, {id: "b", label: "Passant"}];
 const split = {picked: ["c", "i"], canSplit: true};

@@ -80,8 +80,8 @@ export function renderCombatHTML(view, t) {
 
 /* ---------- Pursuit ---------- */
 
-/** A fugitive's gap gauge from −bound to +bound: the steps from 0 to where it stands are filled, green toward +bound
- * (getting away), red toward −bound (caught). A pursuer sees its quarry's gauge with the colours the other way round. */
+/** A gap gauge from −bound (caught) to +bound (lost): the steps from 0 to where it stands are filled, green toward
+ * +bound and red toward −bound for a fugitive, the other way round for a pursuer. */
 function gauge(row, bound, t, {chaser = false} = {}) {
   const steps = [], tone = (row.gauge > 0) !== chaser ? "good" : "bad";
   for (let n = -bound; n <= bound; n++) {
@@ -98,9 +98,10 @@ const meansName = (row, t) => row.vehicle ? t(row.vehicle.name) : t("RWFTOOLS.Pu
 function runner(row, view, t) {
   const tag = row.status.done ? `<span class="rwf-pursuit__outcome">${words(t, row.status.key)}</span>`
     : row.active ? `<span class="rwf-pursuit__now">${words(t, "RWFTOOLS.Pursuit.ItsTurn")}</span>` : "";
+  // A fugitive shows its closest chaser's gap and each chaser's; a pursuer its own gap with its target.
   const below = row.role === "fuyard"
-    ? `${gauge(row, view.bound, t)}${row.status.done ? "" : `<p class="rwf-pursuit__chase">${row.chasers?.length ? e(fmt(t, "RWFTOOLS.Pursuit.ChasedBy", {names: row.chasers.map(c => c.name).join(", ")})) : words(t, "RWFTOOLS.Pursuit.NotChased")}</p>`}`
-    : row.status.done ? "" : `${row.target ? gauge({gauge: row.target.gauge, ends: row.ends}, view.bound, t, {chaser: true}) : ""}<p class="rwf-pursuit__chase">${row.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(fmt(t, "RWFTOOLS.Pursuit.Chases", {name: row.target.name}))}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</p>`;
+    ? `${row.gauge !== null && row.gauge !== undefined ? gauge(row, view.bound, t) : ""}${row.status.done ? "" : `<p class="rwf-pursuit__chase">${row.chasers?.length ? e(fmt(t, "RWFTOOLS.Pursuit.ChasedBy", {names: row.chasers.map(c => `${c.name} (${sign(c.gauge)})`).join(", ")})) : words(t, "RWFTOOLS.Pursuit.NotChased")}</p>`}`
+    : row.status.done ? "" : `${row.target ? gauge(row, view.bound, t, {chaser: true}) : ""}<p class="rwf-pursuit__chase">${row.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(fmt(t, "RWFTOOLS.Pursuit.Chases", {name: row.target.name}))}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</p>`;
   return `<li class="rwf-pursuit__runner${row.active ? " rwf-pursuit__runner--active" : ""}${row.status.done ? " rwf-pursuit__runner--done" : ""}"${row.active ? ' aria-current="true"' : ""}>
     <div class="rwf-pursuit__line"><span class="rwf-pursuit__rank">${e(row.rank)}.</span><strong>${e(row.name)}</strong><span class="rwf-pursuit__means">${e(meansName(row, t))}</span>${tag}</div>
     ${below}</li>`;

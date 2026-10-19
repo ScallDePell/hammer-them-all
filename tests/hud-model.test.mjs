@@ -64,11 +64,12 @@ test("the d20 needed and the d20 announced", () => {
   assert.equal(endTurnLabel({pass: 2, passes: 2}), "RWFTOOLS.Combat.EndRound");
 });
 
-test("the HUD asks for RWF 2.5.0 or later", () => {
-  const configurator = actions => ({getActiveVersionId: () => "v", getRuntimeRuleset: () => ({actions: actions.map(id => ({id}))})});
+test("the HUD asks for RWF 2.6.0 or later", () => {
+  const configurator = (actions, role = "self") => ({getActiveVersionId: () => "v", getRuntimeRuleset: () => ({actions: actions.map(id => ({id})), effects: [{id: "avancer-poursuite", targetRole: role}]})});
   assert.equal(hudRuleset({getActiveVersionId: () => null}).reason, "RWFTOOLS.Error.NoRuleset");
   assert.equal(hudRuleset(configurator(["recharger"])).reason, "RWFTOOLS.Error.NotRwfHud");
   assert.equal(hudRuleset(configurator(["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer"])).reason, "RWFTOOLS.Error.NotRwfHud", "2.4.0 has no exhaustion");
+  assert.equal(hudRuleset(configurator(["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer", "epuisement"], "target")).reason, "RWFTOOLS.Error.NotRwfHud", "2.5.0 shared one gauge per fugitive");
   assert.equal(hudRuleset(configurator(["reprendre-son-souffle", "recharger", "poursuite-a-pied-continuer", "epuisement"])).versionId, "v");
 });
 
@@ -99,7 +100,8 @@ test("a pursuit is prepared in the world: who flees, each side, each means", () 
   assert.deepEqual(assignTargets(crowd).map(p => p.targetUuid), [undefined, undefined, "f2", "f1", "f1"], "a pursuer keeps its quarry, the others go to the least chased");
   assert.deepEqual(assignTargets(crowd, uuid => uuid !== "f2").map(p => p.targetUuid), [undefined, undefined, "f1", "f1", "f1"], "a fugitive out of the race is chased no more");
   assert.deepEqual(assignTargets(crowd, () => true, uuid => ({f1: 1, f2: -2})[uuid]).map(p => p.targetUuid), [undefined, undefined, "f2", "f2", "f2"], "the closest fugitive first");
-  assert.deepEqual(assignTargets(crowd, () => false).map(p => p.targetUuid), [undefined, undefined, undefined, undefined, undefined], "no one left to chase");
+  assert.deepEqual(assignTargets(crowd, uuid => !uuid.startsWith("f")).map(p => p.targetUuid), [undefined, undefined, undefined, undefined, undefined], "no one left to chase");
+  assert.deepEqual(assignTargets(crowd, uuid => uuid !== "p1" && uuid !== "f2").map(p => p.targetUuid), [undefined, undefined, "f2", "f1", "f1"], "a pursuer out of the race keeps the quarry it lost");
   const four = [["f1", "fuyard"], ["f2", "fuyard"], ["p1", "poursuivant"], ["p2", "poursuivant"]].map(([uuid, role]) => ({uuid, role, status: {done: false}}));
   assert.equal(splitCheck(four, new Set(["f2", "p2"])).canSplit, true);
   assert.equal(splitCheck(four, new Set(["f2"])).canSplit, false, "a fugitive alone cannot run off on its own pursuit");
