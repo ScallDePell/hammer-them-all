@@ -28,7 +28,15 @@ export function pursuitCombat(combatId = null) {
   const mine = game.user?.isGM ? null : list.find(c => [...(c.combatants ?? [])].some(x => x.isOwner || x.actor?.isOwner));
   return mine ?? list[0] ?? [...(game.combats ?? [])].find(isPursuitCombat) ?? null;
 }
-const running = combat => readRunningPursuit(combat.getFlag(MODULE_ID, PURSUIT_FLAG));
+/** A running pursuit, each participant tied to the combatant of its own token: a pursuit launched with an older
+ * version could hold another participant's combatant (they were matched by creation order). */
+const running = combat => {
+  const pursuit = readRunningPursuit(combat.getFlag(MODULE_ID, PURSUIT_FLAG)), combatants = [...(combat.combatants ?? [])];
+  return {...pursuit, participants: pursuit.participants.map(p => {
+    const own = p.tokenId && combatants.find(c => c.tokenId === p.tokenId);
+    return own && own.id !== p.combatantId ? {...p, combatantId: own.id} : p;
+  })};
+};
 /** Saves a running pursuit (GM). A pursuer that changes target starts its own share of the gap again from 0: its gap
  * with the new target is that fugitive's share. */
 async function saveRunning(combat, pursuit) {

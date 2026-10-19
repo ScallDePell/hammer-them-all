@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2
+
+- Une poursuite lancée par une version plus ancienne (combattants reliés dans le désordre) se répare d'elle-même : chaque participant est relié au combattant de son jeton à chaque lecture. Le joueur ne joue plus au tour d'un Vilain et retrouve ses manœuvres à son tour.
+- Côté MJ, le tour d'un personnage qu'il joue s'affiche en vert « À Vilain de jouer » au lieu de « À vous de jouer ».
+
 ## 0.6.1
 
 - Correctif : au lancement (et à la séparation) d'une poursuite, chaque combattant Foundry est relié au participant par son jeton, et non plus par l'ordre de création. Avant, un PJ pouvait recevoir le nom, le camp ou le +2 d'un autre participant, se voir comme un Vilain ou ne pas pouvoir jouer à son tour.

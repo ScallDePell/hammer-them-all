@@ -42,6 +42,7 @@
   "RWFTOOLS.Combat.RoundPass": "Round {round} · passe {pass}/{passes}",
   "RWFTOOLS.Combat.YourTurn": "À vous de jouer",
   "RWFTOOLS.Combat.TurnOf": "Tour de {name}",
+  "RWFTOOLS.Combat.GmTurn": "À {name} de jouer",
   "RWFTOOLS.Combat.Vitality": "Vitalité",
   "RWFTOOLS.Combat.Endurance": "Endurance",
   "RWFTOOLS.Combat.Energy": "Énergie",

@@ -55,7 +55,7 @@ function card(c, t) {
 export function renderCombatHTML(view, t) {
   if (view.reason) return `<div class="rwf-hud"><p class="rwf-hud__empty">${words(t, view.reason)}</p></div>`;
   const c = view.combatant;
-  const turn = view.myTurn ? `<span class="rwf-hud__turn rwf-hud__turn--mine">${words(t, "RWFTOOLS.Combat.YourTurn")}</span>` : `<span class="rwf-hud__turn">${e(fmt(t, "RWFTOOLS.Combat.TurnOf", {name: view.turnName ?? "—"}))}</span>`;
+  const turn = view.myTurn ? `<span class="rwf-hud__turn rwf-hud__turn--mine">${view.isGM ? e(fmt(t, "RWFTOOLS.Combat.GmTurn", {name: view.turnName ?? "—"})) : words(t, "RWFTOOLS.Combat.YourTurn")}</span>` : `<span class="rwf-hud__turn">${e(fmt(t, "RWFTOOLS.Combat.TurnOf", {name: view.turnName ?? "—"}))}</span>`;
   const head = `<header class="rwf-hud__head"><span>${e(fmt(t, "RWFTOOLS.Combat.RoundPass", {round: view.round, pass: view.pass, passes: view.passes}))}</span>${turn}</header>`;
   const who = `<section class="rwf-hud__who"><h3>${e(view.name)}</h3><div class="rwf-hud__stats">
     ${pool(words(t, "RWFTOOLS.Combat.Vitality"), c.pools.vitalite)}${pool(words(t, "RWFTOOLS.Combat.Endurance"), c.pools.endurance)}${pool(words(t, "RWFTOOLS.Combat.Energy"), c.pools.energie)}
@@ -215,7 +215,7 @@ export function renderPursuitHTML(view, t) {
   if (view.phase === "setup") return renderSetup(view, t);
   if (view.phase !== "running") return `<div class="rwf-hud rwf-hud--pursuit"><p class="rwf-hud__empty">${words(t, view.isGM ? "RWFTOOLS.Pursuit.StartHint" : "RWFTOOLS.Pursuit.None")}</p>
     ${view.isGM ? `<button type="button" data-rwf-start><i class="fa-solid fa-gauge-high"></i> ${words(t, "RWFTOOLS.Pursuit.Start")}</button>` : ""}${message(view.message, t)}</div>`;
-  const turn = view.current ? (view.myTurn ? `<span class="rwf-hud__turn rwf-hud__turn--mine">${words(t, "RWFTOOLS.Combat.YourTurn")}</span>` : `<span class="rwf-hud__turn">${e(fmt(t, "RWFTOOLS.Combat.TurnOf", {name: view.current.name}))}</span>`) : "";
+  const turn = view.current ? (view.myTurn ? `<span class="rwf-hud__turn rwf-hud__turn--mine">${view.isGM ? e(fmt(t, "RWFTOOLS.Combat.GmTurn", {name: view.current.name})) : words(t, "RWFTOOLS.Combat.YourTurn")}</span>` : `<span class="rwf-hud__turn">${e(fmt(t, "RWFTOOLS.Combat.TurnOf", {name: view.current.name}))}</span>`) : "";
   return `<div class="rwf-hud rwf-hud--pursuit"><header class="rwf-hud__head"><span>${e(fmt(t, "RWFTOOLS.Pursuit.Round", {round: view.round}))}</span>${turn}</header>
     ${pursuitTabs(view, t)}${modeSwitch(view.mode, t)}${message(view.message, t)}${turnPanel(view, t)}
     <div class="rwf-pursuit__zones">${zone("fuyard", view.sides.fuyard, view, t)}${zone("poursuivant", view.sides.poursuivant, view, t)}</div>
