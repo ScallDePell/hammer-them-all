@@ -154,9 +154,11 @@ test("the pursuit HUD: a gap gauge per fugitive, pursuers on their quarry, moves
   assert.match(chaserHTML, /rwf-pursuit__legend"><span>Semé<\/span><span>Rattrapé</, "the legend turns round with it");
   assert.equal(v.perspective, "fuyard", "the GM reads the gauges from the side of the characters he plays");
   // Marc's player cannot read the others' state: their shares come from the pursuit, as the GM last read them.
-  const player = await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: {...pursuit, shares: {[driver]: -2, [thug]: 0}}, order: [thug, driver, runner], canAct: uuid => uuid === runner, userId: "marc"});
+  const player = await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: {...pursuit, shares: {[driver]: -2, [thug]: 0}}, order: [thug, driver, runner], canAct: uuid => uuid === runner, relayed: true, userId: "marc"});
   assert.deepEqual([player.rows.find(r => r.uuid === driver).share, player.rows.find(r => r.uuid === runner).share], [-2, 0]);
   assert.equal(player.perspective, "poursuivant");
+  const gm = await pursuitView(runtime, {versionId, ruleset: found.ruleset, pursuit: {...pursuit, shares: {[driver]: 7, [thug]: 7}}, order: [thug, driver, runner], canAct: () => false});
+  assert.equal(gm.rows.find(r => r.uuid === driver).share, row(driver).share, "the GM's client reads the state itself, never the shares it wrote before");
   assert.match(html, /fa-arrow-right"><\/i> Garde/, "each pursuer names its quarry");
   assert.equal(v.over, false);
 

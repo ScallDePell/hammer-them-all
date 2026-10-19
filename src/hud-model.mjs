@@ -366,8 +366,9 @@ export async function setupView(runtime, {versionId, ruleset, pursuit, contentNa
  * pursuer has the fugitive it chases. Someone on foot at 0 Endurance is out of breath and out of the pursuit. The speed
  * advantage is a fugitive's over the fastest of its pursuers, a pursuer's over its target. The one whose turn it is has
  * its moves when this user plays it, run on its own gauge (a fugitive) or its target's (a pursuer).
- * order: the participants' uuids in turn order; activeUuid: whose turn it is; canAct(uuid): whether this user plays it. */
-export async function pursuitView(runtime, {versionId, ruleset, pursuit, order = [], activeUuid = null, canAct = () => true, isGM = false, userId = null, contentName = row => row.name ?? row.templateId}) {
+ * order: the participants' uuids in turn order; activeUuid: whose turn it is; canAct(uuid): whether this user plays it;
+ * relayed: the others' shares are taken from the pursuit, as the GM last wrote them (a player's HUD). */
+export async function pursuitView(runtime, {versionId, ruleset, pursuit, order = [], activeUuid = null, canAct = () => true, isGM = false, relayed = false, userId = null, contentName = row => row.name ?? row.templateId}) {
   const bound = number(ruleset.parameters?.find(x => x.id === RWF.gaugeBound)?.value) ?? 3;
   const rank = uuid => { const i = order.indexOf(uuid); return i < 0 ? Infinity : i; };
   const participants = [...pursuit.participants].sort((a, b) => rank(a.uuid) - rank(b.uuid));
@@ -376,7 +377,8 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
     const {state, vehicles, vehicle, means, speed} = await meansOf(runtime, versionId, ruleset, p, {cap: pursuit.cap, contentName});
     const endurance = means === FOOT ? await runtime.tokenBarValue(versionId, p.uuid, "rta.endurance.points").catch(() => null) : null;
     // The GM reads every share; a player reads its own characters' and takes the others' from the pursuit.
-    const known = isGM || canAct(p.uuid) ? null : pursuit.shares?.[p.uuid];
+    // relayed: this user is a player, whose client may not see the others' state change.
+    const known = relayed && !canAct(p.uuid) ? pursuit.shares?.[p.uuid] : null;
     const share = Number.isFinite(known) ? known : counter(state, RWF.gauge), outcome = pursuit.outcomes?.[p.uuid];
     const exhausted = Boolean(endurance) && Number(endurance.value) <= 0;
     const status = outcome ? {key: outcome, done: true} : exhausted ? EXHAUSTED : RUNNING;

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.4
+
+- Correctif 0.6.3 : le MJ republiait les écarts qu'il avait déjà écrits au lieu de relire l'état des personnages. Les joueurs voyaient donc des écarts figés ou en retard (un PJ qui rate semblait reculer de deux). Le MJ relit maintenant toujours l'état, et publie les écarts juste après chaque manœuvre d'un PNJ, avant que le tour passe.
+
 ## 0.6.3
 
 - Les joueurs voient enfin bouger l'écart des personnages qu'ils ne jouent pas : le MJ tient à jour l'écart de chacun dans la poursuite, et le HUD des joueurs le lit là.

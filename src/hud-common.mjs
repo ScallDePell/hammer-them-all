@@ -51,7 +51,7 @@ export function refreshOnChanges(ids, hooks = globalThis.Hooks) {
     timer = setTimeout(() => { for (const id of ids) globalThis.foundry?.applications?.instances?.get?.(id)?.render(); }, 100);
   };
   for (const hook of ["createCombat", "updateCombat", "deleteCombat", "createCombatant", "updateCombatant", "deleteCombatant", "targetToken",
-    "updateActor", "createItem", "updateItem", "deleteItem", "updateToken", "createToken", "deleteToken", "canvasReady"]) hooks.on(hook, refresh);
+    "updateActor", "updateActorDelta", "createItem", "updateItem", "deleteItem", "updateToken", "createToken", "deleteToken", "canvasReady"]) hooks.on(hook, refresh);
   hooks.on("updateSetting", setting => { const key = String(setting?.key ?? ""); if (key.startsWith(`${MODULE_ID}.`) || key.startsWith("rule-them-all.")) refresh(); });
   return refresh;
 }

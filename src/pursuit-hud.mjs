@@ -154,7 +154,7 @@ export function createPursuitHud() {
         const owns = combatant => Boolean(combatant?.isOwner || combatant?.actor?.isOwner);
         const byUuid = new Map(pursuit.participants.map(p => [p.uuid, p]));
         const owner = uuid => isGM || owns(combat.combatants.get(byUuid.get(uuid)?.combatantId)) || Boolean(globalThis.fromUuidSync?.(uuid)?.isOwner);
-        const view = await pursuitView(runtime, {versionId, ruleset, pursuit, order, activeUuid, canAct: owner, isGM, userId: game.user.id, contentName});
+        const view = await pursuitView(runtime, {versionId, ruleset, pursuit, order, activeUuid, canAct: owner, isGM, relayed: !isGM, userId: game.user.id, contentName});
         const myTurn = Boolean(active) && yourTurn({isGM, owned: owns(active), playerOwned: Boolean(active.actor?.hasPlayerOwner)});
         const others = isGM ? (await sceneTokens(combat.scene, versionId)).filter(c => !pursuit.participants.some(p => p.uuid === c.uuid)) : [];
         // Several pursuits: one tab each, named after its fugitives.
@@ -341,6 +341,8 @@ export function createPursuitHud() {
       try {
         const combatant = globalThis.game.combats?.get?.(view.combatId)?.combatants?.get?.(combatantId) ?? null;
         await runAction({versionId: view.versionId, ruleset: view.ruleset, actorUuid: uuid, actionId, contentKey, targetUuid, input, combatant});
+        // The GM's move (a non-player character's): the players learn the new gap before the turn passes.
+        if (globalThis.game.user.isGM) await publishShares(globalThis.game.combats?.get?.(view.combatId));
         await passTurn(view.combatId, combatantId);
       } catch (error) { this.#message = error?.message ?? String(error); notifyError(error); }
       finally { this.#busy = false; }
@@ -439,10 +441,7 @@ export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {
         }
       }
       if (view.over) return endPursuit(combat);
-      // Every share in the pursuit, for the players' HUDs.
-      const shares = Object.fromEntries(view.rows.map(r => [r.uuid, r.share]));
-      const now = running(combat);
-      if (JSON.stringify(shares) !== JSON.stringify(now.shares)) await saveRunning(combat, {...now, shares});
+      const shares = await publishShares(combat, view);
       // A pursuer whose fugitive is out of the pursuit chases another one still running.
       const after = running(combat), retargeted = assignTargets(after.participants, uuid => !after.outcomes[uuid], uuid => shares[uuid]);
       if (JSON.stringify(retargeted) !== JSON.stringify(after.participants)) await saveRunning(combat, {...after, participants: retargeted});
@@ -451,9 +450,25 @@ export function installPursuitKeeper({hooks = globalThis.Hooks, delay = 300} = {
     } catch (error) { console.error(`${MODULE_ID} | Pursuit check failed`, combat.id, error); }
   };
   const later = () => { clearTimeout(timer); timer = setTimeout(check, delay); };
-  for (const hook of ["combatStart", "combatTurnChange", "updateCombat", "updateCombatant", "updateActor", "updateToken"]) hooks.on(hook, later);
+  for (const hook of ["combatStart", "combatTurnChange", "updateCombat", "updateCombatant", "updateActor", "updateActorDelta", "updateToken"]) hooks.on(hook, later);
   later();
   return check;
+}
+
+/** GM: every participant's share of the gap, written in the pursuit for the players' HUDs (a player cannot read the
+ * state of the characters it does not play). view: the pursuit as just read, else read now. Returns the shares. */
+async function publishShares(combat, view = null) {
+  if (!combat || !isPursuitCombat(combat) || !globalThis.game.user.isGM) return {};
+  const found = view ? null : hudRuleset(rta()?.configurator);
+  if (!view && found.reason) return {};
+  view ??= await pursuitView(rta().runtime, {versionId: found.versionId, ruleset: found.ruleset, pursuit: running(combat), canAct: () => false});
+  const shares = Object.fromEntries(view.rows.map(r => [r.uuid, r.share]));
+  const now = running(combat);
+  if (JSON.stringify(shares) !== JSON.stringify(now.shares)) {
+    console.debug(`${MODULE_ID} | Pursuit shares`, view.rows.map(r => `${r.name} ${r.share}`).join(" · "));
+    await saveRunning(combat, {...now, shares});
+  }
+  return shares;
 }
 
 let PursuitHud = null;
