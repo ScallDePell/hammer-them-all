@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1
+
+- Correctif : au lancement (et à la séparation) d'une poursuite, chaque combattant Foundry est relié au participant par son jeton, et non plus par l'ordre de création. Avant, un PJ pouvait recevoir le nom, le camp ou le +2 d'un autre participant, se voir comme un Vilain ou ne pas pouvoir jouer à son tour.
+- Un joueur ne possède plus que les personnages dont il est vraiment propriétaire.
+- Plus lisible : chaque écart n'apparaît qu'une fois, sous le fuyard, avec une ligne par poursuivant (son rang, son nom, sa jauge). Une légende « Rattrapé … Semé » coiffe la zone des fuyards. Les couleurs suivent le camp du joueur : vert quand son camp gagne du terrain. Un poursuivant affiche simplement « → sa cible ».
+- Les explications des manœuvres sont plus courtes.
+
 ## 0.6.0
 
 - Un écart par poursuivant : chaque poursuivant a son propre écart avec le fuyard qu'il chasse. La manœuvre d'un poursuivant ne change que le sien ; celle d'un fuyard l'éloigne de tous ses poursuivants. Deux poursuivants qui réussissent ne rapprochent plus le fuyard de deux cases, et l'échec de l'un ne fait plus reculer l'autre.

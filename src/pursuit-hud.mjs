@@ -88,7 +88,8 @@ async function joinCombat(combat, participants) {
   if (!joined.length) return [];
   const created = await combat.createEmbeddedDocuments("Combatant", joined.map(j => j.data));
   await combat.rollInitiative(created.map(c => c.id));
-  return created.map((c, i) => ({...joined[i].p, uuid: c.actor?.uuid ?? joined[i].p.uuid, combatantId: c.id}));
+  // Each participant with the combatant made for its own token: Foundry does not promise the order it returns them in.
+  return joined.map(j => { const c = created.find(x => x.tokenId === j.data.tokenId); return c ? {...j.p, uuid: c.actor?.uuid ?? j.p.uuid, combatantId: c.id} : null; }).filter(Boolean);
 }
 
 /** Once the pursuit has started, the fugitives get their +2: each fugitive's initiative is read again from the combat
@@ -141,13 +142,12 @@ export function createPursuitHud() {
         const byCombatant = new Map(pursuit.participants.map(p => [p.combatantId, p]));
         const order = turns.map(c => byCombatant.get(c.id)?.uuid).filter(Boolean);
         const active = combat.combatant ?? null, activeUuid = active ? byCombatant.get(active.id)?.uuid ?? null : null;
-        // Whether this user plays a participant: its token's actor, else the Actor behind the token (a player's client
-        // may not have the token's actor ready yet).
-        const owns = combatant => Boolean(combatant?.isOwner || combatant?.actor?.isOwner || game.actors?.get?.(combatant?.actorId)?.isOwner);
+        // Whether this user plays a participant: its combatant, else its token's actor.
+        const owns = combatant => Boolean(combatant?.isOwner || combatant?.actor?.isOwner);
         const byUuid = new Map(pursuit.participants.map(p => [p.uuid, p]));
         const owner = uuid => isGM || owns(combat.combatants.get(byUuid.get(uuid)?.combatantId)) || Boolean(globalThis.fromUuidSync?.(uuid)?.isOwner);
         const view = await pursuitView(runtime, {versionId, ruleset, pursuit, order, activeUuid, canAct: owner, isGM, userId: game.user.id, contentName});
-        const myTurn = Boolean(active) && yourTurn({isGM, owned: owns(active), playerOwned: Boolean(active.actor?.hasPlayerOwner ?? game.actors?.get?.(active.actorId)?.hasPlayerOwner)});
+        const myTurn = Boolean(active) && yourTurn({isGM, owned: owns(active), playerOwned: Boolean(active.actor?.hasPlayerOwner)});
         const others = isGM ? (await sceneTokens(combat.scene, versionId)).filter(c => !pursuit.participants.some(p => p.uuid === c.uuid)) : [];
         // Several pursuits: one tab each, named after its fugitives.
         const all = pursuitCombats(), pursuits = all.length > 1 ? all.map(c => ({id: c.id, current: c.id === combat.id,
@@ -288,7 +288,7 @@ export function createPursuitHud() {
         const other = await CombatClass.create({scene: combat.scene?.id ?? globalThis.canvas?.scene?.id, active: true, flags: {[MODULE_ID]: {[PURSUIT_FLAG]: {cap: pursuit.cap, participants: [], outcomes: []}}, "rule-them-all": {singlePass: true}}});
         const old = leaving.map(p => combat.combatants.get(p.combatantId)).filter(Boolean);
         const created = await other.createEmbeddedDocuments("Combatant", old.map(c => ({tokenId: c.tokenId, sceneId: c.sceneId, actorId: c.actorId, hidden: c.hidden, initiative: c.initiative, defeated: c.defeated})));
-        const moved = leaving.map(p => { const i = old.findIndex(c => c.id === p.combatantId); return i < 0 ? null : {...p, combatantId: created[i].id}; }).filter(Boolean);
+        const moved = leaving.map(p => { const from = old.find(c => c.id === p.combatantId), to = from && created.find(c => c.tokenId === from.tokenId); return to ? {...p, combatantId: to.id} : null; }).filter(Boolean);
         const outcomes = Object.fromEntries(Object.entries(pursuit.outcomes).filter(([uuid]) => moved.some(p => p.uuid === uuid)));
         await saveRunning(other, {cap: pursuit.cap, participants: assignTargets(moved, running_, gap), outcomes});
         await saveRunning(combat, {...pursuit, participants: assignTargets(staying, running_, gap), outcomes: Object.fromEntries(Object.entries(pursuit.outcomes).filter(([uuid]) => !this.#split.has(uuid)))});
@@ -395,7 +395,7 @@ export function servePursuitOpen(message) {
   if (message?.type !== "pursuit.open" || game.user.isGM) return;
   const combat = game.combats?.get?.(message.combatId);
   if (!combat || !isPursuitCombat(combat)) return;
-  const owns = c => Boolean(c?.isOwner || c?.actor?.isOwner || game.actors?.get?.(c?.actorId)?.isOwner);
+  const owns = c => Boolean(c?.isOwner || c?.actor?.isOwner);
   if (running(combat).participants.some(p => owns(combat.combatants.get(p.combatantId)))) openPursuitHud(combat.id);
 }
 

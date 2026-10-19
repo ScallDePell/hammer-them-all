@@ -144,10 +144,13 @@ test("the pursuit HUD: a gap gauge per fugitive, pursuers on their quarry, moves
   assert.match(html, /data-rwf-move="continuer"/);
   assert.match(html, /data-rwf-end-turn/);
   assert.match(html, /rwf-pursuit__runner--active/);
-  assert.equal((html.match(/rwf-hud__step--bad/g) ?? []).length, -row(thug).gauge, "the gauge fills red from 0 to where the Garde is");
-  assert.equal((html.match(/rwf-hud__step--good/g) ?? []).length, -row(driver).gauge, "green for Léa only: she closes in");
-  assert.match(html, /Poursuivi par Léa \(-\d\), Marc \(0\)/);
-  assert.match(html, /Chasse Garde/);
+  assert.equal((html.match(/rwf-hud__step--bad/g) ?? []).length, -row(driver).gauge, "seen from the fugitive's side, Léa closing in is red");
+  assert.equal((html.match(/rwf-hud__step--good/g) ?? []).length, 0, "Marc did not move: nothing filled for him");
+  assert.equal((html.match(/rwf-pursuit__duel"/g) ?? []).length, 2, "one line per pursuer under the Garde");
+  assert.match(html, />\d\. Léa<.*>\d\. Marc</s);
+  const chaserHTML = renderPursuitHTML({...v, perspective: "poursuivant", isGM: false, round: 1, myTurn: false, mode: "foundry"}, t);
+  assert.equal((chaserHTML.match(/rwf-hud__step--good/g) ?? []).length, -row(driver).gauge, "seen from the pursuers' side, Léa closing in is green");
+  assert.match(html, /fa-arrow-right"><\/i> Garde/, "each pursuer names its quarry");
   assert.equal(v.over, false);
 
   // Marc runs out of breath: out of the race, and the pursuit goes on with Léa.

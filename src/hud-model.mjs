@@ -390,7 +390,7 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
   // A fugitive: caught by a pursuer at −bound, away once every pursuer on it is lost; its gauge is its closest chaser's gap.
   for (const row of rows.filter(r => r.role === "fuyard")) {
     const on = rows.filter(r => r.role === "poursuivant" && r.targetUuid === row.uuid);
-    row.chasers = on.filter(r => !r.status.done).map(r => ({uuid: r.uuid, name: r.name, gauge: r.gauge, speed: r.speed}));
+    row.chasers = on.filter(r => !r.status.done).map(r => ({uuid: r.uuid, name: r.name, rank: r.rank, gauge: r.gauge, speed: r.speed}));
     row.gauge = row.chasers.length ? Math.min(...row.chasers.map(c => c.gauge)) : null;
     if (!row.status.done && row.gauge !== null && row.gauge <= -bound) row.status = CAUGHT;
     else if (!row.status.done && !row.chasers.length && on.some(r => r.status.key === LOST.key)) row.status = ESCAPED;
@@ -413,5 +413,8 @@ export async function pursuitView(runtime, {versionId, ruleset, pursuit, order =
     }
   }
   const sides = Object.fromEntries(ROLES.map(role => [role, rows.filter(r => r.role === role)]));
-  return {phase: "running", bound, dd, cap: pursuit.cap, rows, sides, current, over: pursuitOver(rows)};
+  // The colours follow the side this user plays: a player who only plays pursuers sees closing in as good news.
+  const plays = role => rows.some(r => r.role === role && r.playable);
+  const perspective = !isGM && plays("poursuivant") && !plays("fuyard") ? "poursuivant" : "fuyard";
+  return {phase: "running", bound, dd, cap: pursuit.cap, rows, sides, current, perspective, over: pursuitOver(rows)};
 }

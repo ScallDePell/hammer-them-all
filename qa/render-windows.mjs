@@ -69,10 +69,10 @@ await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML(com
   frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: true, mode: "foundry", settingsOpen: true}, t), "rwf-hud-app", 440)));
 await tab.screenshot({path: `${out}/huds.png`, fullPage: true});
 await tab.setContent(page(frame(t("RWFTOOLS.Combat.Title"), renderCombatHTML({...combat, pending: null, mode: "foundry", targets: [{id: "1", name: "Garde du corps", current: true, distance: 7.5}, {id: "2", name: "Chien", distance: 3}]}, t), "rwf-hud-app", 400) +
-  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: false, mode: "table", pending: {label: "RWFTOOLS.Pursuit.Move.risque", subject: "Léa Martin"}}, t), "rwf-hud-app", 440)));
+  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: false, perspective: "poursuivant", mode: "table", pending: {label: "RWFTOOLS.Pursuit.Move.risque", subject: "Léa Martin"}}, t), "rwf-hud-app", 440)));
 await tab.screenshot({path: `${out}/huds-2.png`, fullPage: true});
 // The GM prepares the chase; a player's view of someone else's turn, in a wide window (the two sides side by side).
 await tab.setContent(page(frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML(prepared, t), "rwf-hud-app", 440) +
-  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: false, myTurn: false, mode: "foundry", current: {...lea, moves: []}}, t), "rwf-hud-app", 760)));
+  frame(t("RWFTOOLS.Pursuit.Title"), renderPursuitHTML({...chase, isGM: false, perspective: "poursuivant", myTurn: false, mode: "foundry", current: {...lea, moves: []}}, t), "rwf-hud-app", 760)));
 await tab.screenshot({path: `${out}/poursuite.png`, fullPage: true});
 await browser.close();

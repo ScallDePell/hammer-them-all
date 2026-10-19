@@ -82,34 +82,40 @@ export function renderCombatHTML(view, t) {
 
 /** A gap gauge from −bound (caught) to +bound (lost): the steps from 0 to where it stands are filled, green toward
  * +bound and red toward −bound for a fugitive, the other way round for a pursuer. */
-function gauge(row, bound, t, {chaser = false} = {}) {
+function gauge(row, bound, t, {chaser = false, compact = false} = {}) {
   const steps = [], tone = (row.gauge > 0) !== chaser ? "good" : "bad";
   for (let n = -bound; n <= bound; n++) {
     const filled = n !== 0 && (row.gauge > 0 ? n > 0 && n <= row.gauge : n < 0 && n >= row.gauge);
     steps.push(`<span class="rwf-hud__step${n === 0 ? " rwf-hud__step--zero" : ""}${filled ? ` rwf-hud__step--${tone}` : ""}${n === row.gauge ? " rwf-hud__step--here" : ""}" title="${e(sign(n))}"></span>`);
   }
   return `<div class="rwf-hud__gauge" role="meter" aria-valuemin="${-bound}" aria-valuemax="${bound}" aria-valuenow="${e(row.gauge)}" aria-label="${e(`${t(row.ends[0])} / ${t(row.ends[1])}`)}">
-    <span class="rwf-hud__gauge-end">${words(t, row.ends[0])}</span><div class="rwf-hud__track">${steps.join("")}</div><strong class="rwf-hud__gauge-value rwf-hud__gauge-value--${row.gauge === 0 ? "zero" : tone}">${e(sign(row.gauge))}</strong><span class="rwf-hud__gauge-end">${words(t, row.ends[1])}</span></div>`;
+    ${compact ? "" : `<span class="rwf-hud__gauge-end">${words(t, row.ends[0])}</span>`}<div class="rwf-hud__track">${steps.join("")}</div><strong class="rwf-hud__gauge-value rwf-hud__gauge-value--${row.gauge === 0 ? "zero" : tone}">${e(sign(row.gauge))}</strong>${compact ? "" : `<span class="rwf-hud__gauge-end">${words(t, row.ends[1])}</span>`}</div>`;
 }
 const meansName = (row, t) => row.vehicle ? t(row.vehicle.name) : t("RWFTOOLS.Pursuit.OnFoot");
 
-/** A participant in its side's list: name and means; a fugitive's gap gauge below, with who chases it; a pursuer's
- * target. The one whose turn it is stands out. */
+/** A participant in its side's list: name and means, the one whose turn it is standing out. Each gap is shown once,
+ * under the fugitive: one line per pursuer on it, with its gauge, coloured for the side this user plays. A pursuer
+ * names the fugitive it chases. */
 function runner(row, view, t) {
   const tag = row.status.done ? `<span class="rwf-pursuit__outcome">${words(t, row.status.key)}</span>`
     : row.active ? `<span class="rwf-pursuit__now">${words(t, "RWFTOOLS.Pursuit.ItsTurn")}</span>` : "";
-  // A fugitive shows its closest chaser's gap and each chaser's; a pursuer its own gap with its target.
-  const below = row.role === "fuyard"
-    ? `${row.gauge !== null && row.gauge !== undefined ? gauge(row, view.bound, t) : ""}${row.status.done ? "" : `<p class="rwf-pursuit__chase">${row.chasers?.length ? e(fmt(t, "RWFTOOLS.Pursuit.ChasedBy", {names: row.chasers.map(c => `${c.name} (${sign(c.gauge)})`).join(", ")})) : words(t, "RWFTOOLS.Pursuit.NotChased")}</p>`}`
-    : row.status.done ? "" : `${row.target ? gauge(row, view.bound, t, {chaser: true}) : ""}<p class="rwf-pursuit__chase">${row.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(fmt(t, "RWFTOOLS.Pursuit.Chases", {name: row.target.name}))}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</p>`;
+  const chaser = view.perspective === "poursuivant";
+  const below = row.status.done ? ""
+    : row.role === "fuyard"
+      ? row.chasers?.length ? `<ul class="rwf-pursuit__duels">${row.chasers.map(c => `<li class="rwf-pursuit__duel"><span class="rwf-pursuit__duel-name">${e(c.rank)}. ${e(c.name)}</span>${gauge({gauge: c.gauge, ends: row.ends}, view.bound, t, {chaser, compact: true})}</li>`).join("")}</ul>`
+        : `<p class="rwf-pursuit__chase">${words(t, "RWFTOOLS.Pursuit.NotChased")}</p>`
+      : "";
+  const chases = row.role === "poursuivant" && !row.status.done
+    ? `<span class="rwf-pursuit__means">${row.target ? `<i class="fa-solid fa-arrow-right"></i> ${e(row.target.name)}` : words(t, "RWFTOOLS.Pursuit.NoTarget")}</span>` : "";
   return `<li class="rwf-pursuit__runner${row.active ? " rwf-pursuit__runner--active" : ""}${row.status.done ? " rwf-pursuit__runner--done" : ""}"${row.active ? ' aria-current="true"' : ""}>
-    <div class="rwf-pursuit__line"><span class="rwf-pursuit__rank">${e(row.rank)}.</span><strong>${e(row.name)}</strong><span class="rwf-pursuit__means">${e(meansName(row, t))}</span>${tag}</div>
+    <div class="rwf-pursuit__line"><span class="rwf-pursuit__rank">${e(row.rank)}.</span><strong>${e(row.name)}</strong><span class="rwf-pursuit__means">${e(meansName(row, t))}</span>${chases}${tag}</div>
     ${below}</li>`;
 }
 
 function zone(role, rows, view, t) {
   const count = view.phase === "setup" ? "" : `<small>${e(fmt(t, "RWFTOOLS.Pursuit.StillRunning", {n: rows.filter(r => !r.status.done).length}))}</small>`;
   return `<section class="rwf-pursuit__zone rwf-pursuit__zone--${role}"><h3 class="rwf-pursuit__zone-title">${words(t, `RWFTOOLS.Pursuit.Side.${role}`)}${count}</h3>
+    ${role === "fuyard" && view.phase === "running" && rows.length ? `<p class="rwf-pursuit__legend"><span>${words(t, "RWFTOOLS.Pursuit.Ends.CaughtUp")}</span><span>${words(t, "RWFTOOLS.Pursuit.Ends.Escaped")}</span></p>` : ""}
     ${rows.length ? `<ul class="rwf-pursuit__list">${rows.map(row => view.phase === "setup" ? setupLine(row, view, t) : runner(row, view, t)).join("")}</ul>` : `<p class="rwf-hud__empty">${words(t, "RWFTOOLS.Pursuit.NoOne")}</p>`}</section>`;
 }
 
