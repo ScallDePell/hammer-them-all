@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Corrige l'issue d'un participant (rattrapé, semé, à bout de souffle) qui n'était pas gardée par la poursuite : Foundry découpait l'identifiant du participant à ses points. L'issue était annoncée plusieurs fois dans le chat, et un poursuivant dont le fuyard était rattrapé ne passait pas à un autre fuyard. Une poursuite lancée avant cette version est à relancer.
+
 ## 0.4.0
 
 - Poursuite à jauge d'écart : chaque fuyard a une jauge de −3 (rattrapé) à +3 (il a semé ses poursuivants). La manœuvre d'un fuyard fait monter sa jauge, celle d'un poursuivant fait baisser la jauge du fuyard qu'il chasse ; plusieurs poursuivants sur un fuyard s'additionnent. Avant, chacun avait sa propre jauge et un fuyard pouvait n'être jamais rattrapé.

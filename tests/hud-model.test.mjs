@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, readRunningPursuit, addParticipants, setFleeing, canLaunch, pursuitOver, emptyPursuit, speedAdvantage, pursuitStatus, assignTargets, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
+import {yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, followedCombatant, edgeDistance, outOfRange, requiredD20, readWhole, readPursuit, readRunningPursuit, runningPursuitFlag, addParticipants, setFleeing, canLaunch, pursuitOver, emptyPursuit, speedAdvantage, pursuitStatus, assignTargets, endTurnLabel, moveAction, hudRuleset} from "../src/hud-model.mjs";
 import {renderCombatHTML, renderPursuitHTML} from "../src/hud-markup.mjs";
 
 test("each user's HUD follows the combatant acting when it is theirs, else their own character", () => {
@@ -86,8 +86,10 @@ test("a pursuit is prepared in the world: who flees, each side, each means", () 
   assert.equal(addParticipants(p, [{uuid: "pc2", name: "Léa", playerOwned: true, role: "poursuivant"}]).participants[2].role, "poursuivant", "a side given wins");
   assert.equal(canLaunch(p), true);
   assert.equal(canLaunch({...p, participants: p.participants.slice(0, 1)}), false, "someone on each side");
-  assert.deepEqual(readRunningPursuit({cap: 2, participants: [{uuid: "a", combatantId: "c", role: "fuyard"}], outcomes: {a: "RWFTOOLS.Pursuit.Status.Escaped", b: 3}}),
-    {cap: 2, participants: [{uuid: "a", name: "", role: "fuyard", means: "pied", playerOwned: false, combatantId: "c"}], outcomes: {a: "RWFTOOLS.Pursuit.Status.Escaped"}});
+  const stored = runningPursuitFlag({cap: 2, participants: [{uuid: "Scene.s.Token.t.Actor.a", combatantId: "c", role: "fuyard"}], outcomes: {"Scene.s.Token.t.Actor.a": "RWFTOOLS.Pursuit.Status.Escaped"}});
+  assert.ok(Array.isArray(stored.outcomes), "no uuid as a key: Foundry would split it at its dots");
+  assert.deepEqual(readRunningPursuit({...stored, outcomes: [...stored.outcomes, {uuid: "b", key: 3}]}),
+    {cap: 2, participants: [{uuid: "Scene.s.Token.t.Actor.a", name: "", role: "fuyard", means: "pied", playerOwned: false, combatantId: "c"}], outcomes: {"Scene.s.Token.t.Actor.a": "RWFTOOLS.Pursuit.Status.Escaped"}});
   assert.deepEqual([speedAdvantage(2, 1), speedAdvantage(-1, -1), speedAdvantage(-1, 1), speedAdvantage(1, null)], [1, 0, -1, 0]);
   assert.equal(pursuitStatus(3, 3).key, "RWFTOOLS.Pursuit.Status.Escaped");
   assert.equal(pursuitStatus(-3, 3).key, "RWFTOOLS.Pursuit.Status.CaughtUp");

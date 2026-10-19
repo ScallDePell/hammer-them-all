@@ -257,12 +257,15 @@ export function readPursuit(stored) {
 }
 
 /** The pursuit a combat runs (its rwf-tools flag "pursuit"): {cap, participants: [{uuid, combatantId, name, role, means}],
- * outcomes: {uuid: the status key it ended with}}. */
+ * outcomes: {uuid: the status key it ended with}}. The flag keeps outcomes as a list [{uuid, key}]: Foundry would split
+ * a uuid used as a key at its dots. */
 export function readRunningPursuit(flag) {
   const value = flag && typeof flag === "object" ? flag : {};
-  const outcomes = Object.fromEntries(Object.entries(value.outcomes && typeof value.outcomes === "object" ? value.outcomes : {}).filter(([, key]) => typeof key === "string"));
+  const outcomes = Object.fromEntries((Array.isArray(value.outcomes) ? value.outcomes : []).filter(o => typeof o?.uuid === "string" && typeof o?.key === "string").map(o => [o.uuid, o.key]));
   return {cap: Math.max(0, number(value.cap) ?? 0), participants: readParticipants(value.participants), outcomes};
 }
+/** The flag a running pursuit is stored as (outcomes as a list, see readRunningPursuit). */
+export const runningPursuitFlag = pursuit => ({...pursuit, outcomes: Object.entries(pursuit.outcomes ?? {}).map(([uuid, key]) => ({uuid, key}))});
 
 /** New participants join the side they are given, else the side the draft says: the fleeing side ("pnj" or "pj"),
  * the others pursue. */

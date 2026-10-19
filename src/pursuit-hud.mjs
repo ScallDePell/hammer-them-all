@@ -5,7 +5,7 @@
    "Progression de poursuite"), then the turn passes. The active GM notes who reached a bound, skips their turns and
    ends the pursuit once a side has no one left running. */
 import {MODULE_ID, SOCKET} from "./test-request-model.mjs";
-import {RWF, ROLES, FOOT, FLEE_BONUS, hudRuleset, readPursuit, readRunningPursuit, addParticipants, assignTargets, setFleeing, canLaunch, emptyPursuit, setupView, pursuitView, actionContext, readWhole, yourTurn} from "./hud-model.mjs";
+import {RWF, ROLES, FOOT, FLEE_BONUS, hudRuleset, readPursuit, readRunningPursuit, runningPursuitFlag, addParticipants, assignTargets, setFleeing, canLaunch, emptyPursuit, setupView, pursuitView, actionContext, readWhole, yourTurn} from "./hud-model.mjs";
 import {renderPursuitHTML} from "./hud-markup.mjs";
 import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction} from "./hud-common.mjs";
 
@@ -23,7 +23,7 @@ export function pursuitCombat() {
 }
 export const isPursuitCombat = combat => Boolean(combat?.getFlag?.(MODULE_ID, PURSUIT_FLAG));
 const running = combat => readRunningPursuit(combat.getFlag(MODULE_ID, PURSUIT_FLAG));
-const saveRunning = (combat, pursuit) => combat.update({[`flags.${MODULE_ID}.${PURSUIT_FLAG}`]: pursuit});
+const saveRunning = (combat, pursuit) => combat.update({[`flags.${MODULE_ID}.${PURSUIT_FLAG}`]: runningPursuitFlag(pursuit)});
 const chat = text => globalThis.ChatMessage.create({content: `<p><strong>${t("RWFTOOLS.Pursuit.Title")}</strong> · ${text}</p>`});
 const activeGM = () => { const game = globalThis.game; return game.user.isGM && (!game.users.activeGM || game.users.activeGM === game.user); };
 
@@ -204,7 +204,7 @@ export function createPursuitHud() {
       try {
         await resetGauges(this.#view?.versionId, draft.participants.map(p => p.uuid));
         const CombatClass = globalThis.CONFIG?.Combat?.documentClass ?? globalThis.Combat;
-        const combat = await CombatClass.create({scene: scene.id, active: true, flags: {[MODULE_ID]: {[PURSUIT_FLAG]: {cap: draft.cap, participants: [], outcomes: {}}}, "rule-them-all": {singlePass: true}}});
+        const combat = await CombatClass.create({scene: scene.id, active: true, flags: {[MODULE_ID]: {[PURSUIT_FLAG]: {cap: draft.cap, participants: [], outcomes: []}}, "rule-them-all": {singlePass: true}}});
         const joined = await joinCombat(combat, assignTargets(draft.participants));
         await saveRunning(combat, {cap: draft.cap, participants: joined, outcomes: {}});
         const raised = joined.filter(p => p.role === "fuyard").map(p => combat.combatants.get(p.combatantId)).filter(Boolean)
