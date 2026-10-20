@@ -58,7 +58,7 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 
 ### 0.2.0 à 0.2.6 (18 octobre) : HUD Combat
 
-- **Demande de Luca :** des HUD Combat et Poursuite dans RWF tools, ouverts par des macros pour le MJ et les joueurs, inspirés de l'ancien système RWF v0.1.475 (résumé dans `huds-ancien-systeme-rwf.md`, voir §7).
+- **Demande de Luca :** des HUD Combat et Poursuite dans RWF tools, ouverts par des macros pour le MJ et les joueurs, inspirés de l'ancien système RWF v0.1.475 (résumé dans [huds-ancien-systeme-rwf.md](huds-ancien-systeme-rwf.md)).
 - 0.2.0 : ressources, passes, cible et couverture, une carte par arme, pouvoir et action physique, d20 à atteindre, portée, dés Foundry ou table, fin de passe ou de round relayée au MJ pour un joueur. Choix par défaut de Claude : couverture par cible sur le client, attaque bloquée hors de portée ou hors contact, mode de dés par client.
 - 0.2.1 : « À vous de jouer » en vert seulement pour qui joue réellement le combattant (retour de Luca).
 - 0.2.2 : le MJ voit la cible du joueur, cibles du camp opposé seulement, choix des dés plus visible, dégâts en deux temps sur table et sur la carte de chat (retours de Luca).
@@ -125,5 +125,6 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 - **Tests :** `node --test tests/*.test.mjs`, avec `RTA_REPO=<checkout de Rule Them'All>` (par défaut `../rule-them-all`) pour le test d'intégration avec le Ruleset.
 - **Captures :** `node qa/render-windows.mjs <dossier>` (playwright-core et Chromium).
 - **Publication :** monter `version` et `download` dans `module.json`, ajouter l'entrée du CHANGELOG, pousser sur `main`, puis lancer le workflow `.github/workflows/release.yml` à la main (workflow_dispatch sur `main`). Il lance les tests avec un checkout de Rule Them'All, crée le tag `v<version>` et la release avec `rwf-tools.zip` et `module.json`. Le dépôt étant privé, Foundry ne peut pas télécharger le manifeste : Luca installe le zip à la main dans `Data/modules/rwf-tools`.
-- **Fichiers du projet Rule Them'All** (`/mnt/project-files/rwf-tools/`) : tous les zips de 0.1.0 à 0.6.4, les captures par version (`apercus-0.3.0` … `apercus-0.6.3`, `apercus-hud`), `huds-ancien-systeme-rwf.md` (résumé des HUD Combat et Poursuite de l'ancien système RWF v0.1.475 : mise en page, mécaniques, défauts connus, correspondance avec le Ruleset) et une copie de ce document.
+- **Fichiers du projet Rule Them'All** (`/mnt/project-files/rwf-tools/`) : tous les zips de 0.1.0 à 0.6.4, les captures par version (`apercus-0.3.0` … `apercus-0.6.3`, `apercus-hud`) et une copie de ce document.
+- **Ancien système RWF :** [docs/huds-ancien-systeme-rwf.md](huds-ancien-systeme-rwf.md), résumé des HUD Combat et Poursuite de l'ancien système RWF v0.1.475 (mise en page, mécaniques, défauts connus, correspondance avec le Ruleset).
 - **Sources de règles :** `RWF-Reference-Fonctionnelle.docx` (référence fonctionnelle de Luca, dans les fichiers du projet Rule Them'All) et le dossier `Rulesets/rwf/` du dépôt Rule Them'All (`LISEZMOI.md`, générateur `outils/build-rwf.mjs`, vérifications `verify-rwf.mjs`).
