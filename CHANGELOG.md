@@ -3,7 +3,7 @@
 ## 0.7.0
 
 - Le module s'appelle désormais **Hammer Them'All** : identifiant `hammer-them-all`, dépôt ScallDePell/hammer-them-all, zip `hammer-them-all.zip` à décompresser dans `Data/modules/hammer-them-all`. Les fichiers `rwf-tools.mjs` et `styles/rwf-tools.css` deviennent `hammer-them-all.mjs` et `styles/hammer-them-all.css`, la classe CSS `rwf-tools-app` devient `hammer-them-all-app`, le socket `module.hammer-them-all`.
-- Pour Foundry, c'est un nouveau module : supprimez le dossier `Data/modules/rwf-tools` et activez Hammer Them'All dans le monde. Au premier lancement, le MJ reprend les trois macros de RWF tools (elles gardent leur place dans les barres de macros) et chaque joueur garde la liste des macros déjà placées. Les poursuites et cibles de combat en cours, le brouillon de préparation et le choix des dés ne sont pas repris : terminez les poursuites en cours avant la mise à jour.
+- Pour Foundry, c'est un nouveau module : supprimez le dossier `Data/modules/rwf-tools` et activez Hammer Them'All dans le monde. Au premier lancement, le MJ passe au nouvel identifiant toute macro qui appelle encore `game.modules.get("rwf-tools")`, les trois macros de RWF tools comme celles que vous avez écrites (elles gardent leur place dans les barres de macros) et chaque joueur garde la liste des macros déjà placées. Les poursuites et cibles de combat en cours, le brouillon de préparation et le choix des dés ne sont pas repris : terminez les poursuites en cours avant la mise à jour.
 
 ## 0.6.4
 

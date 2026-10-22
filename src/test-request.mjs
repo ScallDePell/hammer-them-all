@@ -210,11 +210,15 @@ const MACROS = [
 export async function ensureMacros() {
   const game = globalThis.game, find = flag => game.macros.find(m => m.getFlag?.(MODULE_ID, flag));
   if (game.user.isGM && (!game.users.activeGM || game.users.activeGM === game.user)) {
-    // The macros made under the old module id keep their place in the hotbars: they are switched to the new id.
-    for (const spec of MACROS) {
-      const old = game.macros.find(m => m._source?.flags?.[OLD_MODULE_ID]?.[spec.flag]);
-      if (old && !find(spec.flag)) await old.update({command: `game.modules.get("${MODULE_ID}")?.api?.${spec.api}();`,
-        [`flags.${MODULE_ID}.${spec.flag}`]: true, [`flags.-=${OLD_MODULE_ID}`]: null});
+    // Every macro that still calls the old module id (ours and the user's own) is switched to the new id. Ours are
+    // recognized by the API they call, since Foundry may drop the flags of a module that is gone; they keep their place
+    // in the hotbars and are not made again.
+    const oldCall = `game.modules.get("${OLD_MODULE_ID}")`;
+    for (const macro of [...game.macros].filter(m => String(m.command ?? "").includes(oldCall))) {
+      const spec = MACROS.find(s => macro.command.includes(`.${s.api}(`) && !find(s.flag));
+      await macro.update({command: macro.command.replaceAll(oldCall, `game.modules.get("${MODULE_ID}")`),
+        ...(spec ? {[`flags.${MODULE_ID}.${spec.flag}`]: true} : {}),
+        ...(macro._source?.flags?.[OLD_MODULE_ID] ? {[`flags.-=${OLD_MODULE_ID}`]: null} : {})});
     }
     for (const spec of MACROS) if (!find(spec.flag)) await globalThis.Macro.create({name: t(spec.name), type: "script", img: spec.img, ownership: spec.ownership,
       command: `game.modules.get("${MODULE_ID}")?.api?.${spec.api}();`, flags: {[MODULE_ID]: {[spec.flag]: true}}});
