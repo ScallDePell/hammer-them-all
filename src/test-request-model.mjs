@@ -1,7 +1,9 @@
 /* What the GM's test request is made of, read from Rule Them'All and the active RWF Ruleset: the players who can be
    asked, the skills, the DDs, and the messages the clients exchange. Nothing here touches the screen. */
 
-export const MODULE_ID = "rwf-tools";
+export const MODULE_ID = "hammer-them-all";
+/** The module's id up to 0.6.4: its macros and the hotbar flag are taken over from it. */
+export const OLD_MODULE_ID = "rwf-tools";
 export const SOCKET = `module.${MODULE_ID}`;
 /** The RWF Ruleset's Action for a test the GM asked for (2.1.0): the GM's client runs it with the announced d20. */
 export const REQUESTED_TEST_ACTION = "test-demande";

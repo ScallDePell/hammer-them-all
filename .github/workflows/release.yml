@@ -26,15 +26,15 @@ jobs:
         run: echo "tag=v$(node -p "require('./module.json').version")" >> "$GITHUB_OUTPUT"
       - name: Build the zip
         run: |
-          mkdir -p dist/rwf-tools
-          cp -r module.json rwf-tools.mjs README.md CHANGELOG.md lang src styles dist/rwf-tools/
+          mkdir -p dist/hammer-them-all
+          cp -r module.json hammer-them-all.mjs README.md CHANGELOG.md lang src styles dist/hammer-them-all/
           cp module.json dist/module.json
-          cd dist && zip -qr rwf-tools.zip rwf-tools
+          cd dist && zip -qr hammer-them-all.zip hammer-them-all
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: RWF tools ${{ steps.version.outputs.tag }}
+          name: Hammer Them'All ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
           files: |
             dist/module.json
-            dist/rwf-tools.zip
+            dist/hammer-them-all.zip

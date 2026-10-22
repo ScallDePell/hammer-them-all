@@ -80,7 +80,7 @@ async function sceneTokens(scene, versionId) {
 async function resetGauges(versionId, uuids) {
   for (const uuid of uuids) {
     try { await rta().runtime.executeAction(versionId, RWF.reset, actionContext({actorUuid: uuid, isGM: true, userId: globalThis.game.user.id})); }
-    catch (error) { console.warn("RWF tools | Gauge not reset", uuid, error); }
+    catch (error) { console.warn("Hammer Them'All | Gauge not reset", uuid, error); }
   }
 }
 
@@ -112,14 +112,14 @@ async function raiseFugitives(combat, joined) {
   if (Number(combat.turn) !== 0) await combat.update({turn: 0});
   // The order, each fugitive's initiative shown with its bonus: "Luca 13.33 + 2 = 15.33 · Vilain 15.32".
   const order = (combat.turns ?? []).map(c => rolled.has(c.id) ? `${escapeHTML(c.name)} ${rolled.get(c.id)} + ${FLEE_BONUS} = <strong>${c.initiative}</strong>` : `${escapeHTML(c.name)} <strong>${c.initiative}</strong>`);
-  console.info("RWF tools | Pursuit initiative", (combat.turns ?? []).map(c => `${c.name} ${c.initiative}`).join(" · "));
+  console.info("Hammer Them'All | Pursuit initiative", (combat.turns ?? []).map(c => `${c.name} ${c.initiative}`).join(" · "));
   return order.join(" · ");
 }
 const escapeHTML = text => String(text ?? "").replace(/[&<>"]/g, ch => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[ch]);
 
 export function createPursuitHud() {
   return class PursuitHud extends ApplicationV2() {
-    static DEFAULT_OPTIONS = {id: PURSUIT_HUD_ID, classes: ["rwf-tools-app", "rwf-hud-app"], position: {width: 440, height: "auto"}, window: {title: "RWFTOOLS.Pursuit.Title", icon: "fa-solid fa-gauge-high", resizable: true}};
+    static DEFAULT_OPTIONS = {id: PURSUIT_HUD_ID, classes: ["hammer-them-all-app", "rwf-hud-app"], position: {width: 440, height: "auto"}, window: {title: "RWFTOOLS.Pursuit.Title", icon: "fa-solid fa-gauge-high", resizable: true}};
     #view = null;
     #pending = null;
     #error = null;
@@ -134,7 +134,7 @@ export function createPursuitHud() {
 
     async _prepareContext(options) {
       const context = await super._prepareContext(options);
-      try { this.#view = await this.#read(); } catch (error) { console.error("RWF tools |", error); this.#view = {reason: "RWFTOOLS.Error.HudFailed"}; }
+      try { this.#view = await this.#read(); } catch (error) { console.error("Hammer Them'All |", error); this.#view = {reason: "RWFTOOLS.Error.HudFailed"}; }
       return context;
     }
     async #read() {

@@ -61,7 +61,7 @@ export function followedCombatant({combatants = [], activeId = null, isGM = fals
 /** Whether the turn is this user's to play: a player's when they own the combatant acting, the GM's when no player does. */
 export const yourTurn = ({isGM, owned, playerOwned}) => isGM ? !playerOwned : Boolean(owned);
 
-/* Targets are kept per combatant in the combat (rwf-tools flag "targets": {combatantId: target combatantId}): a new
+/* Targets are kept per combatant in the combat (hammer-them-all flag "targets": {combatantId: target combatantId}): a new
    combat starts with none, a target stays until its combatant picks another one or it is out of the combat. */
 
 /** The combatant a combatant aims at, or null when it has none or that one is gone or out of combat (defeated).
@@ -258,7 +258,7 @@ export function readPursuit(stored) {
   return {phase: value.phase === "setup" ? "setup" : "none", fleeing: FLEEING.includes(value.fleeing) ? value.fleeing : "pnj", cap: Math.max(0, number(value.cap) ?? 0), participants};
 }
 
-/** The pursuit a combat runs (its rwf-tools flag "pursuit"): {cap, participants: [{uuid, combatantId, name, role, means}],
+/** The pursuit a combat runs (its hammer-them-all flag "pursuit"): {cap, participants: [{uuid, combatantId, name, role, means}],
  * outcomes: {uuid: the status key it ended with}}. The flag keeps outcomes as a list [{uuid, key}]: Foundry would split
  * a uuid used as a key at its dots. */
 export function readRunningPursuit(flag) {
@@ -344,8 +344,8 @@ export const pursuitOver = rows => ROLES.some(role => !rows.some(r => r.role ===
 async function meansOf(runtime, versionId, ruleset, p, {cap, contentName}) {
   let state = null, contents = [];
   // Read apart: a player's client that cannot list someone's vehicles still reads its gauge.
-  try { state = await runtime.getContainerState(p.uuid); } catch (error) { console.warn("RWF tools | Pursuit state not read", p.uuid, error); }
-  try { contents = await runtime.listOwnedContents(versionId, p.uuid, actionContext({actorUuid: p.uuid})); } catch (error) { console.warn("RWF tools | Pursuit vehicles not read", p.uuid, error); }
+  try { state = await runtime.getContainerState(p.uuid); } catch (error) { console.warn("Hammer Them'All | Pursuit state not read", p.uuid, error); }
+  try { contents = await runtime.listOwnedContents(versionId, p.uuid, actionContext({actorUuid: p.uuid})); } catch (error) { console.warn("Hammer Them'All | Pursuit vehicles not read", p.uuid, error); }
   const footSpeed = number(ruleset.parameters?.find(x => x.id === RWF.footSpeed)?.value) ?? -1;
   const vehicles = contents.filter(r => r.contentTypeId === RWF.vehicleType).map(r => ({key: r.key, name: contentName(r, p.uuid), speed: number(r.fields?.vitesse) ?? 0, handling: number(r.fields?.maniabilite) ?? 0}));
   const vehicle = vehicles.find(v => v.key === p.means) ?? null, raw = vehicle ? vehicle.speed : footSpeed;

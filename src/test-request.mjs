@@ -2,13 +2,13 @@
    they cannot close until they answer, with the Foundry dice or the d20 rolled on the table. The answer comes back to
    the GM's client, which runs the RWF Ruleset's "Test demandé par le MJ" (the only test that gives practice) and posts
    its chat card. */
-import {SOCKET, MODULE_ID, REQUESTED_TEST_ACTION, requestRuleset, skillOptions, ddOptions, defaultDD, requestCandidates, isRwfPlayerCharacter,
+import {SOCKET, MODULE_ID, OLD_MODULE_ID, REQUESTED_TEST_ACTION, requestRuleset, skillOptions, ddOptions, defaultDD, requestCandidates, isRwfPlayerCharacter,
   readD20, canSend, requestMessage, answerMessage, cancelMessage, acceptAnswer, requestedTestContext} from "./test-request-model.mjs";
 import {renderRequestHTML, renderPromptHTML} from "./test-request-markup.mjs";
 
 const t = key => globalThis.game?.i18n?.localize?.(key) ?? key;
 const rta = () => globalThis.game?.ruleThemAll;
-const notifyError = error => { console.error("RWF tools |", error); globalThis.ui?.notifications?.error?.(error?.message ?? String(error)); };
+const notifyError = error => { console.error("Hammer Them'All |", error); globalThis.ui?.notifications?.error?.(error?.message ?? String(error)); };
 const REQUEST_APP_ID = "rwf-test-request";
 
 /** Requests this GM sent and not yet answered or cancelled: requestId -> {request, status, summary}. */
@@ -21,7 +21,7 @@ const refreshRequest = () => globalThis.foundry?.applications?.instances?.get?.(
 
 export function createRequestWindow({ApplicationV2}) {
   return class TestRequestWindow extends ApplicationV2 {
-    static DEFAULT_OPTIONS = {id: REQUEST_APP_ID, classes: ["rwf-tools-app"], position: {width: 420, height: "auto"}, window: {title: "RWFTOOLS.Request.Title", icon: "fa-solid fa-dice-d20", resizable: true}};
+    static DEFAULT_OPTIONS = {id: REQUEST_APP_ID, classes: ["hammer-them-all-app"], position: {width: 420, height: "auto"}, window: {title: "RWFTOOLS.Request.Title", icon: "fa-solid fa-dice-d20", resizable: true}};
     #selected = new Set();
     #skillId = null;
     #ddId = null;
@@ -117,7 +117,7 @@ async function resolveAnswer(accepted) {
 
 export function createPromptWindow({ApplicationV2}) {
   return class TestPromptWindow extends ApplicationV2 {
-    static DEFAULT_OPTIONS = {classes: ["rwf-tools-app", "rwf-test-prompt"], position: {width: 340, height: "auto"}, window: {title: "RWFTOOLS.Prompt.Title", icon: "fa-solid fa-dice-d20", minimizable: false, resizable: false}};
+    static DEFAULT_OPTIONS = {classes: ["hammer-them-all-app", "rwf-test-prompt"], position: {width: 340, height: "auto"}, window: {title: "RWFTOOLS.Prompt.Title", icon: "fa-solid fa-dice-d20", minimizable: false, resizable: false}};
     #request;
     #sent = null;
     #error = null;
@@ -210,11 +210,17 @@ const MACROS = [
 export async function ensureMacros() {
   const game = globalThis.game, find = flag => game.macros.find(m => m.getFlag?.(MODULE_ID, flag));
   if (game.user.isGM && (!game.users.activeGM || game.users.activeGM === game.user)) {
+    // The macros made under the old module id keep their place in the hotbars: they are switched to the new id.
+    for (const spec of MACROS) {
+      const old = game.macros.find(m => m._source?.flags?.[OLD_MODULE_ID]?.[spec.flag]);
+      if (old && !find(spec.flag)) await old.update({command: `game.modules.get("${MODULE_ID}")?.api?.${spec.api}();`,
+        [`flags.${MODULE_ID}.${spec.flag}`]: true, [`flags.-=${OLD_MODULE_ID}`]: null});
+    }
     for (const spec of MACROS) if (!find(spec.flag)) await globalThis.Macro.create({name: t(spec.name), type: "script", img: spec.img, ownership: spec.ownership,
       command: `game.modules.get("${MODULE_ID}")?.api?.${spec.api}();`, flags: {[MODULE_ID]: {[spec.flag]: true}}});
   }
   // A macro the user removed from the hotbar stays removed: each one is placed once per user.
-  const placed = game.user.getFlag?.(MODULE_ID, "hotbarPlaced") ?? {};
+  const placed = game.user.getFlag?.(MODULE_ID, "hotbarPlaced") ?? {...game.user._source?.flags?.[OLD_MODULE_ID]?.hotbarPlaced};
   let changed = false;
   for (const spec of MACROS) {
     const macro = find(spec.flag);

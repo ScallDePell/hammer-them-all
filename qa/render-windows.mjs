@@ -12,13 +12,13 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE ?? "playwright-core");
 const fr = JSON.parse(readFileSync(new URL("../lang/fr.json", import.meta.url)));
 // RTA_FOUNDRY_CSS: Foundry's own stylesheet, for its theme variables and buttons.
 const foundryCss = process.env.RTA_FOUNDRY_CSS ? readFileSync(process.env.RTA_FOUNDRY_CSS, "utf8") : "";
-const t = key => fr[key] ?? key, css = readFileSync(new URL("../styles/rwf-tools.css", import.meta.url), "utf8");
+const t = key => fr[key] ?? key, css = readFileSync(new URL("../styles/hammer-them-all.css", import.meta.url), "utf8");
 const skills = ["Athlétisme", "Discrétion", "Vigilance", "Investigation"].map(label => ({id: label, label}));
 const dds = [["dd-facile", "Facile (10)"], ["dd-standard", "Standard (13)"], ["dd-difficile", "Difficile (16)"], ["dd-extreme", "Extrême (19)"], ["dd-heroique", "Héroïque (22)"]].map(([id, label]) => ({id, label}));
 const rows = [["Alice", "Léa Martin"], ["Bruno", "Marc Durand"], ["Chloé", "Inès Garcia"]].map(([userName, actorName], i) => ({userId: `u${i}`, userName, actorUuid: `Actor.${i}`, actorName, img: null}));
 const request = {requestId: "r1", actorName: "Marc Durand", skillLabel: "Vigilance", ddLabel: "Standard (13)"};
 const pending = new Map([["r1", {request, status: "waiting"}], ["r2", {request: {...request, requestId: "r2", actorName: "Léa Martin"}, status: "done", summary: "17 (jet sur table) → 21 · Réussite"}]]);
-const frame = (title, body, cls, width) => `<section class="application themed theme-dark rwf-tools-app ${cls}" style="width:${width}px"><header class="window-header"><h1 class="window-title">${title}</h1><button data-action="close">✕</button></header><div class="window-content">${body}</div></section>`;
+const frame = (title, body, cls, width) => `<section class="application themed theme-dark hammer-them-all-app ${cls}" style="width:${width}px"><header class="window-header"><h1 class="window-title">${title}</h1><button data-action="close">✕</button></header><div class="window-content">${body}</div></section>`;
 const page = body => `<!doctype html><meta charset="utf-8"><style>:root{--color-border:#666;--color-border-highlight:#ff6400;--color-shadow-highlight:#ff6400;--color-level-error:#e05050;--color-level-warning:#e0b050;--color-level-success:#60c060;--font-size-11:11px;--font-size-12:12px;--font-size-14:14px}body{font-family:sans-serif;background:#2b2b2b;color:#eee;padding:16px;display:flex;gap:24px;align-items:flex-start}
 .application{background:#1f1f1f;border:1px solid #555;border-radius:6px}.window-header{display:flex;justify-content:space-between;padding:4px 8px;background:#111}.window-title{font-size:14px;margin:0}
 select,input,button{font:inherit;padding:4px}button{width:100%}</style><style>${foundryCss}</style><style>${css}</style><style>.application{position:relative;flex:none;max-height:none}</style><body class="theme-dark">${body}</body>`;

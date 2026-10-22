@@ -4,7 +4,7 @@ Anciennement **RWF tools**. Dépôt : [ScallDePell/hammer-them-all](https://gith
 
 Outils de jeu de Real World Fantasy pour Foundry VTT v14, par-dessus [Rule Them'All](https://github.com/ScallDePell/Rule-Them-All) et son Ruleset RWF. Module privé : les outils propres à RWF vivent ici, jamais dans Rule Them'All.
 
-Il demande Rule Them'All 1.0.17 ou plus récent et le Ruleset RWF 2.6.0 ou plus récent, actif dans le monde.
+Il demande Rule Them'All 1.0.20 ou plus récent et le Ruleset RWF 2.6.0 ou plus récent, actif dans le monde.
 
 ## Les macros
 
@@ -50,7 +50,7 @@ La macro **HUD Poursuite** ouvre la poursuite en cours, la même pour tout le mo
 
 ## Installation
 
-Le dépôt est privé : Foundry ne peut pas télécharger le module tout seul. Téléchargez `rwf-tools.zip` depuis la [dernière release](https://github.com/ScallDePell/hammer-them-all/releases/latest) du dépôt (ou le code), décompressez-le dans `Data/modules/rwf-tools`, puis activez-le dans le monde avec Rule Them'All. L'identifiant du module reste `rwf-tools` pour l'instant : le dossier et le zip gardent ce nom.
+Le dépôt est privé : Foundry ne peut pas télécharger le module tout seul. Téléchargez `hammer-them-all.zip` depuis la [dernière release](https://github.com/ScallDePell/hammer-them-all/releases/latest) du dépôt (ou le code), décompressez-le dans `Data/modules/hammer-them-all`, puis activez-le dans le monde avec Rule Them'All. Si vous aviez RWF tools (0.6.4 ou avant), supprimez le dossier `Data/modules/rwf-tools` : le MJ reprend ses macros au premier lancement.
 
 ## Développement
 

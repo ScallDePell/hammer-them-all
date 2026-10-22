@@ -1,4 +1,6 @@
-# RWF tools : historique et passation
+# Hammer Them'All (ex RWF tools) : historique et passation
+
+Depuis la 0.7.0 (22 octobre 2026), le module s'appelle Hammer Them'All, identifiant `hammer-them-all`. « RWF tools » ci-dessous désigne le même module avant le renommage.
 
 Ce document résume tout ce qui s'est fait sur RWF tools jusqu'à la 0.6.4 (20 octobre 2026), pour reprendre le travail dans un nouveau projet sans relire les anciennes discussions. Les détails version par version sont dans [CHANGELOG.md](../CHANGELOG.md), le fonctionnement pour les joueurs dans [README.md](../README.md).
 
@@ -45,8 +47,8 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 - `runtime.emitSystemEvent` : réannoncer `rta.combat.turn` / `rta.combat.round`, envoyer `rta.combat.end` aux Acteurs encore marqués quand un combat est supprimé.
 - `runtime.setDefinitionState` : remettre à zéro des compteurs de combat restés d'un ancien combat.
 - `chat.postActionCard(result, versionId, {speaker})` : carte de chat d'un test demandé.
-- Drapeaux et réglages : combat `rule-them-all.singlePass` (une passe par round), combat `rwf-tools.targets`, combat `rwf-tools.pursuit`, réglage monde `rwf-tools.pursuit` (brouillon de préparation), réglage client `rwf-tools.diceMode`.
-- Socket `module.rwf-tools` : `request`/`answer`/`cancel` (tests), `hud.endTurn`, `hud.target`, `pursuit.target`, `pursuit.open`.
+- Drapeaux et réglages : combat `rule-them-all.singlePass` (une passe par round), combat `hammer-them-all.targets`, combat `hammer-them-all.pursuit`, réglage monde `hammer-them-all.pursuit` (brouillon de préparation), réglage client `hammer-them-all.diceMode` (`rwf-tools.*` jusqu'à la 0.6.4).
+- Socket `module.hammer-them-all` (`module.rwf-tools` jusqu'à la 0.6.4) : `request`/`answer`/`cancel` (tests), `hud.endTurn`, `hud.target`, `pursuit.target`, `pursuit.open`.
 
 ## 4. Les versions
 
@@ -100,7 +102,7 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 ## 5. Décisions à garder en tête
 
 - Les règles vont dans le Ruleset RWF, l'interface et l'orchestration dans RWF tools, rien de propre à RWF dans Rule Them'All.
-- Une poursuite est un combat Foundry marqué `rwf-tools.pursuit`, à une passe par round ; le HUD Combat l'ignore.
+- Une poursuite est un combat Foundry marqué `hammer-them-all.pursuit`, à une passe par round ; le HUD Combat l'ignore.
 - Chaque poursuivant a son propre écart avec sa cible (choix de Luca après la 0.5.0). Pas de jauge commune.
 - Scinder = plusieurs combats Foundry (choix de Luca).
 - Jauges lues du camp de celui qui regarde ; le MJ lit du côté des PNJ.
@@ -120,11 +122,11 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 
 ## 7. Où trouver quoi
 
-- **Dépôt :** github.com/ScallDePell/rwf-tools (privé), branche `main`. Luca travaille directement sur `main`, sans PR.
-- **Code :** `rwf-tools.mjs` (entrée, macros, socket, hooks), `src/test-request*.mjs` (demande de test), `src/hud-model.mjs` (vues pures, testées), `src/hud-markup.mjs`, `src/combat-hud.mjs`, `src/pursuit-hud.mjs`, `src/hud-common.mjs`, `src/turn-guard.mjs`, `styles/rwf-tools.css`, `lang/fr.json` et `lang/en.json`.
+- **Dépôt :** github.com/ScallDePell/hammer-them-all (privé, ex rwf-tools, renommé le 22 octobre 2026), branche `main`. Luca travaille directement sur `main`, sans PR.
+- **Code :** `hammer-them-all.mjs` (entrée, macros, socket, hooks), `src/test-request*.mjs` (demande de test), `src/hud-model.mjs` (vues pures, testées), `src/hud-markup.mjs`, `src/combat-hud.mjs`, `src/pursuit-hud.mjs`, `src/hud-common.mjs`, `src/turn-guard.mjs`, `styles/hammer-them-all.css`, `lang/fr.json` et `lang/en.json`.
 - **Tests :** `node --test tests/*.test.mjs`, avec `RTA_REPO=<checkout de Rule Them'All>` (par défaut `../rule-them-all`) pour le test d'intégration avec le Ruleset.
 - **Captures :** `node qa/render-windows.mjs <dossier>` (playwright-core et Chromium).
-- **Publication :** monter `version` et `download` dans `module.json`, ajouter l'entrée du CHANGELOG, pousser sur `main`, puis lancer le workflow `.github/workflows/release.yml` à la main (workflow_dispatch sur `main`). Il lance les tests avec un checkout de Rule Them'All, crée le tag `v<version>` et la release avec `rwf-tools.zip` et `module.json`. Le dépôt étant privé, Foundry ne peut pas télécharger le manifeste : Luca installe le zip à la main dans `Data/modules/rwf-tools`.
+- **Publication :** monter `version` et `download` dans `module.json`, ajouter l'entrée du CHANGELOG, pousser sur `main`, puis lancer le workflow `.github/workflows/release.yml` à la main (workflow_dispatch sur `main`). Il lance les tests avec un checkout de Rule Them'All, crée le tag `v<version>` et la release avec `hammer-them-all.zip` et `module.json`. Le dépôt étant privé, Foundry ne peut pas télécharger le manifeste : Luca installe le zip à la main dans `Data/modules/hammer-them-all`.
 - **Fichiers du projet Rule Them'All** (`/mnt/project-files/rwf-tools/`) : tous les zips de 0.1.0 à 0.6.4, les captures par version (`apercus-0.3.0` … `apercus-0.6.3`, `apercus-hud`) et une copie de ce document.
 - **Ancien système RWF :** [docs/huds-ancien-systeme-rwf.md](huds-ancien-systeme-rwf.md), résumé des HUD Combat et Poursuite de l'ancien système RWF v0.1.475 (mise en page, mécaniques, défauts connus, correspondance avec le Ruleset).
 - **Sources de règles :** `RWF-Reference-Fonctionnelle.docx` (référence fonctionnelle de Luca, dans les fichiers du projet Rule Them'All) et le dossier `Rulesets/rwf/` du dépôt Rule Them'All (`LISEZMOI.md`, générateur `outils/build-rwf.mjs`, vérifications `verify-rwf.mjs`).

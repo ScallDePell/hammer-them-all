@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0
+
+- Le module s'appelle désormais **Hammer Them'All** : identifiant `hammer-them-all`, dépôt ScallDePell/hammer-them-all, zip `hammer-them-all.zip` à décompresser dans `Data/modules/hammer-them-all`. Les fichiers `rwf-tools.mjs` et `styles/rwf-tools.css` deviennent `hammer-them-all.mjs` et `styles/hammer-them-all.css`, la classe CSS `rwf-tools-app` devient `hammer-them-all-app`, le socket `module.hammer-them-all`.
+- Pour Foundry, c'est un nouveau module : supprimez le dossier `Data/modules/rwf-tools` et activez Hammer Them'All dans le monde. Au premier lancement, le MJ reprend les trois macros de RWF tools (elles gardent leur place dans les barres de macros) et chaque joueur garde la liste des macros déjà placées. Les poursuites et cibles de combat en cours, le brouillon de préparation et le choix des dés ne sont pas repris : terminez les poursuites en cours avant la mise à jour.
+
 ## 0.6.4
 
 - Correctif 0.6.3 : le MJ republiait les écarts qu'il avait déjà écrits au lieu de relire l'état des personnages. Les joueurs voyaient donc des écarts figés ou en retard (un PJ qui rate semblait reculer de deux). Le MJ relit maintenant toujours l'état, et publie les écarts juste après chaque manœuvre d'un PNJ, avant que le tour passe.

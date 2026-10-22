@@ -18,7 +18,7 @@ const distanceBetween = (a, b) => { const grid = gridOf(); return grid && a && b
 
 export function createCombatHud() {
   return class CombatHud extends ApplicationV2() {
-    static DEFAULT_OPTIONS = {id: COMBAT_HUD_ID, classes: ["rwf-tools-app", "rwf-hud-app"], position: {width: 400, height: "auto"}, window: {title: "RWFTOOLS.Combat.Title", icon: "fa-solid fa-khanda", resizable: true}};
+    static DEFAULT_OPTIONS = {id: COMBAT_HUD_ID, classes: ["hammer-them-all-app", "rwf-hud-app"], position: {width: 400, height: "auto"}, window: {title: "RWFTOOLS.Combat.Title", icon: "fa-solid fa-khanda", resizable: true}};
     #view = null;
     #picking = false;
     #pending = null;
@@ -29,7 +29,7 @@ export function createCombatHud() {
 
     async _prepareContext(options) {
       const context = await super._prepareContext(options);
-      try { this.#view = await this.#read(); } catch (error) { console.error("RWF tools |", error); this.#view = {reason: "RWFTOOLS.Error.HudFailed"}; }
+      try { this.#view = await this.#read(); } catch (error) { console.error("Hammer Them'All |", error); this.#view = {reason: "RWFTOOLS.Error.HudFailed"}; }
       return context;
     }
     async #read() {

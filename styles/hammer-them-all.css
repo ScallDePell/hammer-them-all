@@ -1,5 +1,5 @@
-/* RWF tools windows. Spacing on the 4 / 8 / 12 px steps; colors from Foundry's theme. */
-.rwf-tools-app .window-content { padding: 12px; }
+/* Hammer Them'All windows. Spacing on the 4 / 8 / 12 px steps; colors from Foundry's theme. */
+.hammer-them-all-app .window-content { padding: 12px; }
 .rwf-request, .rwf-prompt { display: flex; flex-direction: column; gap: 12px; }
 .rwf-request h3 { margin: 0; }
 .rwf-request__players { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto; }

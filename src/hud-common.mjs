@@ -5,7 +5,7 @@ import {DICE_MODES, actionContext, emptyPursuit} from "./hud-model.mjs";
 
 export const t = key => globalThis.game?.i18n?.localize?.(key) ?? key;
 export const rta = () => globalThis.game?.ruleThemAll;
-export const notifyError = error => { console.error("RWF tools |", error); globalThis.ui?.notifications?.error?.(error?.message ?? String(error)); };
+export const notifyError = error => { console.error("Hammer Them'All |", error); globalThis.ui?.notifications?.error?.(error?.message ?? String(error)); };
 export const ApplicationV2 = () => globalThis.foundry.applications.api.ApplicationV2;
 
 export function registerHudSettings() {

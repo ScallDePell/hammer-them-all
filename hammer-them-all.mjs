@@ -26,7 +26,7 @@ Hooks.once("ready", async () => {
   installPursuitKeeper();
   // One at a time: the GM's own macro creations fire createMacro while it is still making the others.
   let queue = Promise.resolve();
-  const macros = () => (queue = queue.then(ensureMacros).catch(error => console.error("RWF tools | Macro", error)));
+  const macros = () => (queue = queue.then(ensureMacros).catch(error => console.error("Hammer Them'All | Macro", error)));
   await macros();
   // A player who logged in before the GM made the macros gets them as soon as they exist.
   Hooks.on("createMacro", macro => { if (macro.flags?.[MODULE_ID]) macros(); });
