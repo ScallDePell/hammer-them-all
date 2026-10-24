@@ -1,6 +1,6 @@
 # Changelog
 
-## Non publié
+## 0.8.0
 
 - Hors combat (vaincu, ou à 0 de Vitalité) : le HUD Combat n'offre plus aucune action à ce combattant, même à son tour (« Hors combat : ce combattant ne peut plus agir »). Avant, un criminel tombé à 0 pouvait encore attaquer.
 - Un combattant vaincu ne tire plus d'initiative aux rounds suivants : il perd la sienne et passe en fin d'ordre, et le client du MJ passe son tour quand il arrive (poursuites comprises pour l'initiative).
