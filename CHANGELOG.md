@@ -1,6 +1,6 @@
 # Changelog
 
-## Non publié
+## 0.8.1
 
 - Plus d'avertissement de Foundry 14 sur la syntaxe `-=` : les cibles de combat (et l'ancien drapeau des macros) s'effacent avec `ForcedDeletion`.
 - À la suppression d'un combat commencé, le client du MJ laisse passer la fin de combat de Rule Them'All avant d'envoyer la sienne, seulement aux acteurs encore marqués. Avant, les deux écrivaient en même temps et la console montrait « rta.combat.end failed … Runtime container changed since it was read ».
