@@ -1,6 +1,6 @@
 # Changelog
 
-## Non publié
+## 0.8.2
 
 - Test demandé par le MJ : une carte de chat à lui, lisible d'un coup d'œil : le d20 (dés Foundry ou jet sur table), le bonus de compétence, le total contre la DD et le résultat en couleur. Avant, la carte de Rule Them'All montrait « @input.de : 17 = 21 », sans dire d'où venait l'écart.
 - Fenêtre du joueur : le champ du d20 lu sur la table prend le focus à l'ouverture, accepte la saisie au clavier sans que Foundry n'intercepte les chiffres, et se valide avec Entrée.
