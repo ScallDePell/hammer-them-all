@@ -157,5 +157,8 @@
   "RWFTOOLS.Pursuit.Status.Lost": "a été semé",
   "RWFTOOLS.Combat.OutOfCombat": "Hors combat : ce combattant ne peut plus agir.",
   "RWFTOOLS.Settings.Sounds": "Sons de combat et de poursuite",
-  "RWFTOOLS.Settings.SoundsHint": "Début du combat, « À vous », « Vous êtes le prochain » et la chute d'un combattant, sur ce client. Décoché, Hammer Them'All ne joue aucun son et coupe aussi ceux du thème de combat de Foundry."
+  "RWFTOOLS.Settings.SoundsHint": "Début du combat, « À vous », « Vous êtes le prochain » et la chute d'un combattant, sur ce client. Décoché, Hammer Them'All ne joue aucun son et coupe aussi ceux du thème de combat de Foundry.",
+  "RWFTOOLS.Combat.EndedPlayers": "Combat terminé : plus aucun adversaire debout.",
+  "RWFTOOLS.Combat.EndedOthers": "Combat terminé : plus aucun personnage joueur debout.",
+  "RWFTOOLS.Combat.EndedNone": "Combat terminé : plus personne debout."
 }

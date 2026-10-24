@@ -157,5 +157,8 @@
   "RWFTOOLS.Pursuit.Status.Lost": "was shaken off",
   "RWFTOOLS.Combat.OutOfCombat": "Out of the combat: this combatant can no longer act.",
   "RWFTOOLS.Settings.Sounds": "Combat and pursuit sounds",
-  "RWFTOOLS.Settings.SoundsHint": "Start of the combat, your turn, next up and a combatant falling, on this client. Unticked, Hammer Them'All plays no sound and also silences Foundry's combat theme."
+  "RWFTOOLS.Settings.SoundsHint": "Start of the combat, your turn, next up and a combatant falling, on this client. Unticked, Hammer Them'All plays no sound and also silences Foundry's combat theme.",
+  "RWFTOOLS.Combat.EndedPlayers": "Combat over: no opponent left standing.",
+  "RWFTOOLS.Combat.EndedOthers": "Combat over: no player character left standing.",
+  "RWFTOOLS.Combat.EndedNone": "Combat over: no one left standing."
 }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {initiativeRolls, passOutTurn, installDefeatedInitiative} from "../src/out-of-combat.mjs";
+import {initiativeRolls, passOutTurn, installDefeatedInitiative, combatOver, missingStatus} from "../src/out-of-combat.mjs";
 import {hudToOpen} from "../src/hud-open.mjs";
 import {combatCues, cueFile} from "../src/sounds.mjs";
 import {isOut, knockedOut} from "../src/hud-model.mjs";
@@ -79,4 +79,18 @@ test("a flag key is removed with Foundry 14's ForcedDeletion when it exists", as
   globalThis.foundry = {data: {operators: {ForcedDeletion}}};
   try { assert.ok(deletion("flags.x.targets", "a")["flags.x.targets.a"] instanceof ForcedDeletion); }
   finally { delete globalThis.foundry; }
+});
+
+test("a combat is over once a side has no one left standing", () => {
+  const pc = (defeated = false) => ({playerOwned: true, defeated}), npc = (defeated = false) => ({playerOwned: false, defeated});
+  assert.equal(combatOver([pc(), npc(true), npc(true)]), "players");
+  assert.equal(combatOver([pc(true), npc()]), "others");
+  assert.equal(combatOver([pc(true), npc(true)]), "none");
+  assert.equal(combatOver([pc(), npc(), npc(true)]), null);
+  assert.equal(combatOver([pc(), pc(true)]), null, "no other side: the GM ends it");
+  assert.equal(combatOver([]), null);
+});
+
+test("a defeated combatant without the status on its token gets it", () => {
+  assert.deepEqual(missingStatus([{id: "a", defeated: true, hasStatus: false}, {id: "b", defeated: true, hasStatus: true}, {id: "c", defeated: false, hasStatus: false}]), ["a"]);
 });

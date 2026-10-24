@@ -1,5 +1,10 @@
 # Changelog
 
+## Non publié
+
+- Un combattant vaincu reçoit toujours le statut « vaincu » sur son jeton : le client du MJ le pose quand il manque (le suivi de combat le marquait, pas toujours le jeton).
+- Fin automatique du combat : quand tous les PJ ou tous leurs adversaires sont hors combat, le combat se termine deux secondes plus tard, avec une ligne « Combat terminé » dans le chat. Pas pour les poursuites, qui ont leur propre fin.
+
 ## 0.8.1
 
 - Plus d'avertissement de Foundry 14 sur la syntaxe `-=` : les cibles de combat (et l'ancien drapeau des macros) s'effacent avec `ForcedDeletion`.

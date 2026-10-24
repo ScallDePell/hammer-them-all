@@ -34,7 +34,8 @@ Elle s'ouvre toute seule chez chaque joueur dont un personnage est dans le comba
 - Une carte par manière d'agir : mains nues, chaque arme (dégâts, portée, perforation, chargeur et réserve, attaques par round ; Tirer ou Attaquer, Rafale, Full auto, Recharger selon l'arme), chaque pouvoir disponible (latent pour le MJ seulement), et les actions physiques Sprinter et Reprendre son souffle. Chaque bouton montre le d20 à atteindre ; un bouton grisé dit pourquoi au survol (la Condition du Ruleset qui l'interdit, une cible hors de portée, une arme de mêlée qui n'est pas au contact).
 - Chaque Action est celle du Ruleset RWF, lancée par Rule Them'All, avec sa carte de chat.
 - **Fin de la passe N** ou **Fin du round** passe au combattant suivant ; pour un joueur, c'est le client du MJ qui le fait (il faut un MJ connecté).
-- **Hors combat :** un combattant vaincu (marqué dans le suivi de combat) ou à 0 de Vitalité ne peut plus agir, même à son tour. Il ne tire plus d'initiative aux rounds suivants (il perd la sienne et passe en fin d'ordre) et le client du MJ passe son tour quand il arrive.
+- **Hors combat :** un combattant vaincu (marqué dans le suivi de combat) ou à 0 de Vitalité ne peut plus agir, même à son tour. Il ne tire plus d'initiative aux rounds suivants (il perd la sienne et passe en fin d'ordre) et le client du MJ passe son tour quand il arrive. Le client du MJ lui pose aussi le statut « vaincu » sur son jeton s'il lui manque.
+- **Fin automatique :** quand tous les personnages joueurs ou tous leurs adversaires sont hors combat, le client du MJ écrit « Combat terminé » dans le chat et termine le combat, deux secondes plus tard. Un combat sans adversaires (ou sans PJ) reste au MJ.
 
 ## Sons
 
