@@ -1,5 +1,10 @@
 # Changelog
 
+## Non publié
+
+- Plus d'avertissement de Foundry 14 sur la syntaxe `-=` : les cibles de combat (et l'ancien drapeau des macros) s'effacent avec `ForcedDeletion`.
+- À la suppression d'un combat commencé, le client du MJ laisse passer la fin de combat de Rule Them'All avant d'envoyer la sienne, seulement aux acteurs encore marqués. Avant, les deux écrivaient en même temps et la console montrait « rta.combat.end failed … Runtime container changed since it was read ».
+
 ## 0.8.0
 
 - Hors combat (vaincu, ou à 0 de Vitalité) : le HUD Combat n'offre plus aucune action à ce combattant, même à son tour (« Hors combat : ce combattant ne peut plus agir »). Avant, un criminel tombé à 0 pouvait encore attaquer.

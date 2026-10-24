@@ -4,7 +4,7 @@
 import {MODULE_ID, SOCKET} from "./test-request-model.mjs";
 import {hudRuleset, followedCombatant, waitForTurn, yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, edgeDistance, combatantView, endTurnLabel, readWhole, isOut, knockedOut} from "./hud-model.mjs";
 import {renderCombatHTML} from "./hud-markup.mjs";
-import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction} from "./hud-common.mjs";
+import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction, deletion} from "./hud-common.mjs";
 
 export const COMBAT_HUD_ID = "rwf-combat-hud";
 const PASS_FLAG = ["rule-them-all", "initiativePass"];
@@ -179,7 +179,7 @@ export async function setCombatTarget(combatantId, targetId) {
 }
 const writeTarget = (combat, combatantId, targetId) => targetId
   ? combat.update({[`flags.${MODULE_ID}.${TARGETS}.${combatantId}`]: targetId})
-  : combat.update({[`flags.${MODULE_ID}.${TARGETS}.-=${combatantId}`]: null});
+  : combat.update(deletion(`flags.${MODULE_ID}.${TARGETS}`, combatantId));
 
 /** Active GM client: a player sets the target of a combatant they own, among the combatants of that combat. */
 export async function serveTarget(message, senderId) {
@@ -209,7 +209,7 @@ export function installCombatTargets(hooks = globalThis.Hooks) {
   const tidy = combat => {
     if (!combat?.started || !activeGM()) return;
     const stale = staleTargets({targets: combat.getFlag?.(MODULE_ID, TARGETS), combatants: [...combat.combatants].map(c => ({id: c.id, defeated: Boolean(c.isDefeated)}))});
-    if (stale.length) combat.update(Object.fromEntries(stale.map(id => [`flags.${MODULE_ID}.${TARGETS}.-=${id}`, null]))).catch(notifyError);
+    if (stale.length) combat.update(Object.assign({}, ...stale.map(id => deletion(`flags.${MODULE_ID}.${TARGETS}`, id)))).catch(notifyError);
   };
   for (const hook of ["updateCombatant", "deleteCombatant"]) hooks.on(hook, combatant => tidy(combatant.parent ?? combatant.combat));
 }

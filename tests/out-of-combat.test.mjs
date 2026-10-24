@@ -71,3 +71,12 @@ test("combat sounds: the start, your turn, next up; none when Foundry's theme pl
   assert.equal(cueFile({yourTurn: "x.ogg"}, "yourTurn"), "x.ogg");
   assert.equal(cueFile({}, "nextUp"), null);
 });
+
+test("a flag key is removed with Foundry 14's ForcedDeletion when it exists", async () => {
+  const {deletion} = await import("../src/hud-common.mjs");
+  assert.deepEqual(deletion("flags.x.targets", "a"), {"flags.x.targets.-=a": null});
+  class ForcedDeletion {}
+  globalThis.foundry = {data: {operators: {ForcedDeletion}}};
+  try { assert.ok(deletion("flags.x.targets", "a")["flags.x.targets.a"] instanceof ForcedDeletion); }
+  finally { delete globalThis.foundry; }
+});

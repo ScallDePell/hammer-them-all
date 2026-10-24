@@ -5,6 +5,7 @@
 import {SOCKET, MODULE_ID, OLD_MODULE_ID, REQUESTED_TEST_ACTION, requestRuleset, skillOptions, ddOptions, defaultDD, requestCandidates, isRwfPlayerCharacter,
   readD20, canSend, requestMessage, answerMessage, cancelMessage, acceptAnswer, requestedTestContext} from "./test-request-model.mjs";
 import {renderRequestHTML, renderPromptHTML} from "./test-request-markup.mjs";
+import {deletion} from "./hud-common.mjs";
 
 const t = key => globalThis.game?.i18n?.localize?.(key) ?? key;
 const rta = () => globalThis.game?.ruleThemAll;
@@ -218,7 +219,7 @@ export async function ensureMacros() {
       const spec = MACROS.find(s => macro.command.includes(`.${s.api}(`) && !find(s.flag));
       await macro.update({command: macro.command.replaceAll(oldCall, `game.modules.get("${MODULE_ID}")`),
         ...(spec ? {[`flags.${MODULE_ID}.${spec.flag}`]: true} : {}),
-        ...(macro._source?.flags?.[OLD_MODULE_ID] ? {[`flags.-=${OLD_MODULE_ID}`]: null} : {})});
+        ...(macro._source?.flags?.[OLD_MODULE_ID] ? deletion("flags", OLD_MODULE_ID) : {})});
     }
     for (const spec of MACROS) if (!find(spec.flag)) await globalThis.Macro.create({name: t(spec.name), type: "script", img: spec.img, ownership: spec.ownership,
       command: `game.modules.get("${MODULE_ID}")?.api?.${spec.api}();`, flags: {[MODULE_ID]: {[spec.flag]: true}}});

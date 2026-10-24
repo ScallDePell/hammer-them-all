@@ -37,7 +37,7 @@ const COUNTERS = ["round-en-cours", "passe-en-cours", "derniere-passe-attaque", 
 /** Whether an Actor still carries the marks of a combat: "En combat" or a combat counter above 0. */
 export function combatMarks(state) { return Boolean(state) && (inCombat(state) || COUNTERS.some(id => counter(state, id) > 0)); }
 
-export function installTurnGuard({hooks = globalThis.Hooks, delay = 400} = {}) {
+export function installTurnGuard({hooks = globalThis.Hooks, delay = 400, endDelay = 1500} = {}) {
   // One repair per turn and pass: a Ruleset that refuses the pass is not asked again and again. The turn running when
   // the GM logs in is not fresh: its combatant may already have attacked.
   let timer = null, running = false, again = false, first = true;
@@ -81,9 +81,11 @@ export function installTurnGuard({hooks = globalThis.Hooks, delay = 400} = {}) {
       if (found.reason) return;
       const elsewhere = new Set([...(game.combats ?? [])].filter(c => c.id !== combat.id && c.started).flatMap(c => [...c.combatants].map(x => x.actor?.uuid)));
       const uuids = [...new Set([...(combat.combatants ?? [])].map(c => c.actor?.uuid).filter(uuid => uuid && !elsewhere.has(uuid)))];
+      // Rule Them'All sends its own end for a started combat: it goes first, and only the Actors it left marked get
+      // this one (both at once wrote the same Actor twice, and one failed with "Runtime container changed").
+      if (combat.started && uuids.length) await new Promise(resolve => setTimeout(resolve, endDelay));
       const marked = [];
       for (const uuid of uuids) { const state = await rta.runtime.getContainerState(uuid); if (state?.rulesetVersionId === found.versionId && combatMarks(state)) marked.push(uuid); }
-      // Rule Them'All sends its own end a moment later for a started combat: both leave the same marks at 0.
       if (marked.length) await rta.runtime.emitSystemEvent("rta.combat.end", {combatId: combat.id, round: Number(combat.round ?? 0)}, marked);
     } catch (error) { console.error(`${MODULE_ID} | Combat end failed`, error); }
   });
