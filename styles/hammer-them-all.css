@@ -35,6 +35,18 @@
 .rwf-prompt__error { margin: 0; color: var(--htm-color-danger); }
 .rwf-prompt__manual { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--htm-gap-row); }
 
+/* ---------- Carte de chat d'un test demandé ---------- */
+.rwf-card { display: flex; flex-direction: column; gap: var(--htm-gap-tight); }
+.rwf-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--htm-gap-row); font-size: var(--htm-type-control); }
+.rwf-card__who { margin: 0; font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-card__lines { display: grid; grid-template-columns: auto 1fr; gap: var(--htm-gap-tight) var(--htm-gap-row); margin: 0; font-size: var(--htm-type-base); }
+.rwf-card__lines dt { font-weight: 700; color: var(--htm-color-text-secondary); }
+.rwf-card__lines dd { margin: 0; text-align: end; }
+.rwf-card__how { font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-card__outcome { margin: 0; padding-top: var(--htm-space-2); border-top: 1px solid var(--htm-color-border-subtle); font-weight: 700; text-align: center; }
+.rwf-card__outcome--good { color: var(--htm-color-success); }
+.rwf-card__outcome--bad { color: var(--htm-color-danger); }
+
 /* ---------- HUD Combat et HUD Poursuite ---------- */
 .rwf-hud { display: flex; flex-direction: column; gap: var(--htm-gap-row); }
 .rwf-hud button { width: auto; }

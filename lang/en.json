@@ -160,5 +160,11 @@
   "RWFTOOLS.Settings.SoundsHint": "Start of the combat, your turn, next up and a combatant falling, on this client. Unticked, Hammer Them'All plays no sound and also silences Foundry's combat theme.",
   "RWFTOOLS.Combat.EndedPlayers": "Combat over: no opponent left standing.",
   "RWFTOOLS.Combat.EndedOthers": "Combat over: no player character left standing.",
-  "RWFTOOLS.Combat.EndedNone": "Combat over: no one left standing."
+  "RWFTOOLS.Combat.EndedNone": "Combat over: no one left standing.",
+  "RWFTOOLS.Card.D20": "d20",
+  "RWFTOOLS.Card.Table": "rolled on the table",
+  "RWFTOOLS.Card.Foundry": "Foundry dice",
+  "RWFTOOLS.Card.Bonus": "Skill bonus",
+  "RWFTOOLS.Card.Total": "Total",
+  "RWFTOOLS.Card.Against": "against DD"
 }

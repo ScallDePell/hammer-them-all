@@ -36,8 +36,25 @@ export function renderPromptHTML({request, sent = null, error = null}, t) {
   return `<div class="rwf-prompt">${asked}
     <button type="button" data-rwf-roll><i class="fa-solid fa-dice-d20"></i> ${e(t("RWFTOOLS.Prompt.Roll"))}</button>
     <div class="rwf-prompt__manual">
-      <label>${e(t("RWFTOOLS.Prompt.Manual"))}<input type="number" min="1" max="20" step="1" inputmode="numeric" data-rwf-d20></label>
+      <label>${e(t("RWFTOOLS.Prompt.Manual"))}<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="1–20" data-rwf-d20></label>
       <button type="button" data-rwf-submit>${e(t("RWFTOOLS.Prompt.Submit"))}</button>
     </div>
     ${error ? `<p class="rwf-prompt__error">${e(t(error))}</p>` : ""}</div>`;
+}
+
+/** Chat card of a requested test, read at a glance: the d20 (rolled with the Foundry dice or on the table), plus the
+ * skill bonus, the total against the DD, and the outcome. */
+export function renderTestCardHTML({actorName, skillLabel, ddLabel, dd, d20, manual, total, outcome = "", success = null}, t) {
+  const bonus = Number.isFinite(Number(total)) ? Number(total) - Number(d20) : null;
+  const signed = n => `${n < 0 ? "−" : "+"} ${Math.abs(n)}`;
+  const tone = success === true ? " rwf-card__outcome--good" : success === false ? " rwf-card__outcome--bad" : "";
+  return `<div class="rwf-card">
+    <header class="rwf-card__head"><strong>${e(skillLabel)}</strong><span>${e(t("RWFTOOLS.Request.DD"))} ${e(ddLabel)}</span></header>
+    <p class="rwf-card__who">${e(actorName)} · ${e(t("RWFTOOLS.Prompt.Title"))}</p>
+    <dl class="rwf-card__lines">
+      <dt>${e(t("RWFTOOLS.Card.D20"))}</dt><dd>${e(d20)} <span class="rwf-card__how">(${e(t(manual ? "RWFTOOLS.Card.Table" : "RWFTOOLS.Card.Foundry"))})</span></dd>
+      ${bonus === null ? "" : `<dt>${e(t("RWFTOOLS.Card.Bonus"))}</dt><dd>${e(signed(bonus))}</dd>`}
+      <dt>${e(t("RWFTOOLS.Card.Total"))}</dt><dd><strong>${e(total ?? "?")}</strong> ${e(t("RWFTOOLS.Card.Against"))} ${e(dd)}</dd>
+    </dl>
+    ${outcome ? `<p class="rwf-card__outcome${tone}">${e(outcome)}</p>` : ""}</div>`;
 }

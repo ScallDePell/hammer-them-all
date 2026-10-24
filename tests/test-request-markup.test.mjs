@@ -32,10 +32,20 @@ test("GM window: requests in progress, with Cancel while waiting", () => {
 test("player window: Foundry dice or the table d20, then what was sent", () => {
   const html = renderPromptHTML({request}, t);
   assert.match(html, /data-rwf-roll/);
-  assert.match(html, /type="number" min="1" max="20"/);
+  assert.match(html, /<input type="text" inputmode="numeric"[^>]*data-rwf-d20>/);
   assert.match(html, /data-rwf-submit/);
   assert.match(renderPromptHTML({request, error: "RWFTOOLS.Prompt.Invalid"}, t), /RWFTOOLS\.Prompt\.Invalid/);
   const sent = renderPromptHTML({request, sent: 14}, t);
   assert.match(sent, /RWFTOOLS\.Prompt\.Sent 14/);
   assert.doesNotMatch(sent, /data-rwf-roll/);
+});
+
+test("the chat card of a requested test shows the d20, the bonus, the total against the DD and the outcome", async () => {
+  const {renderTestCardHTML} = await import("../src/test-request-markup.mjs");
+  const html = renderTestCardHTML({actorName: "Léa", skillLabel: "Vigilance", ddLabel: "Standard (13)", dd: 13, d20: 17, manual: true, total: 21, outcome: "Réussite", success: true}, key => key);
+  assert.match(html, /RWFTOOLS\.Card\.D20<\/dt><dd>17 <span class="rwf-card__how">\(RWFTOOLS\.Card\.Table\)/);
+  assert.match(html, /RWFTOOLS\.Card\.Bonus<\/dt><dd>\+ 4<\/dd>/);
+  assert.match(html, /<strong>21<\/strong> RWFTOOLS\.Card\.Against 13/);
+  assert.match(html, /rwf-card__outcome--good">Réussite/);
+  assert.match(renderTestCardHTML({actorName: "A", skillLabel: "S", ddLabel: "D", dd: 13, d20: 5, manual: false, total: 3, outcome: "Échec", success: false}, key => key), /\− 2/);
 });

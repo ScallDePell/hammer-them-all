@@ -4,7 +4,7 @@
    its chat card. */
 import {SOCKET, MODULE_ID, OLD_MODULE_ID, REQUESTED_TEST_ACTION, requestRuleset, skillOptions, ddOptions, defaultDD, requestCandidates, isRwfPlayerCharacter,
   readD20, canSend, requestMessage, answerMessage, cancelMessage, acceptAnswer, requestedTestContext} from "./test-request-model.mjs";
-import {renderRequestHTML, renderPromptHTML} from "./test-request-markup.mjs";
+import {renderRequestHTML, renderPromptHTML, renderTestCardHTML} from "./test-request-markup.mjs";
 import {deletion} from "./hud-common.mjs";
 
 const t = key => globalThis.game?.i18n?.localize?.(key) ?? key;
@@ -104,8 +104,11 @@ async function resolveAnswer(accepted) {
     const result = await rta().runtime.executeAction(request.versionId, REQUESTED_TEST_ACTION, requestedTestContext(request, d20));
     if (!result?.allowed) throw new Error(result?.reason ?? t("RWFTOOLS.Error.NotAllowed"));
     const actor = globalThis.fromUuidSync?.(request.actorUuid);
-    await rta().chat.postActionCard(result, request.versionId, {speaker: globalThis.ChatMessage.getSpeaker({actor})});
     const outcome = result.testResult?.outcome, label = outcome ? t(outcome.labelKey || outcome.nameKey) : "";
+    // Our own card: Rule Them'All's shows the roll's formula (@input.de) and the total, with no word of the bonus.
+    const success = outcome?.id ? /^reussite/.test(outcome.id) : null;
+    await globalThis.ChatMessage.create({speaker: globalThis.ChatMessage.getSpeaker({actor}),
+      content: renderTestCardHTML({actorName: request.actorName, skillLabel: request.skillLabel, ddLabel: request.ddLabel, dd: request.dd, d20, manual, total: result.testResult?.total ?? null, outcome: label, success}, t)});
     entry.status = "done";
     entry.summary = `${d20}${manual ? ` (${t("RWFTOOLS.Request.Manual")})` : ""} → ${result.testResult?.total ?? "?"}${label ? ` · ${label}` : ""}`;
   } catch (error) {
@@ -135,6 +138,9 @@ export function createPromptWindow({ApplicationV2}) {
       const submit = () => this.#answer(input?.value, true);
       root.querySelector("[data-rwf-submit]")?.addEventListener("click", submit);
       input?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); submit(); } });
+      // Foundry's own key bindings do not take the digits typed here.
+      input?.addEventListener("keydown", event => event.stopPropagation());
+      input?.focus();
     }
     /** The window stays until the test is answered, or the GM withdraws it. */
     async close(options = {}) {

@@ -160,5 +160,11 @@
   "RWFTOOLS.Settings.SoundsHint": "Début du combat, « À vous », « Vous êtes le prochain » et la chute d'un combattant, sur ce client. Décoché, Hammer Them'All ne joue aucun son et coupe aussi ceux du thème de combat de Foundry.",
   "RWFTOOLS.Combat.EndedPlayers": "Combat terminé : plus aucun adversaire debout.",
   "RWFTOOLS.Combat.EndedOthers": "Combat terminé : plus aucun personnage joueur debout.",
-  "RWFTOOLS.Combat.EndedNone": "Combat terminé : plus personne debout."
+  "RWFTOOLS.Combat.EndedNone": "Combat terminé : plus personne debout.",
+  "RWFTOOLS.Card.D20": "d20",
+  "RWFTOOLS.Card.Table": "jet sur table",
+  "RWFTOOLS.Card.Foundry": "dés Foundry",
+  "RWFTOOLS.Card.Bonus": "Bonus de compétence",
+  "RWFTOOLS.Card.Total": "Total",
+  "RWFTOOLS.Card.Against": "contre DD"
 }

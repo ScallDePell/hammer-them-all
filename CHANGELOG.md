@@ -2,6 +2,8 @@
 
 ## Non publié
 
+- Test demandé par le MJ : une carte de chat à lui, lisible d'un coup d'œil : le d20 (dés Foundry ou jet sur table), le bonus de compétence, le total contre la DD et le résultat en couleur. Avant, la carte de Rule Them'All montrait « @input.de : 17 = 21 », sans dire d'où venait l'écart.
+- Fenêtre du joueur : le champ du d20 lu sur la table prend le focus à l'ouverture, accepte la saisie au clavier sans que Foundry n'intercepte les chiffres, et se valide avec Entrée.
 - Un combattant vaincu reçoit toujours le statut « vaincu » sur son jeton : le client du MJ le pose quand il manque (le suivi de combat le marquait, pas toujours le jeton).
 - Fin automatique du combat : quand tous les PJ ou tous leurs adversaires sont hors combat, le combat se termine deux secondes plus tard, avec une ligne « Combat terminé » dans le chat. Pas pour les poursuites, qui ont leur propre fin.
 
