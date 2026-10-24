@@ -1,5 +1,12 @@
 # Changelog
 
+## Non publié
+
+- Hors combat (vaincu, ou à 0 de Vitalité) : le HUD Combat n'offre plus aucune action à ce combattant, même à son tour (« Hors combat : ce combattant ne peut plus agir »). Avant, un criminel tombé à 0 pouvait encore attaquer.
+- Un combattant vaincu ne tire plus d'initiative aux rounds suivants : il perd la sienne et passe en fin d'ordre, et le client du MJ passe son tour quand il arrive (poursuites comprises pour l'initiative).
+- Le HUD Combat s'ouvre tout seul chez les joueurs dont un personnage est dans le combat, au début du combat, quand il le rejoint ou à la connexion ; le HUD Poursuite de même, en plus de l'ouverture au lancement.
+- Sons de combat et de poursuite : début de la rencontre, « À vous », « Vous êtes le prochain » et un coup de tambour quand un combattant tombe. Nouveau réglage par client **Sons de combat et de poursuite** dans les paramètres du jeu, qui coupe aussi les sons du thème de combat de Foundry.
+
 ## 0.7.1
 
 - Toutes les fenêtres (Demander un test, réponse du joueur, HUD Combat, HUD Poursuite) prennent la charte graphique de Rule Them'All et de Forge Them'All : mêmes espacements (4 / 8 / 12 px), même échelle de texte, couleurs du thème Foundry avec l'accent orangé, titres de zone en petites capitales, cadres arrondis légèrement teintés, badges (tour en cours, d20 à atteindre, « À son tour », nombre en course), choix des dés et onglets de poursuite en rangée d'onglets, réglages du MJ dans un tiroir repliable. Le fonctionnement ne change pas.

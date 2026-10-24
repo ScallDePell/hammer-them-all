@@ -25,6 +25,8 @@ La fenêtre du MJ montre les tests en attente et leurs résultats. **Annuler** r
 
 La macro **HUD Combat** ouvre, sur chaque client, une fenêtre qui suit le combat de Foundry une fois commencé. Elle suit le combattant qui agit quand il appartient à l'utilisateur (n'importe lequel pour le MJ), sinon son propre personnage.
 
+Elle s'ouvre toute seule chez chaque joueur dont un personnage est dans le combat, au début du combat (ou quand il le rejoint, ou quand il se connecte pendant le combat). Fermée, elle ne revient pas avant le combat suivant : la macro la rouvre.
+
 - En tête : le round, la passe en cours sur le nombre de passes du combattant, et à qui c'est le tour.
 - Les ressources : Vitalité, Endurance, Énergie, Défense, attaques utilisées dans le round sur ce que permet la meilleure maîtrise, efforts physiques sur 3.
 - **Dés Foundry / Dés sur table**, retenu par client : sur table, le HUD demande le d20 lu sur la table, puis, si l'attaque touche, le total des dés de dégâts (ou de soins) ; avec les dés Foundry, tout est lancé automatiquement. La carte de chat montre le jet, la difficulté, le résultat et les dégâts.
@@ -32,6 +34,11 @@ La macro **HUD Combat** ouvre, sur chaque client, une fenêtre qui suit le comba
 - Une carte par manière d'agir : mains nues, chaque arme (dégâts, portée, perforation, chargeur et réserve, attaques par round ; Tirer ou Attaquer, Rafale, Full auto, Recharger selon l'arme), chaque pouvoir disponible (latent pour le MJ seulement), et les actions physiques Sprinter et Reprendre son souffle. Chaque bouton montre le d20 à atteindre ; un bouton grisé dit pourquoi au survol (la Condition du Ruleset qui l'interdit, une cible hors de portée, une arme de mêlée qui n'est pas au contact).
 - Chaque Action est celle du Ruleset RWF, lancée par Rule Them'All, avec sa carte de chat.
 - **Fin de la passe N** ou **Fin du round** passe au combattant suivant ; pour un joueur, c'est le client du MJ qui le fait (il faut un MJ connecté).
+- **Hors combat :** un combattant vaincu (marqué dans le suivi de combat) ou à 0 de Vitalité ne peut plus agir, même à son tour. Il ne tire plus d'initiative aux rounds suivants (il perd la sienne et passe en fin d'ordre) et le client du MJ passe son tour quand il arrive.
+
+## Sons
+
+Les combats et les poursuites ont leurs sons : le début de la rencontre, « À vous » et « Vous êtes le prochain » chez le joueur dont le personnage agit, et un coup de tambour quand un combattant tombe. Ils viennent des thèmes de combat de Foundry (celui choisi dans **Thème de combat** des paramètres de Foundry, sinon Épique) ; quand un thème est choisi, Foundry joue lui-même le début et les tours. Le réglage **Sons de combat et de poursuite** (Paramètres du jeu, Hammer Them'All, par client) les coupe tous, ceux du thème de combat de Foundry compris.
 
 ## HUD Poursuite
 

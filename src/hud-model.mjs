@@ -158,6 +158,14 @@ async function usable(runtime, versionId, ruleset, actionId, context) {
 const hasInput = (ruleset, actionId, inputId) => Boolean(ruleset.actions?.find(a => a.id === actionId)?.inputs?.some(i => i.id === inputId));
 const formula = async (runtime, versionId, id, context) => { try { return await runtime.evaluateFormula(versionId, id, context); } catch { return null; } };
 
+/** Whether a combatant is out of the combat: defeated in the tracker, or its Vitality down to 0. */
+export const isOut = ({defeated = false, vitality = null} = {}) => Boolean(defeated) || (vitality !== null && vitality !== undefined && Number.isFinite(Number(vitality)) && Number(vitality) <= 0);
+
+/** Out of the combat, a combatant can no longer act: every button off, for that one reason. */
+export function knockedOut(combatant) {
+  return {...combatant, out: true, waiting: true, cards: combatant.cards.map(card => ({...card, buttons: card.buttons.map(b => ({...b, allowed: false, reason: "RWFTOOLS.Combat.OutOfCombat", range: null, waiting: true}))}))};
+}
+
 /** The combat HUD of one combatant: its resources, its attacks this round, and an action card per way it can act.
  * target: {uuid, name, distance} or null; cover: the cover the HUD adds to the target's defence. */
 export async function combatantView(runtime, {versionId, ruleset, actorUuid, target = null, cover = 0, isGM = false, userId = null, contentName = row => row.name ?? row.templateId}) {

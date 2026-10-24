@@ -154,5 +154,8 @@
   "RWFTOOLS.Pursuit.SplitHint": "Tick those who go off in a pursuit of their own: each part needs at least one fugitive and one pursuer. Everyone keeps their initiative and gauge.",
   "RWFTOOLS.Pursuit.SplitDone": "the pursuit splits: {a} on one side, {b} on the other.",
   "RWFTOOLS.Pursuit.Pursuits": "Running pursuits",
-  "RWFTOOLS.Pursuit.Status.Lost": "was shaken off"
+  "RWFTOOLS.Pursuit.Status.Lost": "was shaken off",
+  "RWFTOOLS.Combat.OutOfCombat": "Out of the combat: this combatant can no longer act.",
+  "RWFTOOLS.Settings.Sounds": "Combat and pursuit sounds",
+  "RWFTOOLS.Settings.SoundsHint": "Start of the combat, your turn, next up and a combatant falling, on this client. Unticked, Hammer Them'All plays no sound and also silences Foundry's combat theme."
 }

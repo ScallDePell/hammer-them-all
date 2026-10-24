@@ -103,6 +103,14 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 
 - **Demande de Luca :** le style de toutes les fenêtres comme Rule Them'All et Forge Them'All. Les jetons de RTA (`styles/tokens.css` v1.0.20) sont repris sous le préfixe `--htm-`, comme Forge Them'All le fait sous `--fta-` ; les formes (titres de zone, cadres, badges, rangée d'onglets, tiroir) viennent de `forge-them-all/styles/components.css`. Test `tests/css-design-system.test.mjs`. Publié en 0.7.1 ; pas encore vu dans Foundry.
 
+### Non publié (24 octobre) : hors-combat, ouverture des HUD, sons
+
+- **Demande de Luca :** un criminel tombé à 0 de Vitalité a encore attaqué ; les hors-combat retiraient leur initiative à chaque round et jouaient encore ; ouvrir les HUD Combat et Poursuite tout seuls chez les PJ impliqués ; des sons en combat comme en poursuite, désactivables dans les paramètres.
+- `src/out-of-combat.mjs` : Rule Them'All relance l'initiative de tous à chaque round, vaincus compris ; Hammer Them'All enveloppe `Combat#rollInitiative` par-dessus et retire les vaincus du jet (initiative remise à vide, fin d'ordre). Le MJ actif passe le tour d'un vaincu (hors poursuite, qui a déjà le sien). Le HUD Combat coupe tous les boutons d'un combattant vaincu ou à 0 de Vitalité.
+- `src/hud-open.mjs` : ouverture du HUD chez le joueur, une fois par combat, au début, à l'arrivée d'un de ses personnages ou à la connexion.
+- `src/sounds.mjs` : sons tirés de `CONFIG.Combat.sounds` (thème de combat de Foundry, Épique par défaut), coup de tambour `CONFIG.sounds.combat` à la chute. Réglage client `hammer-them-all.sounds`, qui coupe aussi `Combat#_playCombatSound` de Foundry. Choix de Claude, à confirmer par Luca : quels sons il entendait en poursuite (rien dans le code du module n'en jouait ; sans doute le thème de combat de Foundry).
+- Les règles (une Action interdite à Vitalité 0) restent au Ruleset RWF : le blocage est fait dans le HUD seulement, la fiche RTA laisserait encore agir.
+
 ## 5. Décisions à garder en tête
 
 - Les règles vont dans le Ruleset RWF, l'interface et l'orchestration dans RWF tools, rien de propre à RWF dans Rule Them'All.

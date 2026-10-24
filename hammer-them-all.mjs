@@ -4,9 +4,13 @@ import {registerHudSettings, refreshOnChanges} from "./src/hud-common.mjs";
 import {COMBAT_HUD_ID, openCombatHud, serveEndTurn, serveTarget, installCombatTargets} from "./src/combat-hud.mjs";
 import {PURSUIT_HUD_ID, openPursuitHud, installPursuitKeeper, servePursuitTarget, servePursuitOpen} from "./src/pursuit-hud.mjs";
 import {installTurnGuard} from "./src/turn-guard.mjs";
+import {installDefeatedInitiative, installDefeatedTurns} from "./src/out-of-combat.mjs";
+import {installHudOpening} from "./src/hud-open.mjs";
+import {registerSoundSetting, installSounds} from "./src/sounds.mjs";
 
 Hooks.once("init", () => {
   registerHudSettings();
+  registerSoundSetting();
   const module = game.modules.get(MODULE_ID);
   if (module) module.api = Object.freeze({openTestRequest, openCombatHud, openPursuitHud});
 });
@@ -24,6 +28,10 @@ Hooks.once("ready", async () => {
   installTurnGuard();
   installCombatTargets();
   installPursuitKeeper();
+  installDefeatedInitiative();
+  installDefeatedTurns();
+  installHudOpening({openCombatHud, openPursuitHud});
+  installSounds();
   // One at a time: the GM's own macro creations fire createMacro while it is still making the others.
   let queue = Promise.resolve();
   const macros = () => (queue = queue.then(ensureMacros).catch(error => console.error("Hammer Them'All | Macro", error)));

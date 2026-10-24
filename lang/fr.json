@@ -154,5 +154,8 @@
   "RWFTOOLS.Pursuit.SplitHint": "Cochez ceux qui partent dans une poursuite à part : il faut au moins un fuyard et un poursuivant de chaque côté. Chacun garde son initiative et sa jauge.",
   "RWFTOOLS.Pursuit.SplitDone": "la poursuite se scinde : {a} d'un côté, {b} de l'autre.",
   "RWFTOOLS.Pursuit.Pursuits": "Poursuites en cours",
-  "RWFTOOLS.Pursuit.Status.Lost": "a été semé"
+  "RWFTOOLS.Pursuit.Status.Lost": "a été semé",
+  "RWFTOOLS.Combat.OutOfCombat": "Hors combat : ce combattant ne peut plus agir.",
+  "RWFTOOLS.Settings.Sounds": "Sons de combat et de poursuite",
+  "RWFTOOLS.Settings.SoundsHint": "Début du combat, « À vous », « Vous êtes le prochain » et la chute d'un combattant, sur ce client. Décoché, Hammer Them'All ne joue aucun son et coupe aussi ceux du thème de combat de Foundry."
 }

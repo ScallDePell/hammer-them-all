@@ -2,7 +2,7 @@
    acting), with its resources, its target, an action card per weapon, power and physical action, and the button that
    ends its pass or its round. Every Action is the RWF Ruleset's, run through Rule Them'All. */
 import {MODULE_ID, SOCKET} from "./test-request-model.mjs";
-import {hudRuleset, followedCombatant, waitForTurn, yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, edgeDistance, combatantView, endTurnLabel, readWhole} from "./hud-model.mjs";
+import {hudRuleset, followedCombatant, waitForTurn, yourTurn, keptTarget, staleTargets, aimingCombatant, opposingSide, hits, edgeDistance, combatantView, endTurnLabel, readWhole, isOut, knockedOut} from "./hud-model.mjs";
 import {renderCombatHTML} from "./hud-markup.mjs";
 import {t, rta, notifyError, ApplicationV2, diceMode, setDiceMode, contentNamer, runAction} from "./hud-common.mjs";
 
@@ -54,9 +54,11 @@ export function createCombatHud() {
         distance: onScene(me) && onScene(aimed) ? distanceBetween(me.token, aimed.token) : null} : null;
       const cover = target ? this.#cover.get(target.uuid) ?? 0 : 0;
       const read = await combatantView(runtime, {versionId, ruleset, actorUuid: followed.actorUuid, target, cover, isGM, userId: game.user.id, contentName: contentNamer(ruleset, followed.actorUuid)});
-      // Only the combatant acting can act: the others see their cards, every button off.
+      // Only the combatant acting can act: the others see their cards, every button off. Out of the combat (defeated,
+      // or Vitality 0 before the tracker marks it), no one can act, even on its turn.
       const active = combat.combatant ?? null, acting = active?.id === followed.id;
-      const combatant = acting ? read : waitForTurn(read);
+      const out = isOut({defeated: me.isDefeated, vitality: read.pools.vitalite?.value});
+      const combatant = out ? knockedOut(read) : acting ? read : waitForTurn(read);
       const pass = Number(combat.getFlag?.(...PASS_FLAG) ?? 1) || 1, passes = Math.max(pass, combatant.attacks.best);
       // "À vous de jouer" only for whoever plays the combatant acting: its owner, or the GM for a combatant no player owns.
       const myTurn = Boolean(active) && yourTurn({isGM, owned: Boolean(active.isOwner), playerOwned: Boolean(active.actor?.hasPlayerOwner ?? active.hasPlayer)});

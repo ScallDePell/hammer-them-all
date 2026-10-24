@@ -75,7 +75,7 @@ export function renderCombatHTML(view, t) {
     : `<div class="rwf-hud__row"><span><i class="fa-solid fa-crosshairs"></i> ${words(t, "RWFTOOLS.Combat.NoTarget")}</span><button type="button" data-rwf-pick>${words(t, "RWFTOOLS.Combat.Target")}</button></div>`}</section>`;
   const end = view.canEndTurn ? `<button type="button" class="rwf-hud__end" data-rwf-end-turn><i class="fa-solid fa-check"></i> ${e(fmt(t, view.endLabel, {pass: view.pass}))}</button>` : "";
   return `<div class="rwf-hud rwf-hud--combat">${head}${who}${modeSwitch(view.mode, t)}${target}${tableForm(view.pending, t, view.error)}${message(view.message, t)}
-    <h3 class="rwf-hud__section">${words(t, "RWFTOOLS.Combat.Actions")}</h3>${c.waiting ? `<p class="rwf-hud__hint">${words(t, "RWFTOOLS.Combat.WaitTurn")}</p>` : ""}<ul class="rwf-hud__cards">${c.cards.map(x => card(x, t)).join("")}</ul>${end}</div>`;
+    <h3 class="rwf-hud__section">${words(t, "RWFTOOLS.Combat.Actions")}</h3>${c.waiting ? `<p class="rwf-hud__hint">${words(t, c.out ? "RWFTOOLS.Combat.OutOfCombat" : "RWFTOOLS.Combat.WaitTurn")}</p>` : ""}<ul class="rwf-hud__cards">${c.cards.map(x => card(x, t)).join("")}</ul>${end}</div>`;
 }
 
 /* ---------- Pursuit ---------- */
