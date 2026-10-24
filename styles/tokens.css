@@ -1,0 +1,56 @@
+/* Hammer Them'All — tokens.css : échelle et couleurs, reprises du design system de Rule Them'All
+   (rule-them-all/styles/tokens.css, v1.0.20) sous le préfixe --htm-, comme Forge Them'All le fait sous --fta-, pour que
+   les trois modules se ressemblent sans dépendre l'un de l'autre. Chaque couleur suit la variable du thème Foundry quand
+   elle existe, avec une seule valeur de repli. Seul ce fichier écrit des couleurs ; les autres n'utilisent que ces jetons.
+   L'ordre de chargement (module.json "styles") fait partie de la cascade. */
+.hammer-them-all-app {
+  --htm-space-1: .125rem;  /* 2px */
+  --htm-space-2: .25rem;   /* 4px */
+  --htm-space-3: .375rem;  /* 6px */
+  --htm-space-4: .5rem;    /* 8px */
+  --htm-space-5: .625rem;  /* 10px */
+  --htm-space-6: .75rem;   /* 12px */
+  --htm-space-8: 1rem;     /* 16px */
+
+  /* Rythme : trois espacements seulement, horizontaux comme verticaux. */
+  --htm-gap-tight: var(--htm-space-2);  /* 4px : listes compactes, icône + texte */
+  --htm-gap-row: var(--htm-space-4);    /* 8px : entre lignes et contrôles d'un même cadre */
+  --htm-gap-block: var(--htm-space-6);  /* 12px : entre cadres et sections */
+
+  --htm-radius-rail: 2px;
+  --htm-radius-compact: 4px;
+  --htm-radius-control: 5px;
+  --htm-radius-panel: 7px;
+
+  --htm-type-micro: .5625rem;  /* 9px */
+  --htm-type-xs: .625rem;      /* 10px, badges et titres de zone */
+  --htm-type-sm: .75rem;       /* 12px, petits libellés */
+  --htm-type-base: .8125rem;   /* 13px, texte secondaire */
+  --htm-type-control: .875rem; /* 14px, lignes de liste */
+  --htm-type-medium: 1rem;     /* 16px, titres de cadre */
+  --htm-type-heading: 1.125rem; /* 18px, titres de section */
+
+  --htm-color-border: var(--color-border-light-primary, #777);
+  --htm-color-border-secondary: var(--color-border-light-secondary, #777);
+  --htm-color-border-subtle: var(--color-border-light-2, #555);
+  --htm-color-border-highlight: var(--color-border-highlight, #947f9c);
+  --htm-color-surface-raised: var(--color-cool-4, rgba(0, 0, 0, .12));
+  --htm-color-text: var(--color-text-primary);
+  --htm-color-text-highlight: var(--color-text-light-highlight, #eee);
+  --htm-color-text-secondary: var(--color-text-light-6, #bcb8bf);
+  --htm-color-accent-warm: var(--color-warm-2, #ee9b3a);
+  --htm-color-success-fill: #28570d;
+  --htm-color-success-text: #e1f4d3;
+  --htm-color-badge-fill: #34303d;
+  --htm-color-badge-text: #ddd;
+  --htm-color-badge-edge: rgba(255, 255, 255, .14);
+  --htm-color-success: var(--color-level-success, #6fa84b);
+  --htm-color-danger: var(--color-level-error, #d0574b);
+  --htm-color-warning: #dfad64;
+  --htm-color-frame: rgba(128, 128, 128, .06);
+  --htm-color-rail: rgba(125, 125, 125, .055);
+
+  /* La couleur propre du module, comme la couleur d'un Ruleset dans RTA et --fta-accent dans Forge Them'All :
+     choix actif, tour en cours, icônes. */
+  --htm-accent: var(--htm-color-accent-warm);
+}

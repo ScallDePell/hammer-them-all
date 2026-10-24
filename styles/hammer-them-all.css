@@ -1,124 +1,172 @@
-/* Hammer Them'All windows. Spacing on the 4 / 8 / 12 px steps; colors from Foundry's theme. */
-.hammer-them-all-app .window-content { padding: 12px; }
-.rwf-request, .rwf-prompt { display: flex; flex-direction: column; gap: 12px; }
-.rwf-request h3 { margin: 0; }
-.rwf-request__players { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto; }
-.rwf-request__player { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.rwf-request__player img { width: 32px; height: 32px; object-fit: cover; border: none; border-radius: 4px; }
-.rwf-request__actor { font-weight: bold; }
-.rwf-request__user { margin-left: auto; opacity: 0.75; }
-.rwf-request__choice { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
-.rwf-request__choice label, .rwf-prompt__manual label { display: flex; flex-direction: column; gap: 4px; }
-.rwf-request__empty { margin: 0; font-style: italic; }
-.rwf-request__pending ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.rwf-request__pending-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.rwf-request__pending-head h3 { margin: 0; }
-.rwf-request__pending-head button { flex: none; width: auto; }
-.rwf-request__status { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.rwf-request__status--waiting span:nth-child(2) { font-style: italic; }
-.rwf-request__status--failed span:nth-child(2) { color: var(--color-level-error); }
-.rwf-request__status button { flex: none; width: auto; }
-.rwf-prompt__asked, .rwf-prompt__sent, .rwf-prompt__error { margin: 0; }
-.rwf-prompt__error { color: var(--color-level-error); }
-.rwf-prompt__manual { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 8px; }
+/* Hammer Them'All — fenêtres et HUD, dans la charte de Rule Them'All et de Forge Them'All : jetons de tokens.css
+   (espacements 4 / 8 / 12 px, échelle typographique, couleurs du thème Foundry), titres de zone en petites capitales,
+   cadres arrondis légèrement teintés, badges, rangée d'onglets à plat, couleur d'accent du module. Les champs et les
+   boutons restent ceux de Foundry. */
+
+/* ---------- Coquille ---------- */
+.hammer-them-all-app .window-content { padding: var(--htm-space-4) var(--htm-space-6); color: var(--htm-color-text); }
+.hammer-them-all-app h3 { margin: 0; border: 0; }
 /* The player answers before the window goes: no close button (close() refuses too, Escape included). */
 .rwf-test-prompt .window-header [data-action="close"] { display: none; }
 
-/* Combat and pursuit HUDs. */
-.rwf-hud { display: flex; flex-direction: column; gap: 8px; }
-.rwf-hud h3 { margin: 0; border: none; }
-.rwf-hud button { width: auto; }
-.rwf-hud__empty, .rwf-hud__hint, .rwf-hud__message, .rwf-hud__warning, .rwf-hud__error, .rwf-hud__outcome { margin: 0; }
-.rwf-hud__empty, .rwf-hud__hint { font-style: italic; opacity: 0.8; }
-.rwf-hud__error, .rwf-hud__warning { color: var(--color-level-error); }
-.rwf-hud__message { color: var(--color-level-warning); }
-.rwf-hud__outcome { font-weight: bold; }
-.rwf-hud__row { display: flex; align-items: center; gap: 8px; }
-.rwf-hud__row > span:first-child { flex: 1 1 auto; min-width: 0; }
-.rwf-hud__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--color-border); }
-.rwf-hud__turn--mine { font-weight: bold; color: var(--color-level-success); }
-.rwf-hud__who { display: flex; flex-direction: column; gap: 4px; }
-.rwf-hud__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-.rwf-hud__stat { display: flex; flex-direction: column; align-items: center; padding: 4px; border: 1px solid var(--color-border); border-radius: 4px; }
-.rwf-hud__stat > span { font-size: var(--font-size-11); opacity: 0.8; }
-.rwf-hud__mode { display: flex; align-items: center; gap: 4px; }
-.rwf-hud__mode-label { flex: none; font-weight: bold; }
-.rwf-hud__mode-option { flex: 1 1 0; opacity: 0.7; }
-.rwf-hud__mode-option--on { opacity: 1; font-weight: bold; background: var(--color-warm-2); border-color: var(--color-warm-1); color: var(--color-light-1); }
-.rwf-hud__hit { margin: 0; color: var(--color-level-success); }
-.rwf-hud__on { border-color: var(--color-border-highlight); box-shadow: 0 0 4px var(--color-shadow-highlight); font-weight: bold; }
-.rwf-hud__cover strong { min-width: 2ch; text-align: center; }
-.rwf-hud__table { display: flex; flex-direction: column; gap: 8px; padding: 8px; border: 1px solid var(--color-border-highlight); border-radius: 4px; }
-.rwf-hud__table label { display: flex; flex-direction: column; gap: 4px; }
-.rwf-hud__table-title { margin: 0; }
-.rwf-hud__section { font-size: var(--font-size-14); }
-.rwf-hud__cards, .rwf-hud__targets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.rwf-hud__card { display: flex; flex-direction: column; gap: 4px; padding: 8px; border: 1px solid var(--color-border); border-radius: 4px; }
-.rwf-hud__card-head { display: flex; align-items: center; gap: 8px; }
-.rwf-hud__card-head > strong { flex: 1 1 auto; min-width: 0; }
-.rwf-hud__required { font-size: var(--font-size-12); opacity: 0.8; }
-.rwf-hud__details { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--font-size-12); }
-.rwf-hud__ammo--empty { color: var(--color-level-error); font-weight: bold; }
-.rwf-hud__actions { display: flex; flex-wrap: wrap; gap: 4px; }
-.rwf-hud__action { flex: 1 1 auto; }
-.rwf-hud__action small { opacity: 0.8; }
-.rwf-hud__end { align-self: stretch; width: 100%; }
-.rwf-hud__targets button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: start; }
-.rwf-hud__targets img { width: 32px; height: 32px; object-fit: cover; border: none; border-radius: 4px; }
-.rwf-hud__target-name { flex: 1 1 auto; min-width: 0; }
-.rwf-hud__distance { opacity: 0.8; }
-.rwf-hud__picker { display: flex; flex-direction: column; gap: 8px; }
-.rwf-hud__icon { flex: none; padding: 0 4px; line-height: 24px; min-height: 24px; }
+/* ---------- Demande de test (MJ) et réponse du joueur ---------- */
+.rwf-request, .rwf-prompt { display: flex; flex-direction: column; gap: var(--htm-gap-block); }
+.rwf-request > h3, .rwf-request__pending-head h3 { font-size: var(--htm-type-xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--htm-color-text-secondary); }
+.rwf-request__players { list-style: none; margin: 0; padding: var(--htm-space-2); display: flex; flex-direction: column; gap: var(--htm-gap-tight); max-height: 280px; overflow-y: auto; border: 1px solid var(--htm-color-border-secondary); border-radius: var(--htm-radius-compact); background: var(--htm-color-frame); scrollbar-width: thin; }
+.rwf-request__player { display: flex; align-items: center; gap: var(--htm-gap-row); padding: var(--htm-space-2) var(--htm-space-4); border-radius: var(--htm-radius-compact); cursor: pointer; }
+.rwf-request__player:hover { background: color-mix(in srgb, var(--htm-accent) 12%, transparent); }
+.rwf-request__player:has(input:checked) { background: color-mix(in srgb, var(--htm-accent) 17%, transparent); }
+.rwf-request__player img { width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--htm-color-border-subtle); border-radius: var(--htm-radius-compact); }
+.rwf-request__actor { font-weight: 700; font-size: var(--htm-type-control); }
+.rwf-request__user { margin-left: auto; font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-request__choice { display: grid; grid-template-columns: 2fr 1fr; gap: var(--htm-gap-row); }
+.rwf-request__choice label, .rwf-prompt__manual label { display: flex; flex-direction: column; gap: var(--htm-gap-tight); font-size: var(--htm-type-sm); font-weight: 700; color: var(--htm-color-text-secondary); }
+.rwf-request__empty { margin: 0; padding: var(--htm-space-4) var(--htm-space-2); font-size: var(--htm-type-base); font-style: italic; color: var(--htm-color-text-secondary); }
+.rwf-request__pending { display: flex; flex-direction: column; gap: var(--htm-gap-row); padding: var(--htm-space-4) var(--htm-space-6); border: 1px solid var(--htm-color-border); border-radius: var(--htm-radius-panel); background: var(--htm-color-frame); }
+.rwf-request__pending ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--htm-gap-tight); }
+.rwf-request__pending-head { display: flex; align-items: center; justify-content: space-between; gap: var(--htm-gap-row); }
+.rwf-request__pending-head button, .rwf-request__status button { flex: none; width: auto; }
+.rwf-request__status { display: flex; align-items: center; justify-content: space-between; gap: var(--htm-gap-row); min-height: 28px; font-size: var(--htm-type-base); }
+.rwf-request__status + .rwf-request__status { padding-top: var(--htm-space-2); border-top: 1px solid var(--htm-color-border-subtle); }
+.rwf-request__status--waiting span:nth-child(2) { font-style: italic; color: var(--htm-color-text-secondary); }
+.rwf-request__status--failed span:nth-child(2) { color: var(--htm-color-danger); }
+.rwf-prompt__asked { margin: 0; padding: var(--htm-space-4) var(--htm-space-5); border: 1px solid var(--htm-color-border); border-inline-start: 4px solid var(--htm-accent); border-radius: var(--htm-radius-compact); font-size: var(--htm-type-control); }
+.rwf-prompt__sent { margin: 0; font-weight: 700; color: var(--htm-color-success); }
+.rwf-prompt__error { margin: 0; color: var(--htm-color-danger); }
+.rwf-prompt__manual { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--htm-gap-row); }
 
-/* Pursuit: the turn being played on top, then the two sides, side by side when the window is wide enough. */
+/* ---------- HUD Combat et HUD Poursuite ---------- */
+.rwf-hud { display: flex; flex-direction: column; gap: var(--htm-gap-row); }
+.rwf-hud button { width: auto; }
+.rwf-hud button > i { color: var(--htm-accent); }
+.rwf-hud button:disabled > i { color: inherit; }
+.rwf-hud__empty, .rwf-hud__hint, .rwf-hud__message, .rwf-hud__warning, .rwf-hud__error, .rwf-hud__outcome { margin: 0; }
+.rwf-hud__empty { padding: var(--htm-space-4) var(--htm-space-2); font-size: var(--htm-type-base); font-style: italic; color: var(--htm-color-text-secondary); }
+.rwf-hud__hint { font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-hud__error, .rwf-hud__warning { font-size: var(--htm-type-sm); color: var(--htm-color-danger); }
+.rwf-hud__message { padding: var(--htm-space-2) var(--htm-space-4); border-inline-start: 2px solid var(--htm-color-warning); font-size: var(--htm-type-base); color: var(--htm-color-warning); }
+.rwf-hud__outcome { font-weight: 700; }
+.rwf-hud__row { display: flex; align-items: center; gap: var(--htm-gap-row); }
+.rwf-hud__row > span:first-child { flex: 1 1 auto; min-width: 0; }
+
+/* En-tête : round et passe à gauche, à qui le tour en badge à droite (l'en-tête racine de RTA). */
+.rwf-hud__head { display: flex; align-items: center; justify-content: space-between; gap: var(--htm-gap-row); padding-bottom: var(--htm-space-3); border-bottom: 1px solid var(--htm-color-border); font-size: var(--htm-type-base); font-weight: 700; color: var(--htm-color-text-secondary); }
+.rwf-hud__turn { display: inline-flex; align-items: center; min-height: 20px; padding: var(--htm-space-1) var(--htm-space-3); border: 1px solid var(--htm-color-badge-edge); border-radius: var(--htm-radius-rail); background: var(--htm-color-badge-fill); color: var(--htm-color-badge-text); font-size: var(--htm-type-xs); font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.rwf-hud__turn--mine { background: var(--htm-color-success-fill); color: var(--htm-color-success-text); }
+
+/* Titres de zone : petits, en capitales, comme les sous-titres de l'explorateur RTA. */
+.rwf-hud__section, .rwf-hud__picker > h3 { font-size: var(--htm-type-xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--htm-color-text-secondary); }
+
+/* Le combattant : son nom, puis six tuiles de valeurs. */
+.rwf-hud__who { display: flex; flex-direction: column; gap: var(--htm-gap-row); }
+.rwf-hud__who > h3 { font-size: var(--htm-type-heading); line-height: 1.3; }
+.rwf-hud__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--htm-gap-tight); }
+.rwf-hud__stat { display: flex; flex-direction: column; align-items: center; padding: var(--htm-space-2); border: 1px solid var(--htm-color-border-secondary); border-radius: var(--htm-radius-compact); background: var(--htm-color-frame); }
+.rwf-hud__stat > span { font-size: var(--htm-type-xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--htm-color-text-secondary); }
+.rwf-hud__stat > strong { font-size: var(--htm-type-medium); color: var(--htm-color-text-highlight); }
+
+/* Choix à deux ou plusieurs options (dés, qui fuit, onglets de poursuite) : la rangée d'onglets de l'explorateur RTA, à plat. */
+.rwf-hud__mode, .rwf-pursuit__tabs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--htm-gap-tight); padding: var(--htm-space-2); border-radius: var(--htm-radius-panel); background: var(--htm-color-rail); }
+.rwf-hud__mode-label { flex: none; padding: 0 var(--htm-space-3); font-size: var(--htm-type-xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--htm-color-text-secondary); }
+.rwf-hud .rwf-hud__mode-option { flex: 1 1 0; min-width: 0; margin: 0; border: 1px solid transparent; border-radius: var(--htm-radius-compact); background: transparent; box-shadow: none; color: inherit; font-size: var(--htm-type-control); white-space: nowrap; }
+.rwf-hud .rwf-hud__mode-option:hover { background: color-mix(in srgb, var(--htm-accent) 12%, transparent); }
+.rwf-hud .rwf-hud__mode-option--on { border-color: var(--htm-color-border); background: color-mix(in srgb, var(--htm-accent) 17%, transparent); font-weight: 700; }
+.rwf-pursuit__tabs > .rwf-hud__mode-option { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.rwf-hud__mode-option > .fa-check { font-size: var(--htm-type-xs); }
+
+.rwf-hud__hit { margin: 0; font-weight: 700; color: var(--htm-color-success); }
+.rwf-hud .rwf-hud__on { border-color: var(--htm-accent); background: color-mix(in srgb, var(--htm-accent) 17%, transparent); font-weight: 700; }
+
+/* Cible et couverture. */
+.rwf-hud__target { display: flex; flex-direction: column; gap: var(--htm-gap-tight); padding: var(--htm-space-2) 0; }
+.rwf-hud__target i { color: var(--htm-accent); }
+.rwf-hud__cover > span:first-child { font-size: var(--htm-type-base); color: var(--htm-color-text-secondary); }
+.rwf-hud__cover button { flex: none; display: inline-grid; place-items: center; width: var(--input-height, 1.75rem); height: var(--input-height, 1.75rem); padding: 0; line-height: 1; }
+.rwf-hud__cover strong { min-width: 2ch; text-align: center; font-size: var(--htm-type-medium); }
+
+/* Dés sur table : le cadre mis en avant, avec la barre d'accent à gauche (l'horloge MAINTENANT de Forge Them'All). */
+.rwf-hud__table { display: flex; flex-direction: column; gap: var(--htm-gap-row); padding: var(--htm-space-4) var(--htm-space-5); border: 1px solid var(--htm-color-border); border-inline-start: 4px solid var(--htm-accent); border-radius: var(--htm-radius-compact); background: var(--htm-color-frame); }
+.rwf-hud__table label { display: flex; flex-direction: column; gap: var(--htm-gap-tight); font-size: var(--htm-type-sm); font-weight: 700; color: var(--htm-color-text-secondary); }
+.rwf-hud__table-title { margin: 0; font-size: var(--htm-type-control); }
+
+/* Une carte par arme, pouvoir et action physique : les cadres de la page Général de RTA. */
+.rwf-hud__cards, .rwf-hud__targets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--htm-gap-row); }
+.rwf-hud__card { display: flex; flex-direction: column; gap: var(--htm-gap-tight); padding: var(--htm-space-4) var(--htm-space-6); border: 1px solid var(--htm-color-border); border-radius: var(--htm-radius-panel); background: var(--htm-color-frame); }
+.rwf-hud__card-head { display: flex; align-items: center; gap: var(--htm-gap-row); }
+.rwf-hud__card-head > strong { flex: 1 1 auto; min-width: 0; font-size: var(--htm-type-control); }
+.rwf-hud__card-head > em { font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-hud__required { flex: none; display: inline-flex; align-items: center; min-height: 20px; padding: var(--htm-space-1) var(--htm-space-3); border: 1px solid var(--htm-color-badge-edge); border-radius: var(--htm-radius-rail); background: var(--htm-color-badge-fill); color: var(--htm-color-badge-text); font-size: var(--htm-type-xs); font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.rwf-hud__details { display: flex; flex-wrap: wrap; gap: var(--htm-gap-tight) var(--htm-gap-block); font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-hud__ammo--empty { color: var(--htm-color-danger); font-weight: 700; }
+.rwf-hud__actions { display: flex; flex-wrap: wrap; gap: var(--htm-gap-tight); padding-top: var(--htm-space-2); }
+.rwf-hud__action { flex: 1 1 auto; }
+.rwf-hud__action small { font-size: var(--htm-type-xs); color: var(--htm-color-text-secondary); }
+.rwf-hud__end { align-self: stretch; width: 100%; font-weight: 700; }
+
+/* Choisir une cible : une ligne par combattant, l'image à gauche. */
+.rwf-hud__targets button { display: flex; align-items: center; gap: var(--htm-gap-row); width: 100%; text-align: start; }
+.rwf-hud__targets img { width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--htm-color-border-subtle); border-radius: var(--htm-radius-compact); }
+.rwf-hud__target-name { flex: 1 1 auto; min-width: 0; }
+.rwf-hud__distance { font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-hud__picker { display: flex; flex-direction: column; gap: var(--htm-gap-row); }
+.rwf-hud .rwf-hud__icon { flex: none; display: inline-grid; place-items: center; width: 23px; min-width: 23px; height: 23px; min-height: 23px; margin: 0; padding: 0; font-size: var(--htm-type-sm); line-height: 1; }
+
+/* ---------- Poursuite : le tour joué en haut, puis les deux camps, côte à côte quand la fenêtre est assez large ---------- */
 .rwf-hud--pursuit { container-type: inline-size; }
-.rwf-hud__gauge { display: flex; align-items: center; gap: 8px; }
-.rwf-hud__gauge-end { flex: 0 0 72px; font-size: var(--font-size-11); opacity: 0.8; }
+.rwf-hud__gauge { display: flex; align-items: center; gap: var(--htm-gap-row); }
+.rwf-hud__gauge-end { flex: 0 0 72px; font-size: var(--htm-type-xs); color: var(--htm-color-text-secondary); }
 .rwf-hud__gauge-end:last-child { text-align: end; }
-.rwf-hud__track { flex: 1 1 auto; display: flex; gap: 4px; }
-.rwf-hud__step { flex: 1 1 0; height: 12px; border: 1px solid var(--color-border); border-radius: 4px; }
-.rwf-hud__step--zero { border-width: 2px; }
-.rwf-hud__step--good { background: var(--color-level-success); border-color: var(--color-level-success); }
-.rwf-hud__step--bad { background: var(--color-level-error); border-color: var(--color-level-error); }
-.rwf-hud__step--here { box-shadow: 0 0 4px var(--color-shadow-highlight); }
-.rwf-hud__gauge-value { flex: 0 0 24px; text-align: center; font-size: var(--font-size-12); }
-.rwf-hud__gauge-value--good { color: var(--color-level-success); }
-.rwf-hud__gauge-value--bad { color: var(--color-level-error); }
-.rwf-pursuit__turn { display: flex; flex-direction: column; gap: 8px; padding: 8px; border: 1px solid var(--color-border-highlight); border-radius: 4px; }
-.rwf-pursuit__line { display: flex; align-items: baseline; gap: 8px; }
-.rwf-pursuit__line > strong { flex: 1 1 auto; min-width: 0; }
-.rwf-pursuit__rank { flex: none; min-width: 2ch; opacity: 0.8; }
-.rwf-pursuit__role, .rwf-pursuit__means { flex: none; font-size: var(--font-size-12); opacity: 0.8; }
-.rwf-pursuit__now { flex: none; font-size: var(--font-size-12); font-weight: bold; color: var(--color-level-success); }
-.rwf-pursuit__outcome { flex: none; font-size: var(--font-size-12); font-weight: bold; }
-.rwf-pursuit__chase { margin: 0; font-size: var(--font-size-12); opacity: 0.8; }
-.rwf-pursuit__zones { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.rwf-hud__track { flex: 1 1 auto; display: flex; gap: var(--htm-gap-tight); }
+.rwf-hud__step { flex: 1 1 0; height: 10px; border: 1px solid var(--htm-color-border-subtle); border-radius: var(--htm-radius-rail); background: var(--htm-color-surface-raised); }
+.rwf-hud__step--zero { border-color: var(--htm-color-border-highlight); }
+.rwf-hud__step--good { background: var(--htm-color-success); border-color: var(--htm-color-success); }
+.rwf-hud__step--bad { background: var(--htm-color-danger); border-color: var(--htm-color-danger); }
+.rwf-hud__step--here { outline: 1px solid var(--htm-color-text-highlight); outline-offset: 1px; }
+.rwf-hud__gauge-value { flex: 0 0 24px; text-align: center; font-size: var(--htm-type-sm); }
+.rwf-hud__gauge-value--good { color: var(--htm-color-success); }
+.rwf-hud__gauge-value--bad { color: var(--htm-color-danger); }
+.rwf-pursuit__turn { display: flex; flex-direction: column; gap: var(--htm-gap-row); padding: var(--htm-space-4) var(--htm-space-5); border: 1px solid var(--htm-color-border); border-inline-start: 4px solid var(--htm-accent); border-radius: var(--htm-radius-compact); background: var(--htm-color-frame); }
+.rwf-pursuit__turn > .rwf-pursuit__line > strong { font-size: var(--htm-type-medium); }
+.rwf-pursuit__turn .rwf-hud__table { border-inline-start-width: 1px; }
+.rwf-pursuit__line { display: flex; align-items: baseline; gap: var(--htm-gap-row); }
+.rwf-pursuit__line > strong { flex: 1 1 auto; min-width: 0; font-size: var(--htm-type-control); }
+.rwf-pursuit__rank { flex: none; min-width: 2ch; font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-pursuit__role, .rwf-pursuit__means { flex: none; font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-pursuit__means > i { color: var(--htm-accent); }
+.rwf-pursuit__now { flex: none; padding: var(--htm-space-1) var(--htm-space-3); border-radius: var(--htm-radius-rail); background: var(--htm-color-success-fill); color: var(--htm-color-success-text); font-size: var(--htm-type-xs); font-weight: 700; white-space: nowrap; }
+.rwf-pursuit__outcome { flex: none; padding: var(--htm-space-1) var(--htm-space-3); border-radius: var(--htm-radius-rail); background: var(--htm-color-badge-fill); color: var(--htm-color-badge-text); font-size: var(--htm-type-xs); font-weight: 700; white-space: nowrap; }
+.rwf-pursuit__chase { margin: 0; font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
+.rwf-pursuit__chase > i { color: var(--htm-accent); }
+.rwf-pursuit__zones { display: grid; grid-template-columns: 1fr; gap: var(--htm-gap-block); }
 @container (min-width: 720px) { .rwf-pursuit__zones { grid-template-columns: 1fr 1fr; } }
-.rwf-pursuit__zone { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.rwf-pursuit__zone-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 8px 4px; border-bottom: 1px solid var(--color-border); font-size: var(--font-size-14); }
-.rwf-pursuit__zone-title small { font-weight: normal; font-size: var(--font-size-12); opacity: 0.8; }
-.rwf-pursuit__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.rwf-pursuit__runner { display: flex; flex-direction: column; gap: 4px; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px; }
-.rwf-pursuit__runner--active { border-color: var(--color-border-highlight); box-shadow: 0 0 4px var(--color-shadow-highlight); }
-.rwf-pursuit__runner--done { opacity: 0.6; }
-.rwf-pursuit__setup { display: flex; align-items: center; gap: 8px; }
-.rwf-pursuit__zone .rwf-pursuit__setup, .rwf-pursuit__available .rwf-pursuit__setup { padding: 0 8px; }
-.rwf-pursuit__setup > strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rwf-pursuit__zone { display: flex; flex-direction: column; gap: var(--htm-gap-tight); min-width: 0; }
+.rwf-pursuit__zone-title { display: flex; align-items: center; justify-content: space-between; gap: var(--htm-gap-row); min-height: 24px; padding: 0 var(--htm-space-4) var(--htm-space-2); border-bottom: 1px solid var(--htm-color-border); font-size: var(--htm-type-xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--htm-color-text-secondary); }
+.rwf-pursuit__zone-title small { padding: 0 var(--htm-space-2); border-radius: var(--htm-radius-rail); background: var(--htm-color-badge-fill); color: var(--htm-color-badge-text); font-size: var(--htm-type-xs); letter-spacing: normal; text-transform: none; }
+.rwf-pursuit__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--htm-gap-tight); }
+.rwf-pursuit__runner { display: flex; flex-direction: column; gap: var(--htm-gap-tight); padding: var(--htm-space-2) var(--htm-space-4); border: 1px solid transparent; border-radius: var(--htm-radius-compact); }
+.rwf-pursuit__runner--active { border-color: var(--htm-accent); background: color-mix(in srgb, var(--htm-accent) 12%, transparent); }
+.rwf-pursuit__runner--done { opacity: .6; }
+.rwf-pursuit__setup { display: flex; align-items: center; gap: var(--htm-gap-row); min-height: 28px; }
+.rwf-pursuit__zone .rwf-pursuit__setup, .rwf-pursuit__available .rwf-pursuit__setup { padding: 0 var(--htm-space-4); }
+.rwf-pursuit__setup > strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--htm-type-control); }
 .rwf-pursuit__setup select { flex: 0 1 128px; min-width: 0; }
-.rwf-pursuit__cap { display: flex; align-items: center; gap: 8px; }
-.rwf-pursuit__cap > span { flex: 1 1 auto; }
-.rwf-pursuit__cap input { flex: none; width: 64px; }
-.rwf-pursuit__settings { border-top: 1px solid var(--color-border); padding-top: 4px; }
-.rwf-pursuit__settings summary { cursor: pointer; font-weight: bold; }
-.rwf-pursuit__settings-body { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
-.rwf-pursuit__available { display: flex; flex-direction: column; gap: 4px; }
-.rwf-pursuit__join { flex: none; font-size: var(--font-size-12); }
-.rwf-pursuit__tabs { display: flex; flex-wrap: wrap; gap: 4px; }
-.rwf-pursuit__tabs > button { flex: 1 1 auto; width: auto; min-width: 0; }
-.rwf-pursuit__pick { display: flex; flex: 1 1 auto; align-items: center; gap: 4px; min-width: 0; }
-.rwf-pursuit__pick input { width: var(--checkbox-size, 16px); height: var(--checkbox-size, 16px); margin: 0; flex: none; }
-.rwf-pursuit__legend { display: flex; justify-content: space-between; margin: 0; padding: 0 8px; font-size: var(--font-size-11); opacity: 0.8; }
-.rwf-pursuit__duels { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.rwf-pursuit__duel { display: flex; align-items: center; gap: 8px; }
-.rwf-pursuit__duel-name { flex: 0 0 96px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-size-12); }
+.rwf-pursuit__cap { display: flex; align-items: center; gap: var(--htm-gap-row); }
+.rwf-pursuit__cap > span { flex: 1 1 auto; font-size: var(--htm-type-base); }
+.rwf-pursuit__cap input { flex: none; width: 64px; text-align: center; }
+
+/* Réglages du MJ : un tiroir repliable de Forge Them'All. */
+.rwf-pursuit__settings { border: 1px solid var(--htm-color-border-secondary); border-radius: var(--htm-radius-compact); background: var(--htm-color-frame); }
+.rwf-pursuit__settings > summary { display: flex; align-items: center; gap: var(--htm-gap-row); padding: var(--htm-space-3) var(--htm-space-4); font-size: var(--htm-type-base); font-weight: 700; cursor: pointer; list-style: none; }
+.rwf-pursuit__settings > summary::-webkit-details-marker { display: none; }
+.rwf-pursuit__settings > summary::before { flex: none; font-family: var(--font-awesome, "Font Awesome 6 Pro"); font-size: var(--htm-type-xs); font-weight: 900; content: "\f054"; opacity: .5; transition: transform .15s; }
+.rwf-pursuit__settings[open] > summary::before { transform: rotate(90deg); }
+.rwf-pursuit__settings-body { display: flex; flex-direction: column; gap: var(--htm-gap-row); padding: var(--htm-space-4); border-top: 1px solid var(--htm-color-border-subtle); }
+.rwf-pursuit__available { display: flex; flex-direction: column; gap: var(--htm-gap-tight); }
+.rwf-pursuit__join { flex: none; font-size: var(--htm-type-sm); }
+.rwf-pursuit__pick { display: flex; flex: 1 1 auto; align-items: center; gap: var(--htm-gap-tight); min-width: 0; }
+.rwf-pursuit__pick input[type="checkbox"] { inline-size: var(--checkbox-size, 16px); block-size: var(--checkbox-size, 16px); margin: 0; flex: none; }
+.rwf-pursuit__legend { display: flex; justify-content: space-between; margin: 0; padding: 0 var(--htm-space-4); font-size: var(--htm-type-xs); color: var(--htm-color-text-secondary); }
+.rwf-pursuit__duels { list-style: none; margin: 0; padding: 0 0 0 var(--htm-space-4); display: flex; flex-direction: column; gap: var(--htm-gap-tight); }
+.rwf-pursuit__duel { display: flex; align-items: center; gap: var(--htm-gap-row); }
+.rwf-pursuit__duel-name { flex: 0 0 96px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--htm-type-sm); color: var(--htm-color-text-secondary); }
 .rwf-pursuit__duel .rwf-hud__gauge { flex: 1 1 auto; min-width: 0; }

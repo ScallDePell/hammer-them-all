@@ -1,5 +1,10 @@
 # Changelog
 
+## Non publié
+
+- Toutes les fenêtres (Demander un test, réponse du joueur, HUD Combat, HUD Poursuite) prennent la charte graphique de Rule Them'All et de Forge Them'All : mêmes espacements (4 / 8 / 12 px), même échelle de texte, couleurs du thème Foundry avec l'accent orangé, titres de zone en petites capitales, cadres arrondis légèrement teintés, badges (tour en cours, d20 à atteindre, « À son tour », nombre en course), choix des dés et onglets de poursuite en rangée d'onglets, réglages du MJ dans un tiroir repliable. Le fonctionnement ne change pas.
+- Les jetons de la charte sont dans le nouveau fichier `styles/tokens.css` (préfixe `--htm-`) ; un test vérifie que le CSS les respecte.
+
 ## 0.7.0
 
 - Le module s'appelle désormais **Hammer Them'All** : identifiant `hammer-them-all`, dépôt ScallDePell/hammer-them-all, zip `hammer-them-all.zip` à décompresser dans `Data/modules/hammer-them-all`. Les fichiers `rwf-tools.mjs` et `styles/rwf-tools.css` deviennent `hammer-them-all.mjs` et `styles/hammer-them-all.css`, la classe CSS `rwf-tools-app` devient `hammer-them-all-app`, le socket `module.hammer-them-all`.

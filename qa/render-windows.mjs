@@ -12,16 +12,16 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE ?? "playwright-core");
 const fr = JSON.parse(readFileSync(new URL("../lang/fr.json", import.meta.url)));
 // RTA_FOUNDRY_CSS: Foundry's own stylesheet, for its theme variables and buttons.
 const foundryCss = process.env.RTA_FOUNDRY_CSS ? readFileSync(process.env.RTA_FOUNDRY_CSS, "utf8") : "";
-const t = key => fr[key] ?? key, css = readFileSync(new URL("../styles/hammer-them-all.css", import.meta.url), "utf8");
+const t = key => fr[key] ?? key, css = JSON.parse(readFileSync(new URL("../module.json", import.meta.url))).styles.map(p => readFileSync(new URL(`../${p}`, import.meta.url), "utf8")).join("\n");
 const skills = ["Athlétisme", "Discrétion", "Vigilance", "Investigation"].map(label => ({id: label, label}));
 const dds = [["dd-facile", "Facile (10)"], ["dd-standard", "Standard (13)"], ["dd-difficile", "Difficile (16)"], ["dd-extreme", "Extrême (19)"], ["dd-heroique", "Héroïque (22)"]].map(([id, label]) => ({id, label}));
 const rows = [["Alice", "Léa Martin"], ["Bruno", "Marc Durand"], ["Chloé", "Inès Garcia"]].map(([userName, actorName], i) => ({userId: `u${i}`, userName, actorUuid: `Actor.${i}`, actorName, img: null}));
 const request = {requestId: "r1", actorName: "Marc Durand", skillLabel: "Vigilance", ddLabel: "Standard (13)"};
 const pending = new Map([["r1", {request, status: "waiting"}], ["r2", {request: {...request, requestId: "r2", actorName: "Léa Martin"}, status: "done", summary: "17 (jet sur table) → 21 · Réussite"}]]);
 const frame = (title, body, cls, width) => `<section class="application themed theme-dark hammer-them-all-app ${cls}" style="width:${width}px"><header class="window-header"><h1 class="window-title">${title}</h1><button data-action="close">✕</button></header><div class="window-content">${body}</div></section>`;
-const page = body => `<!doctype html><meta charset="utf-8"><style>:root{--color-border:#666;--color-border-highlight:#ff6400;--color-shadow-highlight:#ff6400;--color-level-error:#e05050;--color-level-warning:#e0b050;--color-level-success:#60c060;--font-size-11:11px;--font-size-12:12px;--font-size-14:14px}body{font-family:sans-serif;background:#2b2b2b;color:#eee;padding:16px;display:flex;gap:24px;align-items:flex-start}
-.application{background:#1f1f1f;border:1px solid #555;border-radius:6px}.window-header{display:flex;justify-content:space-between;padding:4px 8px;background:#111}.window-title{font-size:14px;margin:0}
-select,input,button{font:inherit;padding:4px}button{width:100%}</style><style>${foundryCss}</style><style>${css}</style><style>.application{position:relative;flex:none;max-height:none}</style><body class="theme-dark">${body}</body>`;
+const page = body => `<!doctype html><meta charset="utf-8"><style>:root{--color-text-primary:#efe6d8;--color-warm-2:#ee9b3a;--color-level-error:#d0574b;--color-level-success:#6fa84b}body{font-family:Signika,sans-serif;font-size:14px;background:#2b2b2b;color:#efe6d8;padding:16px;display:flex;gap:24px;align-items:flex-start}
+.application{background:#17141e;border:1px solid #555;border-radius:6px}.window-header{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:#0b0a13}.window-header button{width:auto}.window-title{font-size:14px;margin:0}
+select,input,button{font:inherit;padding:4px 8px;min-height:28px;box-sizing:border-box;border-radius:4px;border:1px solid #777;background:#2b2530;color:inherit}input{background:#0b0a13}button{width:100%;cursor:pointer}button:hover{border-color:#ee9b3a}button:disabled{opacity:.5;cursor:default}</style><style>${foundryCss}</style><style>${css}</style><style>.application{position:relative;flex:none;max-height:none}</style><body class="theme-dark">${body}</body>`;
 const browser = await chromium.launch({executablePath: process.env.RTA_CHROMIUM ?? "/opt/pw-browsers/chromium"});
 const tab = await browser.newPage({viewport: {width: 1300, height: 640}});
 await tab.setContent(page(

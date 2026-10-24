@@ -9,7 +9,7 @@
     "requires": [{"id": "rule-them-all", "type": "module", "compatibility": {"minimum": "1.0.20"}}]
   },
   "esmodules": ["hammer-them-all.mjs"],
-  "styles": ["styles/hammer-them-all.css"],
+  "styles": ["styles/tokens.css", "styles/hammer-them-all.css"],
   "languages": [
     {"lang": "fr", "name": "Français", "path": "lang/fr.json"},
     {"lang": "en", "name": "English", "path": "lang/en.json"}

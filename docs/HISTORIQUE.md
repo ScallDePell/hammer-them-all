@@ -99,6 +99,10 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 - 0.6.3 : le MJ publie la part de chacun dans la poursuite pour les joueurs, qui ne peuvent pas lire l'état des PNJ. Jauges signées du point de vue du camp (demande de Luca : + chez les fuyards = − chez les poursuivants).
 - 0.6.4 : le MJ republiait des parts périmées (décalage de 1 entre PNJ et PJ, un PJ qui rate reculait de deux) ; il relit maintenant toujours l'état et publie après chaque manœuvre d'un PNJ. Ligne de console « Pursuit shares » en mode Verbose.
 
+### Après la 0.7.0 (24 octobre) : charte graphique
+
+- **Demande de Luca :** le style de toutes les fenêtres comme Rule Them'All et Forge Them'All. Les jetons de RTA (`styles/tokens.css` v1.0.20) sont repris sous le préfixe `--htm-`, comme Forge Them'All le fait sous `--fta-` ; les formes (titres de zone, cadres, badges, rangée d'onglets, tiroir) viennent de `forge-them-all/styles/components.css`. Test `tests/css-design-system.test.mjs`. Pas encore vu dans Foundry ni publié.
+
 ## 5. Décisions à garder en tête
 
 - Les règles vont dans le Ruleset RWF, l'interface et l'orchestration dans RWF tools, rien de propre à RWF dans Rule Them'All.
@@ -108,6 +112,7 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 - Jauges lues du camp de celui qui regarde ; le MJ lit du côté des PNJ.
 - Le client du **MJ actif** fait les écritures que les joueurs ne peuvent pas faire (fin de tour, cibles, parts de poursuite, réparation des tours). Il faut donc un MJ connecté.
 - Ne jamais indexer un objet de drapeau Foundry par uuid : Foundry découpe les clés à leurs points. Utiliser des listes `[{uuid, …}]`.
+- Charte : couleurs seulement dans `styles/tokens.css`, espacements `--htm-gap-*` (4 / 8 / 12 px), tailles `--htm-type-*`, une règle par sélecteur (test `css-design-system`).
 - Dans les fichiers de langue, aucune clé ne peut être à la fois un mot et un groupe (Foundry développe les clés pointées ; un test le vérifie).
 
 ## 6. Ce qui reste ouvert
