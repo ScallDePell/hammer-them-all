@@ -99,9 +99,9 @@ Tout passe par `game.ruleThemAll` (fonction `rta()` dans `src/hud-common.mjs` et
 - 0.6.3 : le MJ publie la part de chacun dans la poursuite pour les joueurs, qui ne peuvent pas lire l'état des PNJ. Jauges signées du point de vue du camp (demande de Luca : + chez les fuyards = − chez les poursuivants).
 - 0.6.4 : le MJ republiait des parts périmées (décalage de 1 entre PNJ et PJ, un PJ qui rate reculait de deux) ; il relit maintenant toujours l'état et publie après chaque manœuvre d'un PNJ. Ligne de console « Pursuit shares » en mode Verbose.
 
-### Après la 0.7.0 (24 octobre) : charte graphique
+### 0.7.1 (24 octobre) : charte graphique
 
-- **Demande de Luca :** le style de toutes les fenêtres comme Rule Them'All et Forge Them'All. Les jetons de RTA (`styles/tokens.css` v1.0.20) sont repris sous le préfixe `--htm-`, comme Forge Them'All le fait sous `--fta-` ; les formes (titres de zone, cadres, badges, rangée d'onglets, tiroir) viennent de `forge-them-all/styles/components.css`. Test `tests/css-design-system.test.mjs`. Pas encore vu dans Foundry ni publié.
+- **Demande de Luca :** le style de toutes les fenêtres comme Rule Them'All et Forge Them'All. Les jetons de RTA (`styles/tokens.css` v1.0.20) sont repris sous le préfixe `--htm-`, comme Forge Them'All le fait sous `--fta-` ; les formes (titres de zone, cadres, badges, rangée d'onglets, tiroir) viennent de `forge-them-all/styles/components.css`. Test `tests/css-design-system.test.mjs`. Publié en 0.7.1 ; pas encore vu dans Foundry.
 
 ## 5. Décisions à garder en tête
 
