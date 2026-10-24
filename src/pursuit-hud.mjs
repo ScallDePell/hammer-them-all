@@ -49,13 +49,18 @@ async function saveRunning(combat, pursuit) {
 const chat = text => globalThis.ChatMessage.create({content: `<p><strong>${t("RWFTOOLS.Pursuit.Title")}</strong> · ${text}</p>`});
 const activeGM = () => { const game = globalThis.game; return game.user.isGM && (!game.users.activeGM || game.users.activeGM === game.user); };
 
+/** Whether a token's Actor is out of the combat: it carries the defeated status. Out, it runs no pursuit. */
+const knockedOut = actor => { const status = globalThis.CONFIG?.specialStatusEffects?.DEFEATED; return Boolean(status && actor?.statuses?.has?.(status)); };
+/** Whether a participant of the draft can still run: its token still exists (in any scene) and is not out of the combat. */
+const stillThere = p => { if (!p.tokenId) return !knockedOut(globalThis.fromUuidSync?.(p.uuid)); const token = [...(globalThis.game.scenes ?? [])].map(scene => scene.tokens?.get?.(p.tokenId)).find(Boolean); return Boolean(token) && !knockedOut(token.actor); };
+
 /** The tokens the GM selected and targeted on the scene, as pursuit candidates. */
 function sceneCandidates() {
   const game = globalThis.game, tokens = [...(globalThis.canvas?.tokens?.controlled ?? []), ...(game.user.targets ?? [])];
   const seen = new Set(), out = [];
   for (const token of tokens) {
     const actor = token.actor;
-    if (!actor?.uuid || seen.has(actor.uuid)) continue;
+    if (!actor?.uuid || seen.has(actor.uuid) || knockedOut(actor)) continue;
     seen.add(actor.uuid);
     out.push({uuid: actor.uuid, tokenId: token.document?.id ?? token.id, name: token.name ?? actor.name, playerOwned: Boolean(actor.hasPlayerOwner)});
   }
@@ -67,7 +72,7 @@ async function sceneTokens(scene, versionId) {
   const seen = new Set(), out = [];
   for (const token of scene?.tokens ?? []) {
     const actor = token.actor;
-    if (!actor?.uuid || seen.has(actor.uuid)) continue;
+    if (!actor?.uuid || seen.has(actor.uuid) || knockedOut(actor)) continue;
     seen.add(actor.uuid);
     let state = null;
     try { state = await rta().runtime.getContainerState(actor.uuid); } catch { state = null; }
@@ -163,7 +168,12 @@ export function createPursuitHud() {
         const split = isGM ? {picked: [...this.#split].filter(uuid => byUuid.has(uuid)), ...splitCheck(view.rows, this.#split)} : null;
         return {...view, isGM, myTurn, round: combat.round, combatId: combat.id, combatantId: active?.id ?? null, versionId, ruleset, available: others, pursuits, split};
       }
-      const draft = storedPursuit();
+      let draft = storedPursuit();
+      // A token deleted since (an unlinked token's Actor goes with it) or out of the combat leaves the draft.
+      if (draft.phase === "setup" && draft.participants.some(p => !stillThere(p))) {
+        draft = {...draft, participants: draft.participants.filter(stillThere)};
+        if (isGM) await savePursuit(draft);
+      }
       if (draft.phase === "setup") {
         const others = isGM ? (await sceneTokens(globalThis.canvas?.scene, versionId)).filter(c => !draft.participants.some(p => p.uuid === c.uuid)) : [];
         return {...(await setupView(runtime, {versionId, ruleset, pursuit: draft, contentName})), isGM, fleeBonus: FLEE_BONUS, versionId, ruleset, available: others};
